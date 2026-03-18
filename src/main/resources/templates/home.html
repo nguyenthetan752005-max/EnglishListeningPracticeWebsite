@@ -23,86 +23,13 @@
         <div class="section-divider"></div>
 
         <!-- How It Works -->
-        <section class="how-it-works">
-            <div class="container">
-                <h2 class="section-title">How Practicing Dictation Improves Your English Skills</h2>
-                <p class="section-subtitle">When practicing exercises at our website, you will go through 4 main steps,<br>all of them are equally important!</p>
-
-                <div class="steps-grid">
-                    <div class="step-card">
-                        <div class="step-icon">
-                            <img th:src="@{/images/icons/listentotheaudio.png}" alt="Listen">
-                        </div>
-                        <h3 class="step-number">1. Listen to the audio</h3>
-                        <p>Through the exercises, you will have to listen a lot; that's the key to improving your listening skills in any learning method.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-icon">
-                            <img th:src="@{/images/icons/typewhatyouhear.png}" alt="Type">
-                        </div>
-                        <h3 class="step-number">2. Type what you hear</h3>
-                        <p>Typing what you hear forces you to focus on every detail which helps you become better at pronunciation, spelling and writing.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-icon">
-                            <img th:src="@{/images/icons/checkandcorrect.png}" alt="Check">
-                        </div>
-                        <h3 class="step-number">3. Check &amp; correct</h3>
-                        <p>Error correction is important for your listening accuracy and reading comprehension, it's best to learn from mistakes.</p>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-icon">
-                            <img th:src="@{/images/icons/readitoutloud.png}" alt="Speak">
-                        </div>
-                        <h3 class="step-number">4. Read it out loud</h3>
-                        <p>After completing a sentence, try to read it out loud. It will greatly improve your pronunciation &amp; speaking skills!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <div th:replace="~{fragments/home/how-it-works :: how-it-works}"></div>
 
         <!-- Divider -->
         <div class="section-divider"></div>
 
         <!-- FAQ Section -->
-    <section class="faq">
-        <div class="container">
-            <h2 class="section-title">Frequently Asked Questions</h2>
-
-            <div class="faq-grid">
-                <!-- Column 1 -->
-                <div class="faq-column">
-                    <div class="faq-block">
-                        <h4>Is this program free?</h4>
-                        <p>Yes, it's 100% FREE!</p>
-                    </div>
-                    <div class="faq-block">
-                        <h4>How long will it take to become fluent with this website?</h4>
-                        <p>It depends on many things (such as your current level, how many hours you will spend each day). I can only say that your English will improve very quickly with this method.</p>
-                    </div>
-                </div>
-                
-                <!-- Column 2 -->
-                <div class="faq-column">
-                    <div class="faq-block">
-                        <h4>Is this website for beginners?</h4>
-                        <p>As long as you can understand this page, you're good to go! But it's better if you know basic English pronunciation, if you don't, watch this <a href="#" style="color:#0066cc;text-decoration:underline;">YouTube series</a>.</p>
-                    </div>
-                    <div class="faq-block">
-                        <h4>Will my speaking skills improve using this method?</h4>
-                        <p>Speaking and listening skills are related together, once you have better listening skills, it's much easier and faster to improve your speaking skills. <br>Also, you can try to read out loud what you hear, your skills will improve really quickly!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-
-    </main>
+        <div th:replace="~{fragments/home/faq :: faq}"></div>    </main>
 
     <!-- Footer -->
     <div th:replace="~{fragments/footer :: footer}"></div>
