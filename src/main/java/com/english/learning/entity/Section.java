@@ -1,12 +1,12 @@
-package com.english.learning.model;
+package com.english.learning.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "lessons")
-public class Lesson {
+@Table(name = "sections")
+public class Section {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,7 +15,6 @@ public class Lesson {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    private String title;
-    private Integer level;
-    private Integer totalSentences;
+    private String name;
+    private String description;
 }

@@ -1,4 +1,4 @@
-package com.english.learning.model;
+package com.english.learning.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -14,7 +14,9 @@ public class UserProgress {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // Tạm thời lưu ID, sau này kết nối với bảng User sau
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")

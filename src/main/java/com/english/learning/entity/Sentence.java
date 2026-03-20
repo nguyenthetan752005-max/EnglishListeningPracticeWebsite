@@ -1,7 +1,8 @@
-package com.english.learning.model;
+package com.english.learning.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 @Entity
 @Data
 @Table(name = "sentences")
