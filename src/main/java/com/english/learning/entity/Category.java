@@ -18,4 +18,7 @@ public class Category {
     private Integer totalLessons = 0;
     
     private String description;
+    private String imageUrl;
+    private String levelRange;
+    private Integer totalLessons;
 }

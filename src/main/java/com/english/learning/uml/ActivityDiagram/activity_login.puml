@@ -1,0 +1,44 @@
+@startuml Activity_Login
+title Activity Diagram - Đăng nhập (UC2)
+
+start
+
+:Truy cập trang /login;
+
+if (Chọn phương thức đăng nhập?) then (Google OAuth)
+  :Redirect đến Google OAuth;
+  :Xác thực với Google;
+  :Nhận provider_id từ Google;
+
+  if (Tìm User theo provider_id?) then (Không tìm thấy)
+    :Hiển thị lỗi\n"Tài khoản chưa đăng ký";
+    stop
+  else (Tìm thấy)
+    :Tạo Session cho User;
+  endif
+
+else (Form thường)
+  :Nhập username và password;
+
+  if (Tìm User theo username?) then (Không tìm thấy)
+    :Hiển thị lỗi\n"Tài khoản không tồn tại";
+    stop
+  else (Tìm thấy)
+  endif
+
+  if (So khớp password (BCrypt)?) then (Sai)
+    :Hiển thị lỗi\n"Mật khẩu không chính xác";
+    stop
+  else (Đúng)
+    :Tạo Session cho User;
+  endif
+endif
+
+if (User.role?) then (ROLE_ADMIN)
+  :Chuyển hướng đến /admin;
+else (ROLE_USER)
+  :Chuyển hướng đến /home;
+endif
+
+stop
+@enduml
