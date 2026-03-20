@@ -8,13 +8,17 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "user_progress")
+@Table(name = "user_progress", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"user_id", "lesson_id"})
+})
 public class UserProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // Tạm thời lưu ID, sau này kết nối với bảng User sau
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")

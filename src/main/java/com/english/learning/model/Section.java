@@ -5,14 +5,16 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "categories")
-public class Category {
+@Table(name = "sections")
+public class Section {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
     private String description;
-    private String imageUrl;
-    private String levelRange;
-    private Integer totalLessons;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 }

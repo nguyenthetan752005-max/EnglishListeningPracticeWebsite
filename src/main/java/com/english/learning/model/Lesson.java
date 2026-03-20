@@ -11,11 +11,11 @@ public class Lesson {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
-
     private String title;
-    private Integer level;
+    private String level;
     private Integer totalSentences;
+
+    @ManyToOne
+    @JoinColumn(name = "section_id")
+    private Section section;
 }

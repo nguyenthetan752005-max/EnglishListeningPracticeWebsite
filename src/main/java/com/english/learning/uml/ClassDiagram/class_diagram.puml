@@ -2,9 +2,7 @@
 title Class Diagram - English Listening Practice Website
 
 skinparam classAttributeIconSize 0
-skinparam packageStyle rectangle
 
-' ===================== ENTITY LAYER =====================
 package "Entity Layer" {
 
     class User {
@@ -23,6 +21,7 @@ package "Entity Layer" {
     class Category {
         - id : Long
         - name : String
+        - description : String
         - imageUrl : String
         - levelRange : String
         - totalLessons : Integer
@@ -88,87 +87,17 @@ package "Entity Layer" {
     }
 }
 
-' ===================== DAO LAYER =====================
-package "DAO Layer" {
-
-    interface IUserDAO {
-        + findByUsername(username : String) : User
-        + findByEmail(email : String) : User
-        + save(user : User) : User
-    }
-
-    interface ICategoryDAO {
-        + findAll() : List<Category>
-        + findById(id : Long) : Category
-    }
-
-    interface ILessonDAO {
-        + findBySectionId(sectionId : Long) : List<Lesson>
-        + findById(id : Long) : Lesson
-    }
-
-    interface ISentenceDAO {
-        + findByLessonId(lessonId : Long) : List<Sentence>
-    }
-
-    class UserDAOImpl implements IUserDAO
-    class CategoryDAOImpl implements ICategoryDAO
-    class LessonDAOImpl implements ILessonDAO
-    class SentenceDAOImpl implements ISentenceDAO
-}
-
-' ===================== SERVICE LAYER =====================
-package "Service Layer" {
-
-    interface IUserService {
-        + register(user : User) : User
-        + authenticate(username : String, password : String) : User
-    }
-
-    interface ICategoryService {
-        + getAllCategories() : List<Category>
-    }
-
-    interface ILessonService {
-        + getLessonById(id : Long) : Lesson
-        + getLessonsBySectionId(sectionId : Long) : List<Lesson>
-    }
-}
-
-' ===================== CONTROLLER LAYER =====================
-package "Controller Layer" {
-
-    class AuthController {
-        + login() : String
-        + register() : String
-    }
-
-    class HomeController {
-        + home() : String
-    }
-}
-
-' ===================== ENTITY RELATIONSHIPS =====================
-Category "1" --o "*" Section : category_id
-Section "1" --o "*" Lesson : section_id
-Lesson "1" --o "*" Sentence : lesson_id
-User "1" --o "*" UserProgress : user_id
-Lesson "1" --o "*" UserProgress : lesson_id
-Lesson "1" --o "*" Comment : lesson_id
-User "1" --o "*" Comment : user_id
-Comment "0..1" --o "*" Comment : parent_id
-Comment "1" --o "*" CommentVote : comment_id
-User "1" --o "*" CommentVote : user_id
-Sentence "1" --o "*" SpeakingResult : sentence_id
-User "1" --o "*" SpeakingResult : user_id
-
-' ===================== LAYER DEPENDENCIES =====================
-IUserService ..> IUserDAO : uses
-ICategoryService ..> ICategoryDAO : uses
-ILessonService ..> ILessonDAO : uses
-
-AuthController ..> IUserService : uses
-HomeController ..> ICategoryService : uses
-HomeController ..> ILessonService : uses
+Category "1" --o "many" Section : category_id
+Section "1" --o "many" Lesson : section_id
+Lesson "1" --o "many" Sentence : lesson_id
+User "1" --o "many" UserProgress : user_id
+Lesson "1" --o "many" UserProgress : lesson_id
+Lesson "1" --o "many" Comment : lesson_id
+User "1" --o "many" Comment : user_id
+Comment "0..1" --o "many" Comment : parent_id
+Comment "1" --o "many" CommentVote : comment_id
+User "1" --o "many" CommentVote : user_id
+Sentence "1" --o "many" SpeakingResult : sentence_id
+User "1" --o "many" SpeakingResult : user_id
 
 @enduml
