@@ -16,6 +16,6 @@ public class Lesson {
     private Section section;
 
     private String title;
-    private Integer level;
+    private String level;
     private Integer totalSentences;
 }
