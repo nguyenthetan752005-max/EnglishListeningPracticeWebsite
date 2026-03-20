@@ -1,0 +1,46 @@
+@startuml Activity_Dictation
+title Activity Diagram - Luyện nghe Dictation (UC4)
+
+start
+
+:Chọn Category → Section → Lesson;
+:Tải danh sách Sentence\ntheo lesson_id (ORDER BY order_index);
+
+if (Đã có UserProgress?) then (Có)
+  :Lấy completedSentences hiện tại;
+  :Bắt đầu từ câu completedSentences + 1;
+else (Chưa)
+  :Tạo UserProgress mới\n(completedSentences = 0,\nstatus = "IN_PROGRESS");
+  :Bắt đầu từ câu đầu tiên;
+endif
+
+while (Còn Sentence chưa hoàn thành?) is (Có)
+  :Phát audio (sentence.audioUrl);
+
+  repeat
+    :User gõ nội dung nghe được;
+    :So sánh với sentence.content;
+
+    if (Kết quả?) then (Sai)
+      :Highlight các từ sai;
+
+      if (User chọn?) then (Nghe lại)
+        :Phát lại audio;
+      else (Xem đáp án)
+        :Hiển thị content đúng;
+      endif
+    else (Đúng)
+    endif
+  repeat while (Chưa đúng?) is (Có)
+  ->Không;
+
+  :completedSentences += 1;
+  :Cập nhật UserProgress;
+  :Cập nhật lastAccessed;
+endwhile (Không)
+
+:Cập nhật status = "COMPLETED";
+:Hiển thị kết quả tổng kết\n(số câu đúng / tổng câu);
+
+stop
+@enduml

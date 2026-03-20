@@ -1,0 +1,33 @@
+@startuml Sequence_TrackProgress
+title Sequence Diagram - Theo dõi tiến độ (UC8)
+
+actor User as U
+participant "Progress Page" as V
+participant "ProgressController" as PC
+participant "ProgressService" as PS
+database "Database" as DB
+
+U -> V : Truy cập trang Tiến độ
+V -> PC : GET /progress
+PC -> PS : getProgressByUserId(userId)
+
+PS -> DB : SELECT up.*, l.title, l.total_sentences,\ns.name as section_name,\nc.name as category_name\nFROM user_progress up\nJOIN lessons l ON up.lesson_id = l.id\nJOIN sections s ON l.section_id = s.id\nJOIN categories c ON s.category_id = c.id\nWHERE up.user_id = ?\nORDER BY up.last_accessed DESC
+DB --> PS : List<UserProgress>
+
+PS -> DB : SELECT total_active_time\nFROM users WHERE id = ?
+DB --> PS : totalActiveTime
+
+PS -> PS : Tính toán thống kê:\n- Tổng bài COMPLETED\n- Tổng bài IN_PROGRESS\n- Tỷ lệ hoàn thành
+
+PS --> PC : ProgressSummary
+PC --> V : Render trang tiến độ
+V --> U : Hiển thị:\n- Danh sách bài đã học\n- Thống kê tổng quan\n- totalActiveTime
+
+opt User chọn tiếp tục bài chưa hoàn thành
+    U -> V : Nhấn "Tiếp tục" trên bài IN_PROGRESS
+    V -> PC : GET /lesson/{lessonId}
+    PC --> V : Redirect đến trang Lesson
+    V --> U : Bắt đầu từ câu chưa hoàn thành
+end
+
+@enduml
