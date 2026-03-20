@@ -1,0 +1,39 @@
+@startuml Sequence_Vote
+title Sequence Diagram - Vote bình luận (UC7)
+
+actor User as U
+participant "Lesson Page" as V
+participant "CommentController" as CMC
+participant "VoteService" as VS
+database "Database" as DB
+
+U -> V : Nhấn Like/Dislike trên comment
+V -> CMC : POST /comment/{commentId}/vote\n{isLike: true/false}
+CMC -> VS : toggleVote(commentId, userId, isLike)
+
+VS -> DB : SELECT FROM comment_votes\nWHERE comment_id = ?\nAND user_id = ?
+DB --> VS : CommentVote / null
+
+alt Chưa vote trước đó
+    VS -> DB : INSERT INTO comment_votes\n(is_like, comment_id, user_id, created_at)
+    DB --> VS : OK
+    VS --> CMC : "VOTED"
+
+else Đã vote cùng loại (toggle off)
+    VS -> DB : DELETE FROM comment_votes\nWHERE id = ?
+    DB --> VS : OK
+    VS --> CMC : "UNVOTED"
+
+else Đã vote khác loại (switch)
+    VS -> DB : UPDATE comment_votes\nSET is_like = ?\nWHERE id = ?
+    DB --> VS : OK
+    VS --> CMC : "SWITCHED"
+end
+
+CMC -> DB : SELECT COUNT(*) FROM comment_votes\nWHERE comment_id = ?\nGROUP BY is_like
+DB --> CMC : likeCount, dislikeCount
+
+CMC --> V : {likeCount, dislikeCount, userVoteStatus}
+V --> U : Cập nhật hiển thị vote
+
+@enduml
