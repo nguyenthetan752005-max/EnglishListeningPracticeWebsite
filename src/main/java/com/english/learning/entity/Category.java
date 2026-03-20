@@ -1,4 +1,4 @@
-package com.english.learning.model;
+package com.english.learning.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -11,6 +11,12 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String imageUrl;
+    private String levelRange;
+    
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private Integer totalLessons = 0;
+    
     private String description;
     private String imageUrl;
     private String levelRange;
