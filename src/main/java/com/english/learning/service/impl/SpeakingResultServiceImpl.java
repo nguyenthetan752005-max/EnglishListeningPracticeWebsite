@@ -1,36 +1,36 @@
 package com.english.learning.service.impl;
 
-import com.english.learning.dao.ISentenceDAO;
-import com.english.learning.dao.ISpeakingResultDAO;
-import com.english.learning.dao.IUserDAO;
-import com.english.learning.model.Sentence;
-import com.english.learning.model.SpeakingResult;
-import com.english.learning.model.User;
-import com.english.learning.service.ISpeakingResultService;
+import com.english.learning.repository.SentenceRepository;
+import com.english.learning.repository.SpeakingResultRepository;
+import com.english.learning.repository.UserRepository;
+import com.english.learning.entity.Sentence;
+import com.english.learning.entity.SpeakingResult;
+import com.english.learning.entity.User;
+import com.english.learning.service.SpeakingResultService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class SpeakingResultServiceImpl implements ISpeakingResultService {
+public class SpeakingResultServiceImpl implements SpeakingResultService {
 
     @Autowired
-    private ISpeakingResultDAO speakingResultDAO;
+    private SpeakingResultRepository speakingResultRepository;
 
     @Autowired
-    private IUserDAO userDAO;
+    private UserRepository userRepository;
 
     @Autowired
-    private ISentenceDAO sentenceDAO;
+    private SentenceRepository sentenceRepository;
 
     @Override
     public SpeakingResult saveSpeakingResult(Long userId, Long sentenceId, Double accuracy, String recognizedText, String userAudioUrl) {
         SpeakingResult result = new SpeakingResult();
 
-        User user = userDAO.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
-        Sentence sentence = sentenceDAO.findById(sentenceId)
+        Sentence sentence = sentenceRepository.findById(sentenceId)
                 .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
 
         result.setUser(user);
@@ -39,11 +39,11 @@ public class SpeakingResultServiceImpl implements ISpeakingResultService {
         result.setRecognizedText(recognizedText);
         result.setUserAudioUrl(userAudioUrl);
 
-        return speakingResultDAO.save(result);
+        return speakingResultRepository.save(result);
     }
 
     @Override
     public List<SpeakingResult> getResultsByUserId(Long userId) {
-        return speakingResultDAO.findByUserId(userId);
+        return speakingResultRepository.findByUser_Id(userId);
     }
 }

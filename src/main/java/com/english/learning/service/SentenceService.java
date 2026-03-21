@@ -1,11 +1,11 @@
 package com.english.learning.service;
 
-import com.english.learning.model.Sentence;
+import com.english.learning.entity.Sentence;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ISentenceService {
+public interface SentenceService {
     List<Sentence> getSentencesByLessonId(Long lessonId);
     Optional<Sentence> getSentenceById(Long id);
 }

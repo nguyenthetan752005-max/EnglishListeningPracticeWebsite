@@ -1,12 +1,12 @@
 package com.english.learning.service.impl;
 
-import com.english.learning.dao.ILessonDAO;
-import com.english.learning.dao.IUserDAO;
-import com.english.learning.dao.IUserProgressDAO;
-import com.english.learning.model.Lesson;
-import com.english.learning.model.User;
-import com.english.learning.model.UserProgress;
-import com.english.learning.service.IUserProgressService;
+import com.english.learning.repository.LessonRepository;
+import com.english.learning.repository.UserRepository;
+import com.english.learning.repository.UserProgressRepository;
+import com.english.learning.entity.Lesson;
+import com.english.learning.entity.User;
+import com.english.learning.entity.UserProgress;
+import com.english.learning.service.UserProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,30 +14,30 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserProgressServiceImpl implements IUserProgressService {
+public class UserProgressServiceImpl implements UserProgressService {
 
     @Autowired
-    private IUserProgressDAO userProgressDAO;
+    private UserProgressRepository userProgressRepository;
 
     @Autowired
-    private IUserDAO userDAO;
+    private UserRepository userRepository;
 
     @Autowired
-    private ILessonDAO lessonDAO;
+    private LessonRepository lessonRepository;
 
     @Override
     public Optional<UserProgress> getProgress(Long userId, Long lessonId) {
-        return userProgressDAO.findByUserIdAndLessonId(userId, lessonId);
+        return userProgressRepository.findByUser_IdAndLesson_Id(userId, lessonId);
     }
 
     @Override
     public List<UserProgress> getProgressByUserId(Long userId) {
-        return userProgressDAO.findByUserId(userId);
+        return userProgressRepository.findByUser_Id(userId);
     }
 
     @Override
     public UserProgress updateProgress(Long userId, Long lessonId, Integer completedSentences) {
-        Optional<UserProgress> progressOpt = userProgressDAO.findByUserIdAndLessonId(userId, lessonId);
+        Optional<UserProgress> progressOpt = userProgressRepository.findByUser_IdAndLesson_Id(userId, lessonId);
 
         UserProgress progress;
         if (progressOpt.isPresent()) {
@@ -46,9 +46,9 @@ public class UserProgressServiceImpl implements IUserProgressService {
             progress.setStatus("IN_PROGRESS");
         } else {
             progress = new UserProgress();
-            User user = userDAO.findById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
-            Lesson lesson = lessonDAO.findById(lessonId)
+            Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
             progress.setUser(user);
             progress.setLesson(lesson);
@@ -56,26 +56,26 @@ public class UserProgressServiceImpl implements IUserProgressService {
             progress.setStatus("IN_PROGRESS");
         }
 
-        return userProgressDAO.save(progress);
+        return userProgressRepository.save(progress);
     }
 
     @Override
     public UserProgress completeLesson(Long userId, Long lessonId) {
-        Optional<UserProgress> progressOpt = userProgressDAO.findByUserIdAndLessonId(userId, lessonId);
+        Optional<UserProgress> progressOpt = userProgressRepository.findByUser_IdAndLesson_Id(userId, lessonId);
 
         UserProgress progress;
         if (progressOpt.isPresent()) {
             progress = progressOpt.get();
         } else {
             progress = new UserProgress();
-            User user = userDAO.findById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
-            Lesson lesson = lessonDAO.findById(lessonId)
+            Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
             progress.setUser(user);
             progress.setLesson(lesson);
         }
         progress.setStatus("COMPLETED");
-        return userProgressDAO.save(progress);
+        return userProgressRepository.save(progress);
     }
 }

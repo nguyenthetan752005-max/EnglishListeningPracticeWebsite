@@ -1,8 +1,8 @@
 package com.english.learning.controller;
 
-import com.english.learning.model.Comment;
-import com.english.learning.model.CommentVote;
-import com.english.learning.service.ICommentService;
+import com.english.learning.entity.Comment;
+import com.english.learning.entity.CommentVote;
+import com.english.learning.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +13,7 @@ import java.util.List;
 public class CommentController {
 
     @Autowired
-    private ICommentService commentService;
+    private CommentService commentService;
 
     @GetMapping("/lesson/{lessonId}/comments")
     @ResponseBody
