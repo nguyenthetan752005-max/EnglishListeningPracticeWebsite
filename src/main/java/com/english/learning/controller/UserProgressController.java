@@ -1,7 +1,7 @@
 package com.english.learning.controller;
 
-import com.english.learning.model.UserProgress;
-import com.english.learning.service.IUserProgressService;
+import com.english.learning.entity.UserProgress;
+import com.english.learning.service.UserProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class UserProgressController {
 
     @Autowired
-    private IUserProgressService userProgressService;
+    private UserProgressService userProgressService;
 
     @PostMapping("/progress/update")
     @ResponseBody

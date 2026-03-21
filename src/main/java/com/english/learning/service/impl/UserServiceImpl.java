@@ -1,36 +1,36 @@
 package com.english.learning.service.impl;
 
-import com.english.learning.dao.IUserDAO;
-import com.english.learning.model.User;
-import com.english.learning.service.IUserService;
+import com.english.learning.repository.UserRepository;
+import com.english.learning.entity.User;
+import com.english.learning.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements IUserService {
+public class UserServiceImpl implements UserService {
 
     @Autowired
-    private IUserDAO userDAO;
+    private UserRepository userRepository;
 
     @Override
     public User register(User user) {
         // Kiểm tra email đã tồn tại
-        if (userDAO.findByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new RuntimeException("Email đã tồn tại!");
         }
         // Kiểm tra username đã tồn tại
-        if (userDAO.findByUsername(user.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username đã tồn tại!");
         }
         // TODO: Hash password trước khi lưu
-        return userDAO.save(user);
+        return userRepository.save(user);
     }
 
     @Override
     public Optional<User> authenticate(String username, String password) {
-        Optional<User> userOpt = userDAO.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByUsername(username);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             // TODO: So sánh password đã hash
@@ -43,6 +43,6 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public Optional<User> findById(Long id) {
-        return userDAO.findById(id);
+        return userRepository.findById(id);
     }
 }

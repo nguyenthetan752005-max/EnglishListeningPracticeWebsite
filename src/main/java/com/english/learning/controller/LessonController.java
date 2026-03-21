@@ -1,10 +1,10 @@
 package com.english.learning.controller;
 
-import com.english.learning.model.Lesson;
-import com.english.learning.model.Section;
-import com.english.learning.service.ILessonService;
-import com.english.learning.service.ISectionService;
-import com.english.learning.service.ISentenceService;
+import com.english.learning.entity.Lesson;
+import com.english.learning.entity.Section;
+import com.english.learning.service.LessonService;
+import com.english.learning.service.SectionService;
+import com.english.learning.service.SentenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class LessonController {
 
     @Autowired
-    private ILessonService lessonService;
+    private LessonService lessonService;
 
     @Autowired
-    private ISectionService sectionService;
+    private SectionService sectionService;
 
     @Autowired
-    private ISentenceService sentenceService;
+    private SentenceService sentenceService;
 
     @GetMapping("/section/{id}/lessons")
     public String getLessons(@PathVariable Long id, Model model) {
