@@ -2,11 +2,11 @@ package com.english.learning.service.impl;
 
 import com.english.learning.repository.CommentRepository;
 import com.english.learning.repository.CommentVoteRepository;
-import com.english.learning.repository.LessonRepository;
+import com.english.learning.repository.SentenceRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.entity.Comment;
 import com.english.learning.entity.CommentVote;
-import com.english.learning.entity.Lesson;
+import com.english.learning.entity.Sentence;
 import com.english.learning.entity.User;
 import com.english.learning.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,24 +28,24 @@ public class CommentServiceImpl implements CommentService {
     private UserRepository userRepository;
 
     @Autowired
-    private LessonRepository lessonRepository;
+    private SentenceRepository sentenceRepository;
 
     @Override
-    public List<Comment> getCommentsByLessonId(Long lessonId) {
-        return commentRepository.findByLesson_Id(lessonId);
+    public List<Comment> getCommentsBySentenceId(Long sentenceId) {
+        return commentRepository.findBySentence_Id(sentenceId);
     }
 
     @Override
-    public Comment addComment(Long lessonId, Long userId, String content, Long parentId) {
+    public Comment addComment(Long sentenceId, Long userId, String content, Long parentId) {
         Comment comment = new Comment();
         comment.setContent(content);
 
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
+        Sentence sentence = sentenceRepository.findById(sentenceId)
+                .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
 
-        comment.setLesson(lesson);
+        comment.setSentence(sentence);
         comment.setUser(user);
 
         if (parentId != null) {

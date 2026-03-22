@@ -6,7 +6,7 @@ import com.english.learning.entity.CommentVote;
 import java.util.List;
 
 public interface CommentService {
-    List<Comment> getCommentsByLessonId(Long lessonId);
-    Comment addComment(Long lessonId, Long userId, String content, Long parentId);
+    List<Comment> getCommentsBySentenceId(Long sentenceId);
+    Comment addComment(Long sentenceId, Long userId, String content, Long parentId);
     CommentVote voteComment(Long commentId, Long userId, Boolean isLike);
 }

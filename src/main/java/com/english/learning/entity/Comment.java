@@ -21,8 +21,8 @@ public class Comment {
     private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "lesson_id")
-    private Lesson lesson;
+    @JoinColumn(name = "sentence_id")
+    private Sentence sentence;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
