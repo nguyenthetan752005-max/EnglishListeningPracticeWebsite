@@ -38,6 +38,7 @@ public class LessonController {
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
         model.addAttribute("lesson", lesson);
         model.addAttribute("sentences", sentenceService.getSentencesByLessonId(id));
+        model.addAttribute("category", lesson.getSection().getCategory());
         return "lesson/dictation";
     }
 }

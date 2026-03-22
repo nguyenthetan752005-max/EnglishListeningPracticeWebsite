@@ -15,20 +15,20 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @GetMapping("/lesson/{lessonId}/comments")
+    @GetMapping("/sentence/{sentenceId}/comments")
     @ResponseBody
-    public List<Comment> getComments(@PathVariable Long lessonId) {
-        return commentService.getCommentsByLessonId(lessonId);
+    public List<Comment> getComments(@PathVariable Long sentenceId) {
+        return commentService.getCommentsBySentenceId(sentenceId);
     }
 
     @PostMapping("/comment")
     @ResponseBody
     public Comment addComment(
-            @RequestParam Long lessonId,
+            @RequestParam Long sentenceId,
             @RequestParam Long userId,
             @RequestParam String content,
             @RequestParam(required = false) Long parentId) {
-        return commentService.addComment(lessonId, userId, content, parentId);
+        return commentService.addComment(sentenceId, userId, content, parentId);
     }
 
     @PostMapping("/comment/{commentId}/vote")

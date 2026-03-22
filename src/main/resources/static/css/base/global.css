@@ -1,3 +1,9 @@
+/* [CSS BASE] CHỨA CÁC BIẾN (VARIABLES) VÀ RESET CSS.
+ * - Định nghĩa mã màu chuẩn của trang web (--primary-color, --text-color...)
+ * - Xóa bỏ margin/padding dư thừa mặc định của trình duyệt
+ * - Thiết lập Font chữ mặc định (Inter) cho toàn trang 
+ */
+
 /* ===========================
    CSS Variables & Reset
    =========================== */

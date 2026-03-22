@@ -1,3 +1,5 @@
+#File này tui dùng để tải dữ liệu từ cloudinary về máy tui, mấy ông không cần quan tâm
+
 import os
 import re
 import mysql.connector

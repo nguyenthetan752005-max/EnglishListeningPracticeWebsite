@@ -1,3 +1,7 @@
+/* LOGIC TÌM KIẾM BÀI HỌC VÀ LỌC LEVEL (FRONT-END).
+ * - Theo dõi người dùng gõ phím vào ô Search và tự động ẩn/hiện Bài Học tương ứng 
+ */
+
 // Accordion Toggle
 function toggleSection(headerEl) {
     headerEl.classList.toggle('collapsed');
