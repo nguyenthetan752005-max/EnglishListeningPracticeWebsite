@@ -5,7 +5,9 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "sentences")
+@Table(name = "sentences", indexes = {
+    @Index(name = "idx_lesson_order", columnList = "lesson_id, orderIndex")
+})
 public class Sentence {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,6 +18,9 @@ public class Sentence {
     private Lesson lesson;
 
     private String audioUrl;
+    
+    @Column(columnDefinition = "TEXT")
     private String content;
+    
     private Integer orderIndex;
 }
