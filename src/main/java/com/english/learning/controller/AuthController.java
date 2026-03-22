@@ -8,6 +8,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.Optional;
 
@@ -40,14 +42,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String doLogin(String username, String password, Model model) {
-        Optional<User> userOpt = userService.authenticate(username, password);
+    public String doLogin(@RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "password", required = false) String password,
+            Model model, HttpSession session) {
+        Optional<User> userOpt = userService.authenticateUser(username, password);
         if (userOpt.isPresent()) {
-            // TODO: Lưu session
+            session.setAttribute("loggedInUser", userOpt.get());
             return "redirect:/";
         } else {
             model.addAttribute("error", "Sai tài khoản hoặc mật khẩu!");
             return "auth/login";
         }
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
     }
 }

@@ -6,6 +6,12 @@ import java.util.Optional;
 
 public interface UserService {
     User register(User user);
+
     Optional<User> authenticate(String username, String password);
+
     Optional<User> findById(Long id);
+
+    Optional<User> authenticateAdmin(String username, String password);
+
+    Optional<User> authenticateUser(String username, String password);
 }

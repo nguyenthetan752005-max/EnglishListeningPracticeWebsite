@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | English Listening Practice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-login.css}">
+</head>
+<body>
+    <div class="admin-login-wrapper" style="justify-content: flex-start; padding-top: 40px;">
+        <!-- Decorative background -->
+        <div class="admin-bg-decoration">
+            <div class="bg-circle bg-circle-1"></div>
+            <div class="bg-circle bg-circle-2"></div>
+            <div class="bg-circle bg-circle-3"></div>
+        </div>
+
+        <div class="admin-dashboard-header">
+            <div class="admin-shield-icon" style="width: 48px; height: 48px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <h1 style="font-size: 24px; color: #f1f5f9; margin: 0;">Admin Dashboard</h1>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">
+                Xin chào, <strong th:text="${admin.username}" style="color: #e2e8f0;">Admin</strong>
+            </p>
+        </div>
+
+        <div class="admin-login-card" style="max-width: 600px; margin-top: 24px; text-align: center;">
+            <h2 style="font-size: 18px; margin-bottom: 12px; color: #f1f5f9;">🚧 Trang quản trị đang phát triển</h2>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                Chức năng quản trị sẽ được bổ sung trong các bản cập nhật sắp tới.
+            </p>
+
+            <div style="margin-top: 24px;">
+                <a th:href="@{/admin/logout}" class="admin-login-btn" style="display: inline-flex; text-decoration: none; width: auto; padding: 10px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Đăng xuất
+                </a>
+            </div>
+        </div>
+
+        <div class="admin-login-footer" style="margin-top: 24px;">
+            <a href="/" class="admin-back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Quay về trang chính
+            </a>
+        </div>
+    </div>
+</body>
+</html>

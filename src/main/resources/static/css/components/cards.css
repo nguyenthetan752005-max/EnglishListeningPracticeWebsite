@@ -1,0 +1,92 @@
+/* [CSS COMPONENT] TRANG TRÍ CÁC THẺ BOX.
+ * - Dùng để đổ bóng, bo góc cho các khối danh mục (Categories) ngoài màn hình chứa chủ đề nghe 
+ */
+
+
+/* ===========================
+   Categories List
+   =========================== */
+.page-title {
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.category-card {
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    padding: 16px;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s ease;
+}
+
+.category-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.category-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.category-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-name {
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin: 0 0 8px 0;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 0.2s;
+}
+
+.category-card:hover .category-name {
+    text-decoration-color: var(--primary);
+}
+
+.category-level {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0 0 4px 0;
+}
+
+.category-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.category-lessons {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.card-menu-dots {
+    color: var(--text-muted);
+    font-weight: bold;
+    font-size: 1.2rem;
+    line-height: 1;
+    letter-spacing: 1px;
+}

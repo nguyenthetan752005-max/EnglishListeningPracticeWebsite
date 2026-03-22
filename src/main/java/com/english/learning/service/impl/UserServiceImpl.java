@@ -5,6 +5,7 @@ import com.english.learning.entity.User;
 import com.english.learning.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 
@@ -24,18 +25,35 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username đã tồn tại!");
         }
-        // TODO: Hash password trước khi lưu
+
+        // Hash password trước khi lưu
+        String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
+        user.setPassword(hashedPassword);
+
         return userRepository.save(user);
     }
 
     @Override
     public Optional<User> authenticate(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findByEmail(username);
+        }
+
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            // TODO: So sánh password đã hash
-            if (user.getPassword().equals(password)) {
-                return Optional.of(user);
+
+            String storedPassword = user.getPassword();
+
+            // Hỗ trợ cả tài khoản cũ chưa mã hóa mật khẩu
+            if (storedPassword.startsWith("$2a$")) {
+                if (BCrypt.checkpw(password, storedPassword)) {
+                    return Optional.of(user);
+                }
+            } else {
+                if (storedPassword.equals(password)) {
+                    return Optional.of(user);
+                }
             }
         }
         return Optional.empty();
@@ -44,5 +62,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> authenticateAdmin(String username, String password) {
+        Optional<User> userOpt = authenticate(username, password);
+        if (userOpt.isPresent() && "ADMIN".equals(userOpt.get().getRole())) {
+            return userOpt;
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> authenticateUser(String username, String password) {
+        Optional<User> userOpt = authenticate(username, password);
+        if (userOpt.isPresent() && "USER".equals(userOpt.get().getRole())) {
+            return userOpt;
+        }
+        return Optional.empty();
     }
 }
