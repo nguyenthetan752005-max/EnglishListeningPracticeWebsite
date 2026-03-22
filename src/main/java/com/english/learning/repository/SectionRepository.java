@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface SectionRepository extends JpaRepository<Section, Long> {
     List<Section> findByCategory_Id(Long categoryId);
+    List<Section> findByCategoryId(Long categoryId);
 }

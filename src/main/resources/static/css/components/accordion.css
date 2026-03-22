@@ -1,0 +1,37 @@
+
+/* ===========================
+   Sections & Lessons
+   =========================== */
+.section-group { background: #fff; border: 1px solid #e0e6ed; border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
+.section-header { background: #e6f0fa; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s; }
+.section-header:hover { background: #d9e6f6; }
+.section-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: #003366; }
+
+.lesson-count {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: #6b7280;
+    margin-left: 6px;
+}
+.section-desc { color: #7b8fa1; font-size: 0.95rem; }
+.toggle-icon {
+    color: #0b57d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-header .toggle-icon svg {
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.section-header.collapsed .toggle-icon svg {
+    transform: rotate(0deg);
+}
+.lessons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 24px; background: #fff; }
+.lesson-card { border: 1px solid #f0f0f0; border-radius: 6px; padding: 16px; text-decoration: none; transition: box-shadow 0.2s, border-color 0.2s; }
+.lesson-card:hover { border-color: #d2e3fc; box-shadow: 0 2px 8px rgba(26, 115, 232, 0.08); }
+.lesson-title { color: #1a73e8; font-size: 1.05rem; font-weight: 500; margin: 0 0 8px 0; }
+.lesson-card:hover .lesson-title { text-decoration: underline; }
+.lesson-meta { color: #888; font-size: 0.85rem; margin: 0; }
