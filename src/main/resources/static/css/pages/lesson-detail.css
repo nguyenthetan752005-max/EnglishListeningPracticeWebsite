@@ -11,14 +11,14 @@
 .breadcrumb {
     margin-bottom: 24px;
     font-size: 0.95rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .breadcrumb a {
-    color: #1a73e8;
+    color: var(--primary);
     text-decoration: none;
     transition: text-decoration 0.2s;
 }
@@ -28,11 +28,11 @@
 }
 
 .breadcrumb .separator {
-    color: #9ca3af;
+    color: var(--text-muted);
 }
 
 .breadcrumb .current {
-    color: #1a1a1a;
+    color: var(--text-primary);
 }
 
 /* Lesson Header */
@@ -52,15 +52,15 @@
 .header-icon {
     font-weight: 400;
     font-size: 1.4rem;
-    color: #4b5563;
+    color: var(--text-muted);
 }
 
 .lesson-badge {
     font-size: 0.85rem;
     padding: 3px 8px;
-    background: #f0f0f0;
+    background: var(--bg-section);
     border-radius: 4px;
-    color: #555;
+    color: var(--text-secondary);
     font-weight: 500;
     margin-left: 8px;
 }
@@ -70,38 +70,38 @@
     margin-bottom: -1px;
     display: flex;
     gap: 8px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .tab-btn {
     padding: 12px 24px;
     font-size: 0.95rem;
     font-weight: 500;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-section);
+    border: 1px solid var(--border-color);
     border-bottom: none;
     border-radius: 8px 8px 0 0;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .tab-btn:hover:not(.active) {
-    background: #f3f4f6;
-    color: #374151;
+    background: var(--bg-body);
+    color: var(--text-primary);
 }
 
 .tab-btn.active {
-    background: #fff;
-    color: #1a73e8;
-    border-top: 2px solid #1a73e8;
-    border-bottom: 1px solid #fff; /* Hide underlying border */
+    background: var(--bg-card);
+    color: var(--primary);
+    border-top: 2px solid var(--primary);
+    border-bottom: 1px solid var(--bg-card); /* Hide underlying border */
 }
 
 /* Content Container */
 .tab-content-container {
-    background: #fff;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 0 8px 8px 8px;
     padding: 40px;
     min-height: 400px;
@@ -124,7 +124,7 @@
 }
 
 .sentence-counter {
-    color: #4b5563;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 16px;
@@ -134,7 +134,7 @@
 .nav-arrow {
     background: none;
     border: none;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     font-size: 1.1rem;
     padding: 4px;
@@ -142,7 +142,7 @@
 }
 
 .nav-arrow:hover {
-    color: #1a1a1a;
+    color: var(--text-primary);
 }
 
 /* Audio Player Bar */
@@ -157,9 +157,9 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #f0f4f9;
+    background: var(--bg-section);
     border: none;
-    color: #1a1a1a;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -168,12 +168,12 @@
 }
 
 .play-btn:hover {
-    background: #e2e8f0;
+    background: var(--border-color);
 }
 
 .time-display {
     font-size: 0.85rem;
-    color: #4b5563;
+    color: var(--text-secondary);
     min-width: 85px;
     white-space: nowrap;
     font-family: monospace;
@@ -182,7 +182,7 @@
 .progress-bar-wrapper {
     flex: 1;
     height: 6px;
-    background: #e5e7eb;
+    background: var(--border-color);
     border-radius: 3px;
     cursor: pointer;
 }
@@ -190,14 +190,14 @@
 .progress-fill {
     width: 0%;
     height: 100%;
-    background: #4b5563;
+    background: var(--text-secondary);
     border-radius: 3px;
 }
 
 .volume-btn, .menu-btn {
     background: none;
     border: none;
-    color: #4b5563;
+    color: var(--text-secondary);
     cursor: pointer;
     font-size: 1rem;
     padding: 4px;
@@ -206,12 +206,12 @@
 /* Speed Dropdown */
 .speed-select {
     padding: 4px 8px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #4b5563;
-    background: white;
+    color: var(--text-secondary);
+    background: var(--bg-card);
     cursor: pointer;
 }
 
@@ -226,17 +226,18 @@
     height: 140px;
     padding: 20px;
     font-size: 1.1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     resize: none;
     font-family: inherit;
-    color: #1f2937;
+    color: var(--text-primary);
+    background: var(--bg-card);
     transition: border-color 0.2s;
 }
 
 .dictation-input:focus {
     outline: none;
-    border-color: #1a73e8;
+    border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
@@ -244,12 +245,12 @@
     position: absolute;
     bottom: 20px;
     right: 20px;
-    background: #f3f4f6;
+    background: var(--bg-section);
     border: none;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    color: #9ca3af;
+    color: var(--text-muted);
     cursor: not-allowed;
 }
 
@@ -269,24 +270,24 @@
 }
 
 .btn-check {
-    background: #1a73e8;
+    background: var(--primary);
     color: white;
     border: none;
 }
 
 .btn-check:hover {
-    background: #1557b0;
+    background: var(--primary-hover);
 }
 
 .btn-skip {
-    background: white;
-    color: #4b5563;
-    border: 1px solid #d1d5db;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-skip:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    background: var(--bg-section);
+    border-color: var(--text-muted);
 }
 
 /* Transcript Tab Styling */
@@ -296,11 +297,11 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .repeat-toggle {
-    color: #6b7280;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     display: flex;
     align-items: center;
@@ -328,10 +329,10 @@
 }
 
 .transcript-player-bar {
-    background: #f8fafc;
+    background: var(--bg-section);
     padding: 16px 20px;
     border-radius: 8px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border-color);
     margin-bottom: 0;
 }
 
@@ -343,14 +344,14 @@
     justify-content: center;
     padding: 40px 24px;
     min-height: 180px;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
     border-top: none;
     border-bottom: none;
 }
 
 .sentence-text {
     font-size: 1.25rem;
-    color: #1f2937;
+    color: var(--text-primary);
     text-align: center;
     line-height: 1.8;
 }
@@ -362,11 +363,11 @@
     justify-content: center;
     gap: 20px;
     padding: 16px;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
     border-top: none;
     border-radius: 0 0 8px 8px;
     font-size: 0.95rem;
-    color: #4b5563;
+    color: var(--text-secondary);
 }
 
 /* Transcript List (right panel) */
@@ -375,7 +376,7 @@
     flex-direction: column;
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
 }
 
@@ -384,7 +385,7 @@
     align-items: flex-start;
     gap: 16px;
     padding: 16px 20px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border-color);
     transition: background 0.2s;
     cursor: pointer;
 }
@@ -393,12 +394,12 @@
     border-bottom: none;
 }
 
-.transcript-item:hover, .transcript-item.active {
-    background: #f8fafc;
+.transcript-item:hover {
+    background: var(--bg-section);
 }
 
 .transcript-item.active {
-    background: #eef2ff;
+    background: var(--border-color);
 }
 
 .play-small-btn {
@@ -406,9 +407,9 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: white;
-    border: 1px solid #cbd5e1;
-    color: #1a1a1a;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -417,13 +418,13 @@
 }
 
 .transcript-item.active .play-small-btn {
-    border-color: #1a73e8;
-    color: #1a73e8;
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .transcript-text {
     font-size: 1.05rem;
-    color: #334155;
+    color: var(--text-primary);
     line-height: 1.6;
     padding-top: 4px;
 }
@@ -433,11 +434,11 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-top: 15px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--border-color);
 }
 
 .auto-scroll-toggle {
-    color: #1a73e8;
+    color: var(--primary);
     font-size: 0.9rem;
     font-weight: 500;
     display: flex;
@@ -448,7 +449,7 @@
 
 .keyboard-shortcuts {
     font-size: 0.85rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-align: right;
     line-height: 1.6;
 }
@@ -463,14 +464,20 @@
 }
 
 .feedback-correct {
-    background: #ecfdf5;
+    background: #ecfdf5; /* Keep hardcoded for specific success style or maybe use rgba */
     color: #065f46;
     border: 1px solid #a7f3d0;
 }
 
+[data-theme="dark"] .feedback-correct {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
 .feedback-incorrect {
     background: transparent;
-    color: #1f2937;
+    color: var(--text-primary);
     border: none;
     padding: 0;
 }
@@ -485,6 +492,10 @@
     margin-bottom: 12px;
 }
 
+[data-theme="dark"] .feedback-status {
+    color: #fbbf24;
+}
+
 .feedback-hint {
     font-size: 1.15rem;
     line-height: 1.6;
@@ -496,9 +507,15 @@
     border: 1px solid #fde68a;
 }
 
+[data-theme="dark"] .feedback-skipped {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
 /* Hint Words (hiện khi chấm sai) */
 .hint-matched {
-    color: #1f2937;
+    color: var(--text-primary);
     font-weight: 400;
 }
 
@@ -508,7 +525,7 @@
 }
 
 .hint-hidden {
-    color: #9ca3af;
+    color: var(--text-muted);
     font-weight: 400;
     letter-spacing: 1px;
 }
@@ -517,15 +534,15 @@
 .pronunciation-area {
     margin-bottom: 20px;
     padding: 16px 20px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--bg-section);
 }
 
 .pronunciation-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -533,13 +550,13 @@
 
 .pronunciation-text {
     font-size: 1.15rem;
-    color: #1f2937;
+    color: var(--text-primary);
     line-height: 1.8;
 }
 
 .pron-word {
     display: inline-block;
-    border-bottom: 1px solid #d1d5db;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 2px;
     margin: 0 2px;
 }
@@ -547,9 +564,9 @@
 /* Replay Button */
 .btn-replay {
     padding: 10px 24px;
-    background: white;
-    color: #4b5563;
-    border: 1px solid #d1d5db;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.95rem;
     font-weight: 500;
@@ -561,8 +578,8 @@
 }
 
 .btn-replay:hover {
-    background: #f3f4f6;
-    color: #1f2937;
+    background: var(--bg-section);
+    color: var(--text-primary);
 }
 
 /* Next Button */

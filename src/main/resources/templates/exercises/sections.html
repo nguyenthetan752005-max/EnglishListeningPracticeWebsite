@@ -10,10 +10,10 @@
 
     <main class="container" style="flex: 1; padding-top: 30px; padding-bottom: 100px;">
         <!-- Breadcrumb -->
-        <div class="breadcrumb" style="margin-bottom: 20px; font-size: 0.95rem; color: #6b7280;">
-            <a th:href="@{/exercises}" style="color: #1a73e8; text-decoration: none;">All topics</a>
+        <div class="breadcrumb" style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary);">
+            <a th:href="@{/exercises}" style="color: var(--primary); text-decoration: none;">All topics</a>
             <span style="margin: 0 8px;">/</span>
-            <span th:text="${category.name}" style="color: #1a1a1a;">Category Name</span>
+            <span th:text="${category.name}" style="color: var(--text-primary);">Category Name</span>
         </div>
 
         <!-- Header Row: Title & Search -->
@@ -57,7 +57,7 @@
         </div>
 
         <!-- No Results Message -->
-        <div id="noResultsMsg" style="display: none; text-align: center; padding: 40px 20px; color: #6b7280; font-size: 1.1rem; background: #fff; border: 1px dashed #dcdcdc; border-radius: 8px;">
+        <div id="noResultsMsg" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 1.1rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 8px;">
             No lessons match your search criteria.
         </div>
     </main>
