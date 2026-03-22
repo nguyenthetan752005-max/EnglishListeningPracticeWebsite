@@ -10,14 +10,18 @@
         <div class="auth-card">
             <h1>Create an account</h1>
 
-            <button class="btn-google">
-                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16">
-                Đăng nhập bằng Google
-            </button>
+            <a th:href="@{/oauth2/authorization/google}" class="btn-google"
+                style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16"
+                    style="margin-right:8px;">
+                Đăng ký bằng Google
+            </a>
 
             <div class="auth-divider">Or enter your information</div>
 
-            <form action="#" method="post">
+            <div th:if="${error}" style="color: red; text-align: center; margin-bottom: 15px;" th:text="${error}"></div>
+
+            <form th:action="@{/register}" method="post">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" class="form-control" autofocus>
