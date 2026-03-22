@@ -25,11 +25,11 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username đã tồn tại!");
         }
-        
+
         // Hash password trước khi lưu
         String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
         user.setPassword(hashedPassword);
-        
+
         return userRepository.save(user);
     }
 
@@ -39,11 +39,12 @@ public class UserServiceImpl implements UserService {
         if (userOpt.isEmpty()) {
             userOpt = userRepository.findByEmail(username);
         }
-        
+
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+
             String storedPassword = user.getPassword();
-            
+
             // Hỗ trợ cả tài khoản cũ chưa mã hóa mật khẩu
             if (storedPassword.startsWith("$2a$")) {
                 if (BCrypt.checkpw(password, storedPassword)) {
@@ -61,5 +62,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> authenticateAdmin(String username, String password) {
+        Optional<User> userOpt = authenticate(username, password);
+        if (userOpt.isPresent() && "ADMIN".equals(userOpt.get().getRole())) {
+            return userOpt;
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> authenticateUser(String username, String password) {
+        Optional<User> userOpt = authenticate(username, password);
+        if (userOpt.isPresent() && "USER".equals(userOpt.get().getRole())) {
+            return userOpt;
+        }
+        return Optional.empty();
     }
 }

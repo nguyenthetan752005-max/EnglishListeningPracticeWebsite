@@ -42,10 +42,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String doLogin(@RequestParam(value = "username", required = false) String username, 
-                          @RequestParam(value = "password", required = false) String password, 
-                          Model model, HttpSession session) {
-        Optional<User> userOpt = userService.authenticate(username, password);
+    public String doLogin(@RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "password", required = false) String password,
+            Model model, HttpSession session) {
+        Optional<User> userOpt = userService.authenticateUser(username, password);
         if (userOpt.isPresent()) {
             session.setAttribute("loggedInUser", userOpt.get());
             return "redirect:/";
