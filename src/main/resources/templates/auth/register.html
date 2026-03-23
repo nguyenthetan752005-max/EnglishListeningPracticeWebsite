@@ -1,6 +1,11 @@
 <!DOCTYPE html>
+<!-- GIAO DIỆN TRANG ĐĂNG KÝ -->
+<!-- Cung cấp Form tạo tài khoản mới -->
+
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{fragments/head :: head('Create an account')}"></head>
+
 <body>
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
@@ -11,6 +16,12 @@
             <a th:href="@{/oauth2/authorization/google}" class="btn-google" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
                 <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16" style="margin-right:8px;">
                 Đăng nhập bằng Google
+
+            <a th:href="@{/oauth2/authorization/google}" class="btn-google"
+                style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16"
+                    style="margin-right:8px;">
+                Đăng ký bằng Google
             </a>
 
             <div class="auth-divider">Or enter your information</div>
@@ -21,6 +32,10 @@
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" th:field="*{username}" class="form-control" autofocus required>
+            <form th:action="@{/register}" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" autofocus>
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -41,4 +56,5 @@
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
+
 </html>

@@ -6,7 +6,13 @@ import java.util.Optional;
 
 public interface UserService {
     User register(User user);
+
     Optional<User> authenticate(String username, String password);
+
     Optional<User> findById(Long id);
     void updateUsername(Long id, String newUsername) throws Exception;
+
+    Optional<User> authenticateAdmin(String username, String password);
+
+    Optional<User> authenticateUser(String username, String password);
 }

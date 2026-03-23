@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!-- GIAO DIỆN LỚN NHẤT CỦA PROJECT: PHÒNG LUYỆN NGHE CHÉP CHÍNH TẢ -->
+<!-- Kết hợp Audio Player, Mảng câu hỏi (Thymeleaf đổ data về) và chia làm 2 Tab rõ rệt -->
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${lesson.title})}"></head>
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main class="container" style="flex: 1; padding-top: 30px; padding-bottom: 100px;">
+        <!-- Breadcrumbs -->
+        <div class="breadcrumb">
+            <a th:href="@{/exercises}">All topics</a>
+            <span class="separator">/</span>
+            <a th:href="@{'/category/' + ${category.id} + '/sections'}" th:text="${category.name}">Category Name</a>
+            <span class="separator">/</span>
+            <span class="current" th:text="${lesson.title}">Lesson Title</span>
+        </div>
+
+        <!-- Lesson Header -->
+        <div class="lesson-header">
+            <h1 class="lesson-title">
+                <i class="far fa-star header-icon"></i>
+                <span th:text="${lesson.title}">1. First snowfall</span>
+                <span class="lesson-badge" th:text="'Vocab level: ' + ${lesson.level}">Vocab level: A1</span>
+            </h1>
+        </div>
+
+        <!-- Tabs Container -->
+        <div class="tabs-wrapper">
+            <button class="tab-btn active" data-tab="dictation-tab">Dictation</button>
+            <button class="tab-btn" data-tab="transcript-tab">Full transcript</button>
+        </div>
+
+        <!-- Tab Contents Wrapper -->
+        <div class="tab-content-container">
+            
+            <!-- ======================== -->
+            <!--     DICTATION TAB        -->
+            <!-- ======================== -->
+            <div id="dictation-tab" class="tab-pane active">
+                <!-- Hidden audio element -->
+                <audio id="mainAudio" preload="auto"></audio>
+
+                <!-- Sentence Counter with ← → arrows -->
+                <div class="dictation-controls">
+                    <div class="sentence-counter">
+                        <button class="nav-arrow" id="prevBtn">←</button>
+                        <span><span id="currentSentenceNum">1</span> / <span id="totalSentences" th:text="${lesson.totalSentences}">21</span></span>
+                        <button class="nav-arrow" id="nextBtn">→</button>
+                    </div>
+                </div>
+
+                <!-- Audio Player Bar -->
+                <div class="player-bar" id="dictationPlayer">
+                    <button class="play-btn" id="dictPlayBtn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                    </button>
+                    <span class="time-display" id="dictTimeDisplay">0:00 / 0:00</span>
+                    <div class="progress-bar-wrapper" id="dictProgressWrapper">
+                        <div class="progress-fill" id="dictProgressFill"></div>
+                    </div>
+                    <button class="volume-btn" id="dictVolumeBtn"><i class="fas fa-volume-up"></i></button>
+                    <select class="speed-select" id="dictSpeedSelect">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="1.75">1.75x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+
+                <!-- Input box -->
+                <div class="input-wrapper">
+                    <textarea class="dictation-input" id="dictationInput" placeholder="Type what you hear..."></textarea>
+                    <button class="mic-btn" title="Microphone not active"><i class="fas fa-microphone"></i></button>
+                </div>
+
+                <!-- Feedback: Hint + Status -->
+                <div id="feedbackArea" class="feedback-area" style="display:none;"></div>
+
+                <!-- Pronunciation: hiện đáp án đầy đủ khi đúng hoặc skip -->
+                <div id="pronunciationArea" class="pronunciation-area" style="display:none;">
+                    <div class="pronunciation-label">Pronunciation</div>
+                    <div id="pronunciationText" class="pronunciation-text"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-check" id="checkBtn">Check</button>
+                    <button class="btn-skip" id="skipBtn">Skip</button>
+                    <button class="btn-next" id="nextBtn2" style="display:none;">Next</button>
+                    <button class="btn-replay" id="replayBtn" style="display:none;"><i class="fas fa-redo"></i> Replay</button>
+                </div>
+
+                <!-- Bình luận chỉ hiện ở tab Dictation khi điền đúng -->
+                <div th:replace="~{fragments/comments-section :: comments}"></div>
+            </div>
+
+            <!-- ======================== -->
+            <!--   FULL TRANSCRIPT TAB    -->
+            <!-- ======================== -->
+            <div id="transcript-tab" class="tab-pane">
+                <!-- Toolbar: Repeat only (Translation hidden) -->
+                <div class="transcript-toolbar">
+                    <label class="repeat-toggle">
+                        <input type="checkbox" id="repeatCheckbox"> Repeat
+                    </label>
+                </div>
+                
+                <!-- Two-Column Layout (like DailyDictation) -->
+                <div class="transcript-split">
+                    <!-- Left Panel: Current Sentence Display -->
+                    <div class="transcript-left-panel">
+                        <!-- Player for transcript -->
+                        <div class="player-bar transcript-player-bar">
+                            <button class="play-btn" id="transcriptPlayBtn">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                            </button>
+                            <span class="time-display" id="transcriptTimeDisplay">0:00 / 0:00</span>
+                            <div class="progress-bar-wrapper" id="transcriptProgressWrapper">
+                                <div class="progress-fill" id="transcriptProgressFill"></div>
+                            </div>
+                            <button class="volume-btn" id="transcriptVolumeBtn"><i class="fas fa-volume-up"></i></button>
+                        </div>
+
+                        <!-- Current sentence text display -->
+                        <div class="sentence-display" id="sentenceDisplay">
+                            <p class="sentence-text" id="sentenceText">Click a sentence to see it here.</p>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="transcript-nav">
+                            <button class="nav-arrow" id="transcriptPrevBtn">←</button>
+                            <span><span id="transcriptSentenceNum">1</span> / <span th:text="${lesson.totalSentences}">21</span></span>
+                            <button class="nav-arrow" id="transcriptNextBtn">→</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Sentence List -->
+                    <div class="transcript-right-panel">
+                        <div class="transcript-list" id="transcriptList">
+                            <div class="transcript-item" th:each="sentence, iterStat : ${sentences}" th:data-index="${iterStat.index}" th:data-audio="${sentence.audioUrl}">
+                                <button class="play-small-btn">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                                </button>
+                                <div class="transcript-text" th:text="${sentence.content}">
+                                    Sentence content here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-footer">
+                    <label class="auto-scroll-toggle">
+                        <input type="checkbox" id="autoScrollCheckbox" checked> Auto scroll
+                    </label>
+                    <div class="keyboard-shortcuts">
+                        Press "Space" to Play/Pause<br>
+                        Press ← and → to move between sentences.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        </div>
+
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- Pass sentence data from Thymeleaf to JavaScript -->
+    <script th:inline="javascript">
+        const SENTENCES = /*[[${sentences}]]*/ [];
+    </script>
+    <script src="/js/pages/lesson-detail/state.js?v=5.0"></script>
+    <script src="/js/pages/lesson-detail/tabs.js?v=5.0"></script>
+    <script src="/js/pages/lesson-detail/dictation-ui.js?v=5.0"></script>
+    <script src="/js/pages/lesson-detail/transcript-ui.js?v=5.0"></script>
+    <script src="/js/pages/lesson-detail/keyboard.js?v=5.0"></script>
+</body>
+</html>

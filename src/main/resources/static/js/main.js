@@ -1,3 +1,7 @@
+/* QUẢN LÝ CÁC SỰ KIỆN GIAO DIỆN CHUNG TOÀN CỤC.
+ * - Ví dụ: Bật/Tắt chế độ Nền tối (Dark Mode) bằng cách thêm Class vào body 
+ */
+
 // ===========================
 // Theme Toggle
 // ===========================

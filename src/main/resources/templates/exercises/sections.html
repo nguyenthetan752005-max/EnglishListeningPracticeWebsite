@@ -1,11 +1,21 @@
 <!DOCTYPE html>
+<!-- GIAO DIỆN DANH SÁCH BÀI HỌC THEO TỪNG SECTION -->
+<!-- Chứa thanh Search và danh sách lồng Accordion đóng/mở -->
+
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(${category.name})}"></head>
 <body style="display: flex; flex-direction: column; min-height: 100vh;">
 
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <main class="container" style="flex: 1; padding-top: 50px; padding-bottom: 100px;">
+    <main class="container" style="flex: 1; padding-top: 30px; padding-bottom: 100px;">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb" style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary);">
+            <a th:href="@{/exercises}" style="color: var(--primary); text-decoration: none;">All topics</a>
+            <span style="margin: 0 8px;">/</span>
+            <span th:text="${category.name}" style="color: var(--text-primary);">Category Name</span>
+        </div>
+
         <!-- Header Row: Title & Search -->
         <div class="page-header-row">
             <h1 class="page-title" th:text="${category.name}">Category Name</h1>
@@ -24,8 +34,7 @@
         <div class="section-group" th:each="dto, iterStat : ${sections}">
             
             <!-- Accordion Header -->
-            <!-- Dùng iterStat.first để phần tử đầu tiên (Section 1) mở sẵn, các phần tử sau đóng -->
-            <div th:class="${iterStat.first} ? 'section-header' : 'section-header collapsed'" onclick="toggleSection(this)">
+            <div class="section-header collapsed" onclick="toggleSection(this)">
                 <h2 class="section-title">
                     <span th:text="${dto.section.name}">Section 1</span>
                     <span class="lesson-count" th:text="'(' + ${dto.lessons.size()} + ' lessons)'">(11 lessons)</span>
@@ -38,7 +47,7 @@
             </div>
 
             <!-- Accordion Body (Các Lesson) -->
-            <div class="lessons-grid" th:style="${iterStat.first} ? 'display: grid;' : 'display: none;'">
+            <div class="lessons-grid" style="display: none;">
                 <a th:href="@{'/lesson/' + ${lesson.id}}" class="lesson-card" th:each="lesson : ${dto.lessons}" th:attr="data-level=${lesson.level}">
                     <h3 class="lesson-title" th:text="${lesson.title}">1. First snowfall</h3>
                     <p class="lesson-meta" th:text="${lesson.totalSentences} + ' parts - Vocab level: ' + ${lesson.level}">21 parts - Vocab level: A1</p>
@@ -48,7 +57,7 @@
         </div>
 
         <!-- No Results Message -->
-        <div id="noResultsMsg" style="display: none; text-align: center; padding: 40px 20px; color: #6b7280; font-size: 1.1rem; background: #fff; border: 1px dashed #dcdcdc; border-radius: 8px;">
+        <div id="noResultsMsg" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 1.1rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 8px;">
             No lessons match your search criteria.
         </div>
     </main>
