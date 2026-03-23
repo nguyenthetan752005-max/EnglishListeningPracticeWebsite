@@ -1,6 +1,7 @@
 package com.english.learning.config;
 
 import com.english.learning.entity.User;
+import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +26,12 @@ public class AdminDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.findFirstByRole("ADMIN").isEmpty()) {
+        if (userRepository.findFirstByRole(Role.ADMIN).isEmpty()) {
             User admin = new User();
             admin.setUsername(adminUsername);
             admin.setEmail(adminEmail);
             admin.setPassword(BCrypt.hashpw(adminPassword, BCrypt.gensalt()));
-            admin.setRole("ADMIN");
+            admin.setRole(Role.ADMIN);
             userRepository.save(admin);
 
             System.out.println("=== [AdminDataInitializer] Đã tạo admin ===");
