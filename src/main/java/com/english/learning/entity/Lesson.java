@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.LessonType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,6 +15,10 @@ public class Lesson {
     @ManyToOne
     @JoinColumn(name = "section_id")
     private Section section;
+    @Enumerated(EnumType.STRING)
+    private LessonType type = LessonType.AUDIO;
+
+    private String youtubeVideoId;
     private String title;
     private String level;
     private Integer totalSentences;

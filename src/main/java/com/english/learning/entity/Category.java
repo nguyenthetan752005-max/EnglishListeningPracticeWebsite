@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.LessonType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -13,6 +14,9 @@ public class Category {
     private String name;
     private String imageUrl;
     private String levelRange;
+
+    @Enumerated(EnumType.STRING)
+    private LessonType type = LessonType.AUDIO;
 
     @Column(nullable = false, columnDefinition = "int default 0")
     private Integer totalLessons = 0;

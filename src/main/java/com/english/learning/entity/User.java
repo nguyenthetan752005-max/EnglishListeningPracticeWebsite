@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -23,8 +24,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role = "USER";
+    private Role role = Role.USER;
 
     private String avatarUrl;
     private String provider;

@@ -18,6 +18,7 @@
 
             <div class="auth-divider">Or enter your password</div>
 
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
             <div th:if="${error}" style="color: red; text-align: center; margin-bottom: 15px;" th:text="${error}"></div>
             <div th:if="${param.error}" style="color: red; text-align: center; margin-bottom: 15px;">
                 Đăng nhập OAuth2 thất bại. Hãy kiểm tra lại cấu hình GOOGLE_CLIENT_ID và SECRET.
@@ -36,7 +37,7 @@
             </form>
 
             <div class="auth-links">
-                <p>Forgot your password? <a href="#">Click here</a></p>
+                <p>Forgot your password? <a th:href="@{/forgot-password}">Click here</a></p>
                 <p>Haven't had an account? <a th:href="@{/register}">Register here</a></p>
             </div>
         </div>

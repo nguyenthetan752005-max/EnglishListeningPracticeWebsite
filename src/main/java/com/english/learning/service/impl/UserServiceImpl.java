@@ -1,5 +1,6 @@
 package com.english.learning.service.impl;
 
+import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.entity.User;
 import com.english.learning.service.UserService;
@@ -65,9 +66,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateUsername(Long id, String newUsername) throws Exception {
+        Optional<User> existingUserOpt = userRepository.findByUsername(newUsername);
+        if (existingUserOpt.isPresent() && !existingUserOpt.get().getId().equals(id)) {
+            throw new Exception("Tên người dùng đã tồn tại!");
+        }
+        User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
+        user.setUsername(newUsername);
+        userRepository.save(user);
+    }
+
     public Optional<User> authenticateAdmin(String username, String password) {
         Optional<User> userOpt = authenticate(username, password);
-        if (userOpt.isPresent() && "ADMIN".equals(userOpt.get().getRole())) {
+        if (userOpt.isPresent() && Role.ADMIN.equals(userOpt.get().getRole())) {
             return userOpt;
         }
         return Optional.empty();
@@ -76,9 +87,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> authenticateUser(String username, String password) {
         Optional<User> userOpt = authenticate(username, password);
-        if (userOpt.isPresent() && "USER".equals(userOpt.get().getRole())) {
+        if (userOpt.isPresent() && Role.USER.equals(userOpt.get().getRole())) {
             return userOpt;
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public void updatePassword(User user, String newPassword) {
+        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        user.setPassword(hashedPassword);
+        userRepository.save(user);
     }
 }
