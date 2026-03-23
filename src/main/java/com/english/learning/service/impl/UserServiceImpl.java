@@ -62,4 +62,15 @@ public class UserServiceImpl implements UserService {
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
+
+    @Override
+    public void updateUsername(Long id, String newUsername) throws Exception {
+        Optional<User> existingUserOpt = userRepository.findByUsername(newUsername);
+        if (existingUserOpt.isPresent() && !existingUserOpt.get().getId().equals(id)) {
+            throw new Exception("Tên người dùng đã tồn tại!");
+        }
+        User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
+        user.setUsername(newUsername);
+        userRepository.save(user);
+    }
 }

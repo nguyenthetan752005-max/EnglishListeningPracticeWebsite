@@ -8,4 +8,5 @@ public interface UserService {
     User register(User user);
     Optional<User> authenticate(String username, String password);
     Optional<User> findById(Long id);
+    void updateUsername(Long id, String newUsername) throws Exception;
 }
