@@ -10,6 +10,7 @@ public interface UserService {
     Optional<User> authenticate(String username, String password);
 
     Optional<User> findById(Long id);
+    void updateUsername(Long id, String newUsername) throws Exception;
 
     Optional<User> authenticateAdmin(String username, String password);
 

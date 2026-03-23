@@ -65,6 +65,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateUsername(Long id, String newUsername) throws Exception {
+        Optional<User> existingUserOpt = userRepository.findByUsername(newUsername);
+        if (existingUserOpt.isPresent() && !existingUserOpt.get().getId().equals(id)) {
+            throw new Exception("Tên người dùng đã tồn tại!");
+        }
+        User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
+        user.setUsername(newUsername);
+        userRepository.save(user);
     public Optional<User> authenticateAdmin(String username, String password) {
         Optional<User> userOpt = authenticate(username, password);
         if (userOpt.isPresent() && "ADMIN".equals(userOpt.get().getRole())) {

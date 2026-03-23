@@ -12,6 +12,10 @@
     <main class="auth-container">
         <div class="auth-card">
             <h1>Create an account</h1>
+            
+            <a th:href="@{/oauth2/authorization/google}" class="btn-google" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16" style="margin-right:8px;">
+                Đăng nhập bằng Google
 
             <a th:href="@{/oauth2/authorization/google}" class="btn-google"
                 style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
@@ -24,6 +28,10 @@
 
             <div th:if="${error}" style="color: red; text-align: center; margin-bottom: 15px;" th:text="${error}"></div>
 
+            <form th:action="@{/register}" th:object="${user}" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" th:field="*{username}" class="form-control" autofocus required>
             <form th:action="@{/register}" method="post">
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -31,11 +39,11 @@
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control">
+                    <input type="email" id="email" th:field="*{email}" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control">
+                    <input type="password" id="password" th:field="*{password}" class="form-control" required>
                 </div>
                 <button type="submit" class="btn-submit">Submit</button>
             </form>

@@ -121,6 +121,9 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <main class="profile-container">
+        <div th:if="${successMessage}" style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px;" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px;" th:text="${errorMessage}"></div>
+        
         <div class="profile-header">
             <!-- Hiển thị thư mục Avatar URL nếu có, nếu không thì lấy chữ cái đầu của Username -->
             <div th:if="${user.avatarUrl != null}" style="margin-right: 20px;">
@@ -129,7 +132,17 @@
             <div th:unless="${user.avatarUrl != null}" class="profile-avatar" th:text="${#strings.substring(user.username, 0, 1)}">U</div>
             
             <div class="profile-info">
-                <h2 th:text="${user.username}">Username</h2>
+                <div id="nameDisplayBox" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <h2 th:text="${user.username}" style="margin: 0;">Username</h2>
+                    <button onclick="toggleEditName()" style="background: none; border: none; cursor: pointer; color: #2196F3; font-weight: bold; font-size: 14px;">[ Sửa ]</button>
+                </div>
+                
+                <form id="editNameForm" action="/profile/update-name" method="POST" style="display: none; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <input type="text" name="newUsername" th:value="${user.username}" required style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px;">
+                    <button type="submit" class="badge-role" style="border: none; cursor: pointer; padding: 6px 15px;">Lưu</button>
+                    <button type="button" onclick="toggleEditName()" style="background: none; border: none; cursor: pointer; color: #666; font-weight: bold;">Hủy</button>
+                </form>
+
                 <p th:text="${user.email}">user@example.com</p>
                 <span class="badge-role" th:text="${user.role}">USER</span>
             </div>
@@ -155,11 +168,24 @@
         </div>
         
         <div class="profile-actions">
-            <a href="#" class="btn-action btn-edit">Chỉnh sửa thông tin</a>
             <a href="/logout" class="btn-action btn-logout">Đăng xuất</a>
         </div>
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+        function toggleEditName() {
+            var displayBox = document.getElementById('nameDisplayBox');
+            var editForm = document.getElementById('editNameForm');
+            if (displayBox.style.display === 'none') {
+                displayBox.style.display = 'flex';
+                editForm.style.display = 'none';
+            } else {
+                displayBox.style.display = 'none';
+                editForm.style.display = 'flex';
+            }
+        }
+    </script>
 </body>
 </html>
