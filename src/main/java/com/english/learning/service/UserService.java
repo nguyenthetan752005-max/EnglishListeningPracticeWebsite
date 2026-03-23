@@ -15,4 +15,8 @@ public interface UserService {
     Optional<User> authenticateAdmin(String username, String password);
 
     Optional<User> authenticateUser(String username, String password);
+
+    Optional<User> findByEmail(String email);
+
+    void updatePassword(User user, String newPassword);
 }
