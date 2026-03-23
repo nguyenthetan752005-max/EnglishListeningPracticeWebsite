@@ -14,6 +14,9 @@ public class Category {
     private String imageUrl;
     private String levelRange;
 
+    @Enumerated(EnumType.STRING)
+    private LessonType type = LessonType.AUDIO;
+
     @Column(nullable = false, columnDefinition = "int default 0")
     private Integer totalLessons = 0;
 
