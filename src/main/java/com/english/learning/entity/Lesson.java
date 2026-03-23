@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.LessonType;
 import jakarta.persistence.*;
 import lombok.Data;
 
