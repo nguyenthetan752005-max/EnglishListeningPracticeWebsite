@@ -21,10 +21,10 @@ public class PasswordResetToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "expiry_date", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime expiryDate;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }
