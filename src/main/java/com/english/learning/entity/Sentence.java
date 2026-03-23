@@ -22,5 +22,8 @@ public class Sentence {
     @Column(columnDefinition = "TEXT")
     private String content;
     
+    private Double startTime;
+    private Double endTime;
+    
     private Integer orderIndex;
 }
