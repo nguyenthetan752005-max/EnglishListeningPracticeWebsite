@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextBtn2 = document.getElementById('nextBtn2');
     const replayBtn = document.getElementById('replayBtn');
 
+    function updateHeaderNextButtonByPosition() {
+        const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
+        if (nextBtn) nextBtn.style.display = isLastSentence ? 'none' : '';
+    }
+
     // --- State Listeners ---
     document.addEventListener('lesson:sentenceChanged', (e) => {
         if (counterEl) counterEl.textContent = e.detail.index + 1;
@@ -50,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (skipBtn) skipBtn.style.display = '';
         if (progressFill) progressFill.style.width = '0%';
         if (timeDisplay) timeDisplay.textContent = '0:00 / 0:00';
+        updateHeaderNextButtonByPosition();
     });
 
     document.addEventListener('lesson:playState', (e) => {
@@ -147,7 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputEl) inputEl.disabled = true;
         if (checkBtn) checkBtn.style.display = 'none';
         if (skipBtn) skipBtn.style.display = 'none';
-        if (nextBtn2) nextBtn2.style.display = '';
+        if (nextBtn2) {
+            const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
+            nextBtn2.style.display = isLastSentence ? 'none' : '';
+        }
         if (replayBtn) replayBtn.style.display = '';
 
         // Hiện Comments Section khi ĐIỀN ĐÚNG
@@ -215,5 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    updateHeaderNextButtonByPosition();
 
 });

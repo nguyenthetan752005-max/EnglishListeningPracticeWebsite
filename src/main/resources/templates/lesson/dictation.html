@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- GIAO DIỆN LỚN NHẤT CỦA PROJECT: PHÒNG LUYỆN NGHE CHÉP CHÍNH TẢ -->
-<!-- Kết hợp Audio Player, Mảng câu hỏi (Thymeleaf đổ data về) và chia làm 2 Tab rõ rệt -->
+<!-- Hỗ trợ cả AUDIO và VIDEO (YouTube) lessons -->
 
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(${lesson.title})}"></head>
@@ -40,63 +40,132 @@
             <!--     DICTATION TAB        -->
             <!-- ======================== -->
             <div id="dictation-tab" class="tab-pane active">
-                <!-- Hidden audio element -->
-                <audio id="mainAudio" preload="auto"></audio>
 
-                <!-- Sentence Counter with ← → arrows -->
-                <div class="dictation-controls">
-                    <div class="sentence-counter">
-                        <button class="nav-arrow" id="prevBtn">←</button>
-                        <span><span id="currentSentenceNum">1</span> / <span id="totalSentences" th:text="${lesson.totalSentences}">21</span></span>
-                        <button class="nav-arrow" id="nextBtn">→</button>
+                <!-- ======= VIDEO LESSON: 2-column layout ======= -->
+                <div th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}" class="video-dictation-split">
+                    <!-- LEFT: YouTube Video -->
+                    <div class="video-left-column">
+                        <div class="video-player-wrapper" id="dictationVideoWrapper">
+                            <div id="youtubePlayer"></div>
+                        </div>
+                        <div class="video-controls-bar">
+                            <div class="video-size-control">
+                                <label>Video size:</label>
+                                <select id="videoSizeSelect">
+                                    <option value="small">Small</option>
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="large">Large</option>
+                                </select>
+                            </div>
+                            <button class="hide-video-btn" id="hideVideoBtn">Hide video</button>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Start Dictation / Dictation Panel -->
+                    <div class="dictation-right-column">
+                        <!-- State 1: Start Dictation button -->
+                        <div class="start-dictation-panel" id="startDictationPanel">
+                            <button class="start-dictation-btn" id="startDictationBtn">Start Dictation</button>
+                        </div>
+
+                        <!-- State 2: Dictation controls (hidden initially) -->
+                        <div class="dictation-active-panel" id="dictationActivePanel" style="display:none;">
+                            <!-- Play + Counter -->
+                            <div class="video-dictation-controls">
+                                <button class="play-btn" id="videoDictPlayBtn">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                                </button>
+                                <div class="sentence-counter">
+                                    <button class="nav-arrow" id="prevBtn">←</button>
+                                    <span><span id="currentSentenceNum">1</span> / <span id="totalSentences" th:text="${lesson.totalSentences}">21</span></span>
+                                    <button class="nav-arrow" id="nextBtn">→</button>
+                                </div>
+                            </div>
+
+                            <!-- Input box -->
+                            <div class="input-wrapper">
+                                <textarea class="dictation-input" id="dictationInput" placeholder="Type what you hear..."></textarea>
+                                <button class="mic-btn" title="Microphone not active"><i class="fas fa-microphone"></i></button>
+                            </div>
+
+                            <!-- Feedback -->
+                            <div id="feedbackArea" class="feedback-area" style="display:none;"></div>
+
+                            <!-- Pronunciation -->
+                            <div id="pronunciationArea" class="pronunciation-area" style="display:none;">
+                                <div class="pronunciation-label">Pronunciation</div>
+                                <div id="pronunciationText" class="pronunciation-text"></div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button class="btn-check" id="checkBtn">Check</button>
+                                <button class="btn-skip" id="skipBtn">Skip</button>
+                                <button class="btn-next" id="nextBtn2" style="display:none;">Next</button>
+                                <button class="btn-replay" id="replayBtn" style="display:none;"><i class="fas fa-redo"></i> Replay</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Audio Player Bar -->
-                <div class="player-bar" id="dictationPlayer">
-                    <button class="play-btn" id="dictPlayBtn">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
-                    </button>
-                    <span class="time-display" id="dictTimeDisplay">0:00 / 0:00</span>
-                    <div class="progress-bar-wrapper" id="dictProgressWrapper">
-                        <div class="progress-fill" id="dictProgressFill"></div>
+                <!-- ======= AUDIO LESSON: original stacked layout ======= -->
+                <div th:if="${lesson.type == null or lesson.type.name() == 'AUDIO'}">
+                    <audio id="mainAudio" preload="auto"></audio>
+
+                    <!-- Sentence Counter -->
+                    <div class="dictation-controls">
+                        <div class="sentence-counter">
+                            <button class="nav-arrow" id="prevBtn">←</button>
+                            <span><span id="currentSentenceNum">1</span> / <span id="totalSentences" th:text="${lesson.totalSentences}">21</span></span>
+                            <button class="nav-arrow" id="nextBtn">→</button>
+                        </div>
                     </div>
-                    <button class="volume-btn" id="dictVolumeBtn"><i class="fas fa-volume-up"></i></button>
-                    <select class="speed-select" id="dictSpeedSelect">
-                        <option value="0.25">0.25x</option>
-                        <option value="0.5">0.5x</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="1.75">1.75x</option>
-                        <option value="2">2x</option>
-                    </select>
+
+                    <!-- Audio Player Bar -->
+                    <div class="player-bar" id="dictationPlayer">
+                        <button class="play-btn" id="dictPlayBtn">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                        </button>
+                        <span class="time-display" id="dictTimeDisplay">0:00 / 0:00</span>
+                        <div class="progress-bar-wrapper" id="dictProgressWrapper">
+                            <div class="progress-fill" id="dictProgressFill"></div>
+                        </div>
+                        <button class="volume-btn" id="dictVolumeBtn"><i class="fas fa-volume-up"></i></button>
+                        <select class="speed-select" id="dictSpeedSelect">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="1.75">1.75x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+
+                    <!-- Input box -->
+                    <div class="input-wrapper">
+                        <textarea class="dictation-input" id="dictationInput" placeholder="Type what you hear..."></textarea>
+                        <button class="mic-btn" title="Microphone not active"><i class="fas fa-microphone"></i></button>
+                    </div>
+
+                    <!-- Feedback -->
+                    <div id="feedbackArea" class="feedback-area" style="display:none;"></div>
+
+                    <!-- Pronunciation -->
+                    <div id="pronunciationArea" class="pronunciation-area" style="display:none;">
+                        <div class="pronunciation-label">Pronunciation</div>
+                        <div id="pronunciationText" class="pronunciation-text"></div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-check" id="checkBtn">Check</button>
+                        <button class="btn-skip" id="skipBtn">Skip</button>
+                        <button class="btn-next" id="nextBtn2" style="display:none;">Next</button>
+                        <button class="btn-replay" id="replayBtn" style="display:none;"><i class="fas fa-redo"></i> Replay</button>
+                    </div>
                 </div>
 
-                <!-- Input box -->
-                <div class="input-wrapper">
-                    <textarea class="dictation-input" id="dictationInput" placeholder="Type what you hear..."></textarea>
-                    <button class="mic-btn" title="Microphone not active"><i class="fas fa-microphone"></i></button>
-                </div>
-
-                <!-- Feedback: Hint + Status -->
-                <div id="feedbackArea" class="feedback-area" style="display:none;"></div>
-
-                <!-- Pronunciation: hiện đáp án đầy đủ khi đúng hoặc skip -->
-                <div id="pronunciationArea" class="pronunciation-area" style="display:none;">
-                    <div class="pronunciation-label">Pronunciation</div>
-                    <div id="pronunciationText" class="pronunciation-text"></div>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn-check" id="checkBtn">Check</button>
-                    <button class="btn-skip" id="skipBtn">Skip</button>
-                    <button class="btn-next" id="nextBtn2" style="display:none;">Next</button>
-                    <button class="btn-replay" id="replayBtn" style="display:none;"><i class="fas fa-redo"></i> Replay</button>
-                </div>
-
-                <!-- Bình luận chỉ hiện ở tab Dictation khi điền đúng -->
+                <!-- Bình luận -->
                 <div th:replace="~{fragments/comments-section :: comments}"></div>
             </div>
 
@@ -104,19 +173,25 @@
             <!--   FULL TRANSCRIPT TAB    -->
             <!-- ======================== -->
             <div id="transcript-tab" class="tab-pane">
-                <!-- Toolbar: Repeat only (Translation hidden) -->
+                <!-- Toolbar -->
                 <div class="transcript-toolbar">
                     <label class="repeat-toggle">
                         <input type="checkbox" id="repeatCheckbox"> Repeat
                     </label>
                 </div>
                 
-                <!-- Two-Column Layout (like DailyDictation) -->
+                <!-- Two-Column Layout -->
                 <div class="transcript-split">
-                    <!-- Left Panel: Current Sentence Display -->
+                    <!-- Left Panel -->
                     <div class="transcript-left-panel">
-                        <!-- Player for transcript -->
-                        <div class="player-bar transcript-player-bar">
+
+                        <!-- VIDEO: YouTube player container -->
+                        <div th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}" class="video-player-wrapper transcript-video-wrapper" id="transcriptVideoWrapper">
+                            <!-- Player sẽ được move vào đây bằng JS khi chuyển tab -->
+                        </div>
+
+                        <!-- AUDIO: Player bar -->
+                        <div th:if="${lesson.type == null or lesson.type.name() == 'AUDIO'}" class="player-bar transcript-player-bar">
                             <button class="play-btn" id="transcriptPlayBtn">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
                             </button>
@@ -143,7 +218,11 @@
                     <!-- Right Panel: Sentence List -->
                     <div class="transcript-right-panel">
                         <div class="transcript-list" id="transcriptList">
-                            <div class="transcript-item" th:each="sentence, iterStat : ${sentences}" th:data-index="${iterStat.index}" th:data-audio="${sentence.audioUrl}">
+                            <div class="transcript-item" th:each="sentence, iterStat : ${sentences}"
+                                 th:data-index="${iterStat.index}"
+                                 th:data-audio="${sentence.audioUrl}"
+                                 th:data-start="${sentence.startTime}"
+                                 th:data-end="${sentence.endTime}">
                                 <button class="play-small-btn">
                                     <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
                                 </button>
@@ -174,14 +253,20 @@
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 
-    <!-- Pass sentence data from Thymeleaf to JavaScript -->
+    <!-- Pass sentence data and lesson type from Thymeleaf to JavaScript -->
     <script th:inline="javascript">
         const SENTENCES = /*[[${sentences}]]*/ [];
+        const LESSON_TYPE = /*[[${lesson.type != null ? lesson.type.name() : 'AUDIO'}]]*/ 'AUDIO';
+        const YOUTUBE_VIDEO_ID = /*[[${lesson.youtubeVideoId}]]*/ '';
     </script>
-    <script src="/js/pages/lesson-detail/state.js?v=5.0"></script>
-    <script src="/js/pages/lesson-detail/tabs.js?v=5.0"></script>
-    <script src="/js/pages/lesson-detail/dictation-ui.js?v=5.0"></script>
-    <script src="/js/pages/lesson-detail/transcript-ui.js?v=5.0"></script>
-    <script src="/js/pages/lesson-detail/keyboard.js?v=5.0"></script>
+    <script src="/js/pages/lesson-detail/state.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/tabs.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/dictation-ui.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/transcript-ui.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/keyboard.js?v=7.0"></script>
+    <!-- YouTube IFrame API + Video Engine -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="/js/pages/lesson-detail/video-engine.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=7.0"></script>
 </body>
 </html>
