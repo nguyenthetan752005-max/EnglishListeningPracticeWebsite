@@ -6,7 +6,7 @@
  * - seekTo(startTime) khi sentenceChanged, auto-pause tại endTime
  */
 
-(function() {
+(function () {
     if (typeof LESSON_TYPE === 'undefined' || LESSON_TYPE !== 'VIDEO') return;
     if (typeof YOUTUBE_VIDEO_ID === 'undefined' || !YOUTUBE_VIDEO_ID) return;
 
@@ -59,6 +59,8 @@
         const indexByTime = findSentenceIndexByTime(currentTime);
         if (indexByTime < 0 || indexByTime === window.LessonState.currentIndex) return;
 
+        console.warn(`[!. ENGINE WARNING] ⚠️ Tự động đồng bộ UI từ câu ${window.LessonState.currentIndex} sang câu ${indexByTime} do thời gian video đang là ${currentTime}s`);
+
         const sentence = window.LessonState.sentences[indexByTime];
         if (!sentence) return;
 
@@ -69,7 +71,7 @@
         }));
     }
 
-    window.onYouTubeIframeAPIReady = function() {
+    window.onYouTubeIframeAPIReady = function () {
         player = new YT.Player('youtubePlayer', {
             videoId: YOUTUBE_VIDEO_ID,
             height: '100%',
@@ -79,7 +81,9 @@
                 'controls': 1,
                 'rel': 0,
                 'modestbranding': 1,
-                'playsinline': 1
+                'playsinline': 1,
+                'enablejsapi': 1,
+                'origin': window.location.origin
             },
             events: {
                 'onReady': onPlayerReady,
@@ -91,12 +95,43 @@
     function onPlayerReady() {
         isPlayerReady = true;
         console.log('YouTube Player ready.');
+        
+        // Master polling loop to guarantee sync even if `onPlayerStateChange` events are blocked
+        // by Chrome's generic localhost cross-origin CORS policy.
+        setInterval(() => {
+            if (!player || !isPlayerReady) return;
+            
+            let state;
+            try {
+                state = player.getPlayerState();
+            } catch(e) { return; }
+
+            const wasPlaying = window.LessonState && window.LessonState.isPlaying;
+            const isPlayingNow = (state === YT.PlayerState.PLAYING);
+            
+            if (isPlayingNow !== wasPlaying) {
+                if (window.LessonState) {
+                    window.LessonState.isPlaying = isPlayingNow;
+                }
+                document.dispatchEvent(new CustomEvent('lesson:playState', { detail: { isPlaying: isPlayingNow } }));
+                
+                if (isPlayingNow) {
+                    startTimeTracking();
+                } else {
+                    stopTimeTracking();
+                    if (state === YT.PlayerState.ENDED) {
+                        document.dispatchEvent(new CustomEvent('lesson:ended'));
+                    }
+                }
+            }
+        }, 150);
     }
 
     function refreshPlayerRendering() {
         if (!player || !isPlayerReady) return;
 
-        const state = player.getPlayerState();
+        let state;
+        try { state = player.getPlayerState(); } catch(e) { state = -1; }
         const wasPlaying = state === YT.PlayerState.PLAYING;
         const currentTime = player.getCurrentTime();
 
@@ -114,28 +149,17 @@
         if (!wasPlaying) {
             setTimeout(() => {
                 if (!player || !isPlayerReady) return;
-                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-                    player.pauseVideo();
-                }
+                try {
+                    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                        player.pauseVideo();
+                    }
+                } catch(e) {}
             }, 80);
         }
     }
 
     function onPlayerStateChange(event) {
-        const state = event.data;
-        if (state === YT.PlayerState.PLAYING) {
-            window.LessonState.isPlaying = true;
-            document.dispatchEvent(new CustomEvent('lesson:playState', { detail: { isPlaying: true } }));
-            startTimeTracking();
-        } else if (state === YT.PlayerState.PAUSED) {
-            window.LessonState.isPlaying = false;
-            document.dispatchEvent(new CustomEvent('lesson:playState', { detail: { isPlaying: false } }));
-            stopTimeTracking();
-        } else if (state === YT.PlayerState.ENDED) {
-            window.LessonState.isPlaying = false;
-            document.dispatchEvent(new CustomEvent('lesson:ended'));
-            stopTimeTracking();
-        }
+        // Disabled out of necessity. Fallback polling loop handles this to bypass CORS blocking.
     }
 
     function startTimeTracking() {
@@ -145,16 +169,55 @@
             const currentTime = player.getCurrentTime();
             const duration = player.getDuration();
 
-            // Stop at sentence end in dictation mode or transcript mode.
-            if ((dictationStarted || isTranscriptTabActive()) && currentSentenceEndTime != null && currentTime >= currentSentenceEndTime) {
-                player.pauseVideo();
-                currentSentenceEndTime = null;
-                document.dispatchEvent(new CustomEvent('lesson:ended'));
-                return;
+            // We only stop at endTime if:
+            // 1. We are in Dictation tab (and dictation has started)
+            // 2. OR we are in Transcript tab and the Repeat checkbox is checked.
+            let shouldStop = false;
+            let shouldRepeat = false;
+
+            if (isTranscriptTabActive()) {
+                const repeatCheckbox = document.getElementById('repeatCheckbox');
+                if (repeatCheckbox && repeatCheckbox.checked) {
+                    shouldStop = true;
+                    shouldRepeat = true;
+                }
+            } else {
+                if (dictationStarted) {
+                    shouldStop = true;
+                }
             }
 
-            // Follow transcript by playback time even before dictation starts.
-            if (!dictationStarted) {
+            // Absolute source of truth for boundaries:
+            if (window.LessonState && window.LessonState.sentences && window.LessonState.sentences.length > 0) {
+                const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
+                if (currentSentence && currentSentence.endTime != null) {
+                    if (shouldStop && currentTime >= currentSentence.endTime) {
+                        if (window.lastRepeatSeekTime && Date.now() - window.lastRepeatSeekTime < 1000) {
+                            return; 
+                        }
+
+                        if (shouldRepeat && currentSentence.startTime != null && currentTime < currentSentence.endTime + 1.0) {
+                            window.lastRepeatSeekTime = Date.now();
+                            player.seekTo(currentSentence.startTime, true);
+                            if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                                player.playVideo();
+                            }
+                            return;
+                        } else if (!shouldRepeat || currentTime >= currentSentence.endTime + 1.0) {
+                            // If it drifted way past endTime (e.g user dragged seek bar far ahead), we don't snap them back infinitely.
+                            // But if they didn't drag it, we pause if dictation mode
+                            if (!shouldRepeat) {
+                                player.pauseVideo();
+                                document.dispatchEvent(new CustomEvent('lesson:ended'));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Follow transcript by playback time when not dictating, or when in transcript tab
+            if (!dictationStarted || isTranscriptTabActive()) {
                 syncSentenceByPlaybackTime(currentTime);
             }
 

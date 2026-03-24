@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- State Listeners ---
     document.addEventListener('lesson:sentenceChanged', (e) => {
         const sentence = e.detail.sentence;
-        
+
         if (sentenceTextEl) sentenceTextEl.textContent = sentence.content || '';
         if (transcriptSentenceNum) transcriptSentenceNum.textContent = e.detail.index + 1;
 
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transcriptItems.forEach(item => item.classList.remove('active'));
         if (transcriptItems[e.detail.index]) {
             transcriptItems[e.detail.index].classList.add('active');
-            
+
             // Auto scroll
             const autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
             if (autoScrollCheckbox && autoScrollCheckbox.checked) {
@@ -152,39 +152,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Navigation (cả Audio và Video) ---
-    if (prevBtn) prevBtn.addEventListener('click', () => { 
-        window.LessonState.prev(); 
-        window.LessonState.play(); 
-    });
-    
-    if (nextBtn) nextBtn.addEventListener('click', () => { 
-        window.LessonState.next(); 
-        window.LessonState.play(); 
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+        window.LessonState.prev();
+        window.LessonState.play();
     });
 
-    // --- List item play buttons ---
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+        window.LessonState.next();
+        window.LessonState.play();
+    });
+
+    // --- List item row clicks (play sentence from start) ---
     transcriptItems.forEach((item) => {
-        const playSmallBtn = item.querySelector('.play-small-btn');
         const index = parseInt(item.dataset.index);
+        if (isNaN(index)) return;
 
-        if (playSmallBtn && !isNaN(index)) {
-            playSmallBtn.addEventListener('click', () => {
-                if (window.LessonState.currentIndex === index) {
-                    window.LessonState.togglePlay();
-                    return;
-                }
+        item.style.cursor = 'pointer';
 
-                if (isVideo) {
-                    // VIDEO: seekTo video tại startTime
-                    window.LessonState.loadSentence(index);
-                    playCurrentSentence();
+        item.addEventListener('click', () => {
+            if (window.LessonState.currentIndex === index) {
+                // If it's the current sentence and it's playing, pause it.
+                if (window.LessonState.isPlaying) {
+                    window.LessonState.pause();
                 } else {
-                    // AUDIO: load và play audio
-                    window.LessonState.loadSentence(index);
+                    // If paused, play from the START of this sentence (not resume middle)
                     playCurrentSentence();
                 }
-            });
-        }
+                return;
+            }
+
+            // Always load and seek to startTime for new sentences
+            window.LessonState.loadSentence(index);
+            playCurrentSentence();
+        });
     });
 
     updateTranscriptPlayButtons();

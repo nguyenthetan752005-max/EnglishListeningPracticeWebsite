@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying: false,
         isVideo: isVideo,
         playSvg: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>',
-        pauseSvg: '||',
+        pauseSvg: '<svg viewBox="0 0 24 24" width="16" height="16" fill="#007bff"><rect x="3" y="14" width="3" height="7"/><rect x="10" y="6" width="3" height="15"/><rect x="17" y="10" width="3" height="11"/></svg>',
 
         formatTime: function(seconds) {
             if (isNaN(seconds)) return '0:00';
