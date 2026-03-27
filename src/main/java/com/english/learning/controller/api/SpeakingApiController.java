@@ -1,7 +1,7 @@
 package com.english.learning.controller.api;
 
 import com.english.learning.dto.SpeakingResultDTO;
-import com.english.learning.service.OpenAiAudioService;
+import com.english.learning.service.WitAIAudioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,10 +12,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/speaking")
 public class SpeakingApiController {
 
-    private final OpenAiAudioService openAiAudioService;
+    private final WitAIAudioService witAIAudioService;
 
-    public SpeakingApiController(OpenAiAudioService openAiAudioService) {
-        this.openAiAudioService = openAiAudioService;
+    public SpeakingApiController(WitAIAudioService witAIAudioService) {
+        this.witAIAudioService = witAIAudioService;
     }
 
     @PostMapping("/evaluate")
@@ -24,7 +24,7 @@ public class SpeakingApiController {
             @RequestParam("referenceText") String referenceText) {
         try {
             // 1. Gửi file ghi âm qua Whisper để nhận dạng văn bản
-            String transcribedText = openAiAudioService.transcribeAudio(audio);
+            String transcribedText = witAIAudioService.transcribeAudio(audio);
 
             // 2. Chấm điểm văn bản vừa nhận dạng với câu mẫu
             SpeakingResultDTO result = calculateResult(referenceText, transcribedText);
@@ -60,8 +60,8 @@ public class SpeakingApiController {
         result.setReferenceText(reference);
         result.setTranscribedText(transcribed);
         result.setScore(score);
-        
-        // Highlight logic can be generated or sent as HTML text if needed, 
+
+        // Highlight logic can be generated or sent as HTML text if needed,
         // Here we just use a generic feedback message based on score
         if (score >= 90) {
             result.setFeedback("Excellent! You sound like a native.");
