@@ -152,17 +152,20 @@
             });
         }
     </script>
-    <script src="/js/pages/lesson-detail/state.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/tabs.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/player-controls.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/mock-comments.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/dictation-ui.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/transcript-ui.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/keyboard.js?v=8.0"></script>
+    <script th:inline="javascript">
+        window.CURRENT_USER_ID = /*[[${session.loggedInUser != null ? session.loggedInUser.id : null}]]*/ null;
+    </script>
+    <script src="/js/pages/lesson-detail/state.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/tabs.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/player-controls.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/comments.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/dictation-ui.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/transcript-ui.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/keyboard.js?v=9.0"></script>
     <!-- YouTube IFrame API + Video Engine -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/js/pages/lesson-detail/video-engine.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=8.0"></script>
+    <script src="/js/pages/lesson-detail/video-engine.js?v=9.0"></script>
+    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=9.0"></script>
 </body>
 
 </html>
