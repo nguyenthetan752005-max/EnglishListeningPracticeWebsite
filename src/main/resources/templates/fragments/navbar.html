@@ -14,7 +14,8 @@
 
         <!-- Nav Links (Desktop) -->
         <ul class="nav-links">
-            <li><a href="/exercises" class="nav-link">All exercises</a></li>
+            <li><a href="/exercises" class="nav-link">Listening exercises</a></li>
+            <li><a href="/speaking-exercises" class="nav-link">Speaking exercises</a></li>
             <li><a href="/top-users" class="nav-link">Top users</a></li>
         </ul>
 
@@ -39,6 +40,7 @@
                     </button>
                     <div class="dropdown-content">
                         <a href="/profile">My Profile</a>
+                        <a href="/my-comments">My Comments</a>
                         <a href="/logout" style="color: #f44336;">Logout</a>
                     </div>
                 </div>
@@ -81,7 +83,8 @@
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
-        <a href="/exercises" class="mobile-link">All exercises</a>
+        <a href="/exercises" class="mobile-link">Listening exercises</a>
+        <a href="/speaking-exercises" class="mobile-link">Speaking exercises</a>
         <a href="/top-users" class="mobile-link">Top users</a>
         
         <div class="mobile-auth" th:if="${session.loggedInUser == null}">
@@ -90,6 +93,7 @@
         </div>
         <div class="mobile-auth" th:unless="${session.loggedInUser == null}">
             <a href="/profile" class="mobile-link">My Profile</a>
+            <a href="/my-comments" class="mobile-link">My Comments</a>
             <a href="/logout" class="mobile-link" style="color: #f44336;">Logout</a>
         </div>
     </div>

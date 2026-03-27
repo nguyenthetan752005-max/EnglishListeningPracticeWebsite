@@ -21,10 +21,11 @@ package "Entity Layer" {
     class Category {
         - id : Long
         - name : String
-        - description : String
         - imageUrl : String
         - levelRange : String
+        - type : LessonType
         - totalLessons : Integer
+        - description : String
     }
 
     class Section {
@@ -38,6 +39,8 @@ package "Entity Layer" {
         - id : Long
         - title : String
         - level : String
+        - type : LessonType
+        - youtubeVideoId : String
         - totalSentences : Integer
         - section : Section
     }
@@ -46,6 +49,8 @@ package "Entity Layer" {
         - id : Long
         - audioUrl : String
         - content : String
+        - startTime : Double
+        - endTime : Double
         - orderIndex : Integer
         - lesson : Lesson
     }
@@ -63,7 +68,7 @@ package "Entity Layer" {
         - id : Long
         - content : String
         - createdAt : LocalDateTime
-        - lesson : Lesson
+        - sentence : Sentence
         - user : User
         - parent : Comment
     }
@@ -85,6 +90,19 @@ package "Entity Layer" {
         - sentence : Sentence
         - user : User
     }
+
+    class PasswordResetToken {
+        - id : Long
+        - token : String
+        - user : User
+        - expiryDate : LocalDateTime
+        - createdAt : LocalDateTime
+    }
+
+    enum LessonType {
+        AUDIO
+        YOUTUBE
+    }
 }
 
 Category "1" --o "many" Section : category_id
@@ -92,12 +110,15 @@ Section "1" --o "many" Lesson : section_id
 Lesson "1" --o "many" Sentence : lesson_id
 User "1" --o "many" UserProgress : user_id
 Lesson "1" --o "many" UserProgress : lesson_id
-Lesson "1" --o "many" Comment : lesson_id
+Sentence "1" --o "many" Comment : sentence_id
 User "1" --o "many" Comment : user_id
 Comment "0..1" --o "many" Comment : parent_id
 Comment "1" --o "many" CommentVote : comment_id
 User "1" --o "many" CommentVote : user_id
 Sentence "1" --o "many" SpeakingResult : sentence_id
 User "1" --o "many" SpeakingResult : user_id
+User "1" --o "many" PasswordResetToken : user_id
+Category ..> LessonType : uses
+Lesson ..> LessonType : uses
 
 @enduml

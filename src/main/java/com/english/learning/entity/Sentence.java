@@ -3,6 +3,8 @@ package com.english.learning.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Entity
 @Data
 @Table(name = "sentences", indexes = {
@@ -26,4 +28,8 @@ public class Sentence {
     private Double endTime;
     
     private Integer orderIndex;
+
+    // Danh từ riêng được trích xuất từ content, không lưu vào DB
+    @Transient
+    private List<String> properNouns;
 }

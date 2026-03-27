@@ -8,11 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isVideo = (typeof LESSON_TYPE !== 'undefined') && LESSON_TYPE === 'VIDEO';
 
-    const playBtn = document.getElementById('transcriptPlayBtn');
     const timeDisplay = document.getElementById('transcriptTimeDisplay');
     const progressFill = document.getElementById('transcriptProgressFill');
     const progressWrapper = document.getElementById('transcriptProgressWrapper');
     const volumeBtn = document.getElementById('transcriptVolumeBtn');
+    
     const sentenceTextEl = document.getElementById('sentenceText');
     const transcriptSentenceNum = document.getElementById('transcriptSentenceNum');
     const prevBtn = document.getElementById('transcriptPrevBtn');
@@ -58,11 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- State Listeners ---
-    document.addEventListener('lesson:sentenceChanged', (e) => {
-        const sentence = e.detail.sentence;
-
+    function handleSentenceChange(index, sentence) {
         if (sentenceTextEl) sentenceTextEl.textContent = sentence.content || '';
-        if (transcriptSentenceNum) transcriptSentenceNum.textContent = e.detail.index + 1;
+        if (transcriptSentenceNum) transcriptSentenceNum.textContent = index + 1;
 
         // Reset audio UI (chỉ cho AUDIO mode)
         if (!isVideo) {
@@ -72,23 +70,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Highlight active item
         transcriptItems.forEach(item => item.classList.remove('active'));
-        if (transcriptItems[e.detail.index]) {
-            transcriptItems[e.detail.index].classList.add('active');
+        if (transcriptItems[index]) {
+            transcriptItems[index].classList.add('active');
 
             // Auto scroll
             const autoScrollCheckbox = document.getElementById('autoScrollCheckbox');
             if (autoScrollCheckbox && autoScrollCheckbox.checked) {
-                transcriptItems[e.detail.index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                transcriptItems[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
         updateTranscriptPlayButtons();
         updateTranscriptNextButton();
+    }
+
+    document.addEventListener('lesson:sentenceChanged', (e) => {
+        handleSentenceChange(e.detail.index, e.detail.sentence);
     });
 
+    // Cập nhật ngay lập tức nếu LessonState đã sẵn sàng
+    if (window.LessonState && window.LessonState.sentences && window.LessonState.sentences.length > 0) {
+        const curIdx = window.LessonState.currentIndex;
+        handleSentenceChange(curIdx, window.LessonState.sentences[curIdx]);
+    }
+
     document.addEventListener('lesson:playState', (e) => {
-        if (playBtn) {
-            playBtn.innerHTML = e.detail.isPlaying ? window.LessonState.pauseSvg : window.LessonState.playSvg;
-        }
         updateTranscriptPlayButtons();
     });
 
@@ -100,8 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('lesson:ended', () => {
-            if (playBtn) playBtn.innerHTML = window.LessonState.playSvg;
-
             if (repeatCheckbox && repeatCheckbox.checked) {
                 const audio = document.getElementById('mainAudio');
                 if (audio) {
@@ -123,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('lesson:ended', () => {
         if (!isTranscriptTabActive()) return;
 
-        if (playBtn) playBtn.innerHTML = window.LessonState.playSvg;
         updateTranscriptPlayButtons();
 
         if (repeatCheckbox && repeatCheckbox.checked) {
@@ -140,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- UI Event Bindings (Audio mode only) ---
     if (!isVideo) {
-        if (playBtn) playBtn.addEventListener('click', () => window.LessonState.togglePlay());
         if (volumeBtn) volumeBtn.addEventListener('click', () => window.LessonState.toggleMute());
 
         if (progressWrapper) {
@@ -169,21 +170,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         item.style.cursor = 'pointer';
 
-        item.addEventListener('click', () => {
-            if (window.LessonState.currentIndex === index) {
-                // If it's the current sentence and it's playing, pause it.
-                if (window.LessonState.isPlaying) {
-                    window.LessonState.pause();
+        // Chỉ xử lý khi click vào nút play nhỏ cạnh câu
+        const playSmallBtn = item.querySelector('.play-small-btn');
+        if (playSmallBtn) {
+            playSmallBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Ngăn sự kiện lan ra toàn dòng item
+                if (window.LessonState.currentIndex === index) {
+                    window.LessonState.togglePlay();
                 } else {
-                    // If paused, play from the START of this sentence (not resume middle)
-                    playCurrentSentence();
+                    window.LessonState.loadSentence(index);
+                    window.LessonState.play();
                 }
-                return;
-            }
+            });
+        }
 
-            // Always load and seek to startTime for new sentences
+        item.addEventListener('click', () => {
+            if (window.LessonState.currentIndex === index) return;
+            // Chỉ load câu khi click vào dòng (không tự phát để tránh văng video nếu đang pause)
             window.LessonState.loadSentence(index);
-            playCurrentSentence();
         });
     });
 

@@ -530,6 +530,113 @@
     letter-spacing: 1px;
 }
 
+/* ===========================
+   Proper Noun Hint Area
+   =========================== */
+.hint-area {
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+}
+
+[data-theme="dark"] .hint-area {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.hint-proper-noun {
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+/* ===========================
+   Speaking Exercise UI
+   =========================== */
+
+/* Reference Sentence Display */
+.speaking-reference-box {
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-section);
+    text-align: center;
+}
+
+.speaking-reference-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.speaking-reference-text {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    line-height: 1.8;
+    font-weight: 500;
+}
+
+/* Record Button */
+.speaking-record-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.speaking-record-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
+}
+
+.speaking-record-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(26, 115, 232, 0.4);
+}
+
+.speaking-record-label {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Result Placeholder */
+.speaking-result-placeholder {
+    padding: 40px 20px;
+    margin-bottom: 24px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Pronunciation Area (hiện khi đúng hoặc skip) */
 .pronunciation-area {
     margin-bottom: 20px;
