@@ -10,6 +10,7 @@ public interface DictationService {
 
     /**
      * Chấm đáp án chép chính tả theo từng từ.
+     * 
      * @param sentenceId ID của câu trong Database
      * @param userInput  Nội dung người dùng gõ vào
      * @return DTO chứa kết quả (hint, matchedCount, isCorrect...)
@@ -18,6 +19,7 @@ public interface DictationService {
 
     /**
      * Lấy đáp án đầy đủ (dùng cho chức năng Skip).
+     * 
      * @param sentenceId ID của câu trong Database
      * @return DTO chứa câu gốc đầy đủ
      */

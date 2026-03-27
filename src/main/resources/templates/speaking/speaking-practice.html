@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<!-- GIAO DIỆN LỚN NHẤT CỦA PROJECT: PHÒNG LUYỆN NGHE CHÉP CHÍNH TẢ -->
-<!-- Hỗ trợ cả AUDIO và VIDEO (YouTube) lessons -->
+<!-- GIAO DIỆN LUYỆN NÓI (SPEAKING PRACTICE) -->
+<!-- Tái sử dụng cấu trúc từ dictation.html, thay textarea bằng khối ghi âm -->
 
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
@@ -13,9 +13,9 @@
     <main class="container" style="flex: 1; padding-top: 30px; padding-bottom: 100px;">
         <!-- Breadcrumbs -->
         <div class="breadcrumb">
-            <a th:href="@{/exercises}">All topics</a>
+            <a th:href="@{/speaking-exercises}">Speaking exercises</a>
             <span class="separator">/</span>
-            <a th:href="@{'/category/' + ${category.id} + '/sections'}" th:text="${category.name}">Category Name</a>
+            <a th:href="@{'/speaking/category/' + ${category.id} + '/sections'}" th:text="${category.name}">Category Name</a>
             <span class="separator">/</span>
             <span class="current" th:text="${lesson.title}">Lesson Title</span>
         </div>
@@ -31,7 +31,7 @@
 
         <!-- Tabs Container -->
         <div class="tabs-wrapper">
-            <button class="tab-btn active" data-tab="dictation-tab">Dictation</button>
+            <button class="tab-btn active" data-tab="speaking-tab">Speaking Practice</button>
             <button class="tab-btn" data-tab="transcript-tab">Full transcript</button>
         </div>
 
@@ -39,15 +39,13 @@
         <div class="tab-content-container">
 
             <!-- ======================== -->
-            <!--     DICTATION TAB        -->
+            <!--     SPEAKING TAB         -->
             <!-- ======================== -->
-            <div id="dictation-tab" class="tab-pane active">
+            <div id="speaking-tab" class="tab-pane active">
 
-                <!-- Sử dụng layout chung, truyền vào isSpeakingMode=false -->
-                <div th:replace="~{fragments/lesson/player-ui :: player-layout (isSpeakingMode=false)}"></div>
+                <!-- Sử dụng layout chung, truyền vào isSpeakingMode=true -->
+                <div th:replace="~{fragments/lesson/player-ui :: player-layout (isSpeakingMode=true)}"></div>
 
-                <!-- Bình luận -->
-                <div th:replace="~{fragments/comments-section :: comments}"></div>
             </div>
 
             <!-- ======================== -->
@@ -69,7 +67,6 @@
                         <!-- VIDEO: YouTube player container -->
                         <div th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}"
                             class="video-player-wrapper transcript-video-wrapper" id="transcriptVideoWrapper">
-                            <!-- Player sẽ được move vào đây bằng JS khi chuyển tab -->
                         </div>
 
                         <!-- AUDIO: Progress Bar only (No Play button as requested) -->
@@ -141,7 +138,7 @@
         const HINTS_MAP = /*[[${hintsMap}]]*/{};
         const LESSON_TYPE = /*[[${lesson.type != null ? lesson.type.name() : 'AUDIO'}]]*/ 'AUDIO';
         const YOUTUBE_VIDEO_ID = /*[[${lesson.youtubeVideoId}]]*/ '';
-        const LESSON_ID = /*[[${lesson.id}]]*/ 0;
+        const IS_SPEAKING_MODE = true;
 
         // Gộp Proper Nouns vào SENTENCES vì trường @Transient không tự serialize
         if (SENTENCES && HINTS_MAP) {
@@ -152,17 +149,17 @@
             });
         }
     </script>
-    <script src="/js/pages/lesson-detail/state.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/tabs.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/player-controls.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/mock-comments.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/dictation-ui.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/transcript-ui.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/keyboard.js?v=8.0"></script>
+    <script src="/js/pages/lesson-detail/state.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/tabs.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/player-controls.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/speaking-ui.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/transcript-ui.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/keyboard.js?v=7.0"></script>
     <!-- YouTube IFrame API + Video Engine -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/js/pages/lesson-detail/video-engine.js?v=8.0"></script>
-    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=8.0"></script>
+    <script src="/js/pages/lesson-detail/video-engine.js?v=7.0"></script>
+    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=7.0"></script>
+
 </body>
 
 </html>

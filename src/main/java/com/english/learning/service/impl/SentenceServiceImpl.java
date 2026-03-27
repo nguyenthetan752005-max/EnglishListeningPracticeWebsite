@@ -6,7 +6,10 @@ import com.english.learning.service.SentenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -15,13 +18,25 @@ public class SentenceServiceImpl implements SentenceService {
     @Autowired
     private SentenceRepository sentenceRepository;
 
+    @Autowired
+    private com.english.learning.service.HintService hintService;
+
     @Override
     public List<Sentence> getSentencesByLessonId(Long lessonId) {
-        return sentenceRepository.findByLesson_IdOrderByOrderIndex(lessonId);
+        List<Sentence> sentences = sentenceRepository.findByLesson_IdOrderByOrderIndex(lessonId);
+        // Enrich từng câu với danh từ riêng dùng HintService
+        sentences.forEach(s -> s.setProperNouns(hintService.extractProperNouns(s.getContent())));
+        return sentences;
     }
 
     @Override
     public Optional<Sentence> getSentenceById(Long id) {
         return sentenceRepository.findById(id);
+    }
+
+    @Override
+    public Map<Long, List<String>> getProperNounHints(Long lessonId) {
+        List<Sentence> sentences = sentenceRepository.findByLesson_IdOrderByOrderIndex(lessonId);
+        return hintService.getHintsMap(sentences);
     }
 }
