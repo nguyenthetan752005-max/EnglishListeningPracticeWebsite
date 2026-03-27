@@ -3,7 +3,7 @@ title Activity Diagram - Đánh giá bình luận (UC7)
 
 start
 
-:Xem danh sách Comment trong Lesson;
+:Xem danh sách Comment trong Sentence;
 
 if (User đã đăng nhập?) then (Chưa)
   :Hiển thị thông báo\n"Đăng nhập để vote";

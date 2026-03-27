@@ -36,6 +36,32 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public List<Comment> getTopLevelCommentsWithVotes(Long sentenceId) {
+        List<Comment> comments = commentRepository.findBySentence_IdAndParentIsNullOrderByCreatedAtDesc(sentenceId);
+        comments.forEach(this::populateVoteCounts);
+        return comments;
+    }
+
+    @Override
+    public List<Comment> getRepliesWithVotes(Long parentId) {
+        List<Comment> replies = commentRepository.findByParent_IdOrderByCreatedAtAsc(parentId);
+        replies.forEach(this::populateVoteCounts);
+        return replies;
+    }
+
+    @Override
+    public List<Comment> getCommentsByUserId(Long userId) {
+        List<Comment> comments = commentRepository.findByUser_IdOrderByCreatedAtDesc(userId);
+        comments.forEach(this::populateVoteCounts);
+        return comments;
+    }
+
+    private void populateVoteCounts(Comment comment) {
+        comment.setLikeCount(commentVoteRepository.countVotes(comment.getId(), true));
+        comment.setDislikeCount(commentVoteRepository.countVotes(comment.getId(), false));
+    }
+
+    @Override
     public Comment addComment(Long sentenceId, Long userId, String content, Long parentId) {
         Comment comment = new Comment();
         comment.setContent(content);
@@ -54,7 +80,9 @@ public class CommentServiceImpl implements CommentService {
             comment.setParent(parent);
         }
 
-        return commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        populateVoteCounts(saved);
+        return saved;
     }
 
     @Override
@@ -83,6 +111,36 @@ public class CommentServiceImpl implements CommentService {
             vote.setUser(user);
             vote.setIsLike(isLike);
             return commentVoteRepository.save(vote);
+        }
+    }
+
+    @Override
+    public Comment editComment(Long commentId, Long userId, String newContent) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment không tồn tại!"));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền chỉnh sửa comment này!");
+        }
+        comment.setContent(newContent + " [author edited comment]");
+        Comment saved = commentRepository.save(comment);
+        populateVoteCounts(saved);
+        return saved;
+    }
+
+    @Override
+    public void deleteComment(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment không tồn tại!"));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền xóa comment này!");
+        }
+        // Nếu có reply → soft delete (giữ comment, đổi nội dung)
+        List<Comment> replies = commentRepository.findByParent_IdOrderByCreatedAtAsc(commentId);
+        if (replies != null && !replies.isEmpty()) {
+            comment.setContent("comment has been deleted by author");
+            commentRepository.save(comment);
+        } else {
+            commentRepository.deleteById(commentId);
         }
     }
 }

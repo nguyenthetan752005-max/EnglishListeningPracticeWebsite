@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,13 +23,22 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(name = "sentence_id")
+    @JsonIgnoreProperties({"lesson", "properNouns", "hibernateLazyInitializer"})
     private Sentence sentence;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"password", "provider", "providerId", "hibernateLazyInitializer"})
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
+    @JsonIgnoreProperties({"parent", "sentence", "hibernateLazyInitializer"})
     private Comment parent;
+
+    @Transient
+    private long likeCount;
+
+    @Transient
+    private long dislikeCount;
 }

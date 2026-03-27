@@ -8,7 +8,7 @@ start
 
 if (Chọn chức năng quản lý?) then (Quản lý Category)
   if (Thao tác?) then (Thêm mới)
-    :Nhập name, imageUrl, levelRange;
+    :Nhập name, imageUrl, levelRange, type;
     :Lưu Category mới;
   elseif (Sửa) then
     :Chọn Category cần sửa;
@@ -34,7 +34,7 @@ elseif (Quản lý Section) then
 elseif (Quản lý Lesson) then
   if (Thao tác?) then (Thêm mới)
     :Chọn Section cha;
-    :Nhập title, level, totalSentences;
+    :Nhập title, level, type, youtubeVideoId, totalSentences;
     :Lưu Lesson mới;
   elseif (Sửa) then
     :Cập nhật Lesson;
@@ -45,7 +45,7 @@ elseif (Quản lý Lesson) then
 else (Quản lý Sentence)
   if (Thao tác?) then (Thêm mới)
     :Chọn Lesson cha;
-    :Nhập content, audioUrl, orderIndex;
+    :Nhập content, audioUrl, startTime, endTime, orderIndex;
     :Upload file audio;
     :Lưu Sentence mới;
   elseif (Sửa) then
