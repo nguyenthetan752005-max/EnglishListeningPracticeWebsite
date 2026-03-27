@@ -154,6 +154,7 @@
     </script>
     <script th:inline="javascript">
         window.CURRENT_USER_ID = /*[[${session.loggedInUser != null ? session.loggedInUser.id : null}]]*/ null;
+        window.COMMENT_SOURCE = 'LISTENING';
     </script>
     <script src="/js/pages/lesson-detail/state.js?v=9.0"></script>
     <script src="/js/pages/lesson-detail/tabs.js?v=9.0"></script>

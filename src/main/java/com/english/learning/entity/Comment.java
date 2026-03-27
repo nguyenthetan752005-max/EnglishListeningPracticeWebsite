@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.CommentType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -41,4 +42,8 @@ public class Comment {
 
     @Transient
     private long dislikeCount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(50) default 'LISTENING'")
+    private CommentType commentType;
 }
