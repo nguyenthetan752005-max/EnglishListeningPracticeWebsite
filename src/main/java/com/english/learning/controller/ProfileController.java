@@ -10,14 +10,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
+import com.english.learning.service.CloudinaryService;
 
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 public class ProfileController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @GetMapping("/profile")
     public String viewProfile(HttpSession session, Model model) {
@@ -57,5 +66,34 @@ public class ProfileController {
         }
 
         return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/update-avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateAvatar(@RequestParam("avatar") MultipartFile file,
+                                                            HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User loggedInUser = (User) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            response.put("success", false);
+            response.put("message", "Chưa đăng nhập");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            String avatarUrl = cloudinaryService.uploadFile(file);
+            userService.updateAvatarUrl(loggedInUser.getId(), avatarUrl);
+            
+            loggedInUser.setAvatarUrl(avatarUrl);
+            session.setAttribute("loggedInUser", loggedInUser);
+            
+            response.put("success", true);
+            response.put("avatarUrl", avatarUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
