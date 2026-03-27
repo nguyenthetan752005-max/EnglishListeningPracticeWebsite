@@ -10,6 +10,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import com.english.learning.entity.Sentence;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class LessonController {
@@ -22,6 +26,9 @@ public class LessonController {
 
     @Autowired
     private SentenceService sentenceService;
+
+    @Autowired
+    private com.english.learning.service.HintService hintService;
 
     @GetMapping("/section/{id}/lessons")
     public String getLessons(@PathVariable Long id, Model model) {
@@ -36,9 +43,18 @@ public class LessonController {
     public String getLesson(@PathVariable Long id, Model model) {
         Lesson lesson = lessonService.getLessonById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
+        
+        // Lấy danh sách câu
+        List<Sentence> sentences = sentenceService.getSentencesByLessonId(id);
+        
+        // Dùng HintService để lấy map
+        Map<Long, List<String>> hintsMap = hintService.getHintsMap(sentences);
+
         model.addAttribute("lesson", lesson);
-        model.addAttribute("sentences", sentenceService.getSentencesByLessonId(id));
+        model.addAttribute("sentences", sentences);
+        model.addAttribute("hintsMap", hintsMap); // Truyền map này xuống Thymeleaf
         model.addAttribute("category", lesson.getSection().getCategory());
+        
         return "lesson/dictation";
     }
 }

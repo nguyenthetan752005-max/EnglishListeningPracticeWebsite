@@ -8,9 +8,9 @@ package com.english.learning.service.impl;
 
 import com.english.learning.dto.DictationResultDTO;
 import com.english.learning.entity.Sentence;
+import com.english.learning.exception.SentenceNotFoundException;
 import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.DictationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,8 +19,11 @@ import java.util.List;
 @Service
 public class DictationServiceImpl implements DictationService {
 
-    @Autowired
-    private SentenceRepository sentenceRepository;
+    private final SentenceRepository sentenceRepository;
+
+    public DictationServiceImpl(SentenceRepository sentenceRepository) {
+        this.sentenceRepository = sentenceRepository;
+    }
 
     /**
      * Loại bỏ dấu câu để so sánh công bằng.
@@ -42,7 +45,7 @@ public class DictationServiceImpl implements DictationService {
     @Override
     public DictationResultDTO checkAnswer(Long sentenceId, String userInput) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
-                .orElseThrow(() -> new RuntimeException("Sentence not found: " + sentenceId));
+                .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
         String correctContent = sentence.getContent();
 
@@ -101,7 +104,7 @@ public class DictationServiceImpl implements DictationService {
     @Override
     public DictationResultDTO skipSentence(Long sentenceId) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
-                .orElseThrow(() -> new RuntimeException("Sentence not found: " + sentenceId));
+                .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
         String correctContent = sentence.getContent();
         String[] correctWords = correctContent.trim().split("\\s+");

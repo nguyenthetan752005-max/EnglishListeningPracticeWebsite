@@ -24,7 +24,10 @@
 
                 <div class="category-info">
                     <!-- Title -->
-                    <h3 class="category-name" th:text="${cat.name}">Category Name</h3>
+                    <h3 class="category-name">
+                        <span th:text="${cat.name}">Category Name</span>
+                        <span class="category-video-badge" th:if="${cat.type != null and cat.type.name() == 'VIDEO'}">Video</span>
+                    </h3>
 
                     <!-- Level -->
                     <p class="category-level" th:text="'Levels: ' + ${cat.levelRange}">Levels: A1</p>

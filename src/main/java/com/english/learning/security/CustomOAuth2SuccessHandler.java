@@ -23,15 +23,15 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
-        
+            Authentication authentication) throws IOException, ServletException {
+
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
         String email = token.getPrincipal().getAttribute("email");
         String picture = token.getPrincipal().getAttribute("picture");
 
         Optional<User> userOpt = userRepository.findByEmail(email);
         User user;
-        
+
         if (userOpt.isPresent()) {
             user = userOpt.get();
             // Đã tồn tại Email, đánh dấu liên kết Google
@@ -52,7 +52,7 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
                 baseUsername = baseUsername + "_" + UUID.randomUUID().toString().substring(0, 5);
             }
             user.setUsername(baseUsername);
-            
+
             // Khởi tạo mật khẩu an toàn ngẫu nhiên
             user.setPassword(BCrypt.hashpw(UUID.randomUUID().toString(), BCrypt.gensalt()));
             user.setProvider("GOOGLE");

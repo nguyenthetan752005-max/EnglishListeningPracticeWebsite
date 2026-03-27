@@ -1,14 +1,12 @@
 /* [CSS COMPONENT] TRANG TRÍ KHU VỰC BÌNH LUẬN.
- * - Thiết kế Avatar bo tròn, Nút Like/Dislike/Reply.
- * - Hỗ trợ Reply lồng nhau (nested comments).
- * - Dropdown Sort (Newest, Oldest, Best).
+ * - Sử dụng các biến CSS từ global.css để hỗ trợ Light/Dark mode tự động.
  */
 
 /* Comments Section Container */
 .comments-section {
     margin-top: 40px;
     padding-top: 30px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--border-color);
 }
 
 .comments-header {
@@ -21,16 +19,16 @@
 .comments-header h3 {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-primary);
 }
 
 .comments-sort {
     padding: 6px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
     font-size: 0.9rem;
-    color: #4b5563;
-    background: white;
+    color: var(--text-secondary);
+    background: var(--bg-card);
     cursor: pointer;
 }
 
@@ -45,7 +43,7 @@
     display: flex;
     gap: 12px;
     padding: 16px 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .comment-item:last-child {
@@ -93,20 +91,21 @@
 }
 
 .comment-meta strong {
-    font-size: 0.95rem;
-    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .comment-time {
-    font-size: 0.8rem;
-    color: #9ca3af;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 .comment-text {
-    font-size: 0.95rem;
-    color: #374151;
-    line-height: 1.5;
-    margin-bottom: 8px;
+    font-size: 1rem;
+    color: var(--text-primary); /* Dùng cùng màu với sentence để rõ nét nhất */
+    line-height: 1.6;
+    margin-bottom: 10px;
     word-wrap: break-word;
 }
 
@@ -114,61 +113,36 @@
 .comment-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
+    margin-top: 4px;
 }
 
 .comment-action-btn {
     background: none;
     border: none;
-    color: #6b7280;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 4px 0;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .comment-action-btn:hover {
-    background: #f3f4f6;
-    color: #1f2937;
+    color: var(--primary);
 }
 
 .comment-action-btn i {
-    font-size: 0.8rem;
-}
-
-.comment-more {
-    font-weight: bold;
-    letter-spacing: 2px;
+    font-size: 0.95rem;
 }
 
 /* Replies (Nested Comments) */
 .comment-replies {
     margin-top: 12px;
     padding-left: 12px;
-    border-left: 2px solid #e5e7eb;
-}
-
-/* See Replies Toggle */
-.see-replies-btn {
-    background: none;
-    border: none;
-    color: #1a73e8;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 8px;
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.see-replies-btn:hover {
-    text-decoration: underline;
+    border-left: 2px solid var(--border-color);
 }
 
 /* Write a Comment Button */
@@ -178,10 +152,10 @@
     gap: 8px;
     margin-top: 20px;
     padding: 10px 20px;
-    background: white;
-    border: 1.5px solid #1a73e8;
-    border-radius: 8px;
-    color: #1a73e8;
+    background: var(--bg-card);
+    border: 1.5px solid var(--primary);
+    border-radius: var(--radius-md);
+    color: var(--primary);
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
@@ -189,7 +163,11 @@
 }
 
 .write-comment-btn:hover {
-    background: #eef2ff;
+    background: var(--primary-light);
+}
+
+[data-theme="dark"] .write-comment-btn:hover {
+    background: rgba(230, 115, 0, 0.1);
 }
 
 /* Responsive */

@@ -90,3 +90,32 @@
     line-height: 1;
     letter-spacing: 1px;
 }
+
+.category-video-badge {
+    display: inline-block;
+    background-color: #FFD43B; /* Màu vàng đậm rực rỡ */
+    color: #000;
+    font-size: 0.65rem;       /* Chữ nhỏ hẳn lại để nổi bật tiêu đề */
+    font-weight: 800;         /* Chữ rất đậm */
+    padding: 2px 10px;        /* Padding cho dáng thon dài */
+    border-radius: 20px;      /* Bo tròn hẳn (Pill shape) */
+    text-transform: uppercase; /* Viết hoa toàn bộ */
+    line-height: normal;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Đổ bóng nhẹ tạo độ nổi */
+    flex-shrink: 0;           /* Không cho badge bị bóp méo khi tiêu đề dài */
+}
+
+/* Các phần phụ khác */
+.category-level {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 4px 0;
+}
+
+.category-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #888;
+    font-size: 0.85rem;
+}

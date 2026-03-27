@@ -40,7 +40,8 @@
 }
 
 /* Dark Mode */
-[data-theme="dark"] {
+html[data-theme="dark"], 
+[data-theme="dark"] body {
     --bg-body: #0f172a;
     --bg-section: #1e293b;
     --bg-card: #1e293b;
