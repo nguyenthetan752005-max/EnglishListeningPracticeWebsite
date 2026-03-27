@@ -158,6 +158,7 @@
     <script src="/js/pages/lesson-detail/speaking-ui.js?v=9.0"></script>
     <script th:inline="javascript">
         window.CURRENT_USER_ID = /*[[${session.loggedInUser != null ? session.loggedInUser.id : null}]]*/ null;
+        window.COMMENT_SOURCE = 'SPEAKING';
     </script>
     <script src="/js/pages/lesson-detail/comments.js?v=9.0"></script>
     <script src="/js/pages/lesson-detail/transcript-ui.js?v=9.0"></script>
