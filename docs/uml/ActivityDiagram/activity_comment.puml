@@ -1,10 +1,11 @@
 @startuml Activity_Comment
-title Activity Diagram - Bình luận bài học (UC6)
+title Activity Diagram - Bình luận(UC6)
 
 start
 
 :Truy cập trang Lesson;
-:Hệ thống tải danh sách Comment\ntheo lesson_id (JOIN users);
+:Chọn một Sentence để bình luận;
+:Hệ thống tải danh sách Comment\ntheo sentence_id (JOIN users);
 :Hiển thị comments theo dạng thread\n(phân cấp bởi parent_id);
 
 if (User đã đăng nhập?) then (Chưa)
@@ -22,7 +23,7 @@ if (Hành động?) then (Viết comment mới)
   else (Hợp lệ)
   endif
 
-  :Tạo Comment\n(content, lesson_id, user_id,\nparent_id = NULL, created_at);
+  :Tạo Comment\n(content, sentence_id, user_id,\nparent_id = NULL, created_at);
   :Lưu Comment vào Database;
   :Hiển thị comment mới trên trang;
 
@@ -36,7 +37,7 @@ else (Reply comment)
   else (Hợp lệ)
   endif
 
-  :Tạo Comment\n(content, lesson_id, user_id,\nparent_id = ID comment gốc);
+  :Tạo Comment\n(content, sentence_id, user_id,\nparent_id = ID comment gốc);
   :Lưu Comment vào Database;
   :Hiển thị reply dưới comment gốc;
 endif
