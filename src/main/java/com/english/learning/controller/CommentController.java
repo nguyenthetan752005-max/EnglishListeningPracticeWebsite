@@ -3,6 +3,7 @@ package com.english.learning.controller;
 import com.english.learning.entity.Comment;
 import com.english.learning.entity.CommentVote;
 import com.english.learning.entity.User;
+import com.english.learning.enums.CommentType;
 import com.english.learning.service.CommentService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,10 @@ public class CommentController {
 
     @GetMapping("/sentence/{sentenceId}/comments")
     @ResponseBody
-    public List<Comment> getComments(@PathVariable Long sentenceId) {
-        return commentService.getTopLevelCommentsWithVotes(sentenceId);
+    public List<Comment> getComments(
+            @PathVariable Long sentenceId,
+            @RequestParam(required = false, defaultValue = "LISTENING") CommentType source) {
+        return commentService.getTopLevelCommentsWithVotes(sentenceId, source);
     }
 
     @GetMapping("/comment/{commentId}/replies")
@@ -40,12 +43,13 @@ public class CommentController {
             @RequestParam Long sentenceId,
             @RequestParam String content,
             @RequestParam(required = false) Long parentId,
+            @RequestParam(required = false, defaultValue = "LISTENING") CommentType source,
             HttpSession session) {
         User user = (User) session.getAttribute("loggedInUser");
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Bạn cần đăng nhập để bình luận!"));
         }
-        Comment saved = commentService.addComment(sentenceId, user.getId(), content, parentId);
+        Comment saved = commentService.addComment(sentenceId, user.getId(), content, parentId, source);
         return ResponseEntity.ok(saved);
     }
 

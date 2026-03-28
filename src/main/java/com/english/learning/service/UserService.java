@@ -11,6 +11,7 @@ public interface UserService {
 
     Optional<User> findById(Long id);
     void updateUsername(Long id, String newUsername) throws Exception;
+    void updateAvatarUrl(Long id, String avatarUrl) throws Exception;
 
     Optional<User> authenticateAdmin(String username, String password);
 

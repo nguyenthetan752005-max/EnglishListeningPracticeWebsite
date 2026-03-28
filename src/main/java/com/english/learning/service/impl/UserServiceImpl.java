@@ -76,6 +76,13 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public void updateAvatarUrl(Long id, String avatarUrl) throws Exception {
+        User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
+        user.setAvatarUrl(avatarUrl);
+        userRepository.save(user);
+    }
+
     public Optional<User> authenticateAdmin(String username, String password) {
         Optional<User> userOpt = authenticate(username, password);
         if (userOpt.isPresent() && Role.ADMIN.equals(userOpt.get().getRole())) {

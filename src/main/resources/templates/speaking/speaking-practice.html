@@ -15,7 +15,8 @@
         <div class="breadcrumb">
             <a th:href="@{/speaking-exercises}">Speaking exercises</a>
             <span class="separator">/</span>
-            <a th:href="@{'/speaking/category/' + ${category.id} + '/sections'}" th:text="${category.name}">Category Name</a>
+            <a th:href="@{'/speaking/category/' + ${category.id} + '/sections'}" th:text="${category.name}">Category
+                Name</a>
             <span class="separator">/</span>
             <span class="current" th:text="${lesson.title}">Lesson Title</span>
         </div>
@@ -152,23 +153,24 @@
             });
         }
     </script>
-    <script src="/js/pages/lesson-detail/state.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/tabs.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/player-controls.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/speaking-ui.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/state.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/tabs.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/player-controls.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/speaking-ui.js?v=9.0"></script>
     <script th:inline="javascript">
         window.CURRENT_USER_ID = /*[[${session.loggedInUser != null ? session.loggedInUser.id : null}]]*/ null;
+        window.COMMENT_SOURCE = 'SPEAKING';
     </script>
-    <script src="/js/pages/lesson-detail/comments.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/transcript-ui.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/keyboard.js?v=9.0"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.6.2/RecordRTC.min.js"></script>
+
+    <script src="/js/page/lesson-detail/comments.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/transcript-ui.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/keyboard.js?v=9.0"></script>
     <!-- YouTube IFrame API + Video Engine -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/js/pages/lesson-detail/video-engine.js?v=9.0"></script>
-    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=9.0"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/js/pages/lesson-detail/video-engine.js?v=7.0"></script>
-    <script src="/js/pages/lesson-detail/video-layout-ui.js?v=7.0"></script>
+    <script src="/js/page/lesson-detail/video-engine.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/video-layout-ui.js?v=9.0"></script>
 
 </body>
 

@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const refTextEl = document.getElementById('speakingRefText');
     const hintArea = document.getElementById('hintArea');
     const resultArea = document.getElementById('speakingResultArea');
-    
+
     const checkBtn = document.getElementById('checkBtn');
     const skipBtn = document.getElementById('skipBtn');
     const nextBtn2 = document.getElementById('nextBtn2');
     const replayBtn = document.getElementById('replayBtn');
-    
+
     const recordBtn = document.getElementById('recordBtn');
     const recordLabel = document.querySelector('.speaking-record-label');
 
@@ -93,30 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (recordBtn) {
         recordBtn.addEventListener('click', async () => {
             if (!isRecording) {
-                // Bắt đầu ghi âm
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
 
-                    mediaRecorder.addEventListener('dataavailable', event => {
-                        audioChunks.push(event.data);
+                    // Sử dụng RecordRTC thay cho MediaRecorder mặc định
+                    mediaRecorder = new RecordRTC(stream, {
+                        type: 'audio',
+                        mimeType: 'audio/wav',
+                        recorderType: RecordRTC.StereoAudioRecorder, // Ép dùng bộ mã hóa WAV
+                        desiredSampRate: 16000, // 16kHz là tần số lý tưởng nhất cho Wit.ai
+                        numberOfAudioChannels: 1 // Ghi âm Mono để file nhẹ hơn
                     });
 
-                    mediaRecorder.addEventListener('stop', () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        sendAudioToBackend(audioBlob);
-                        
-                        // Stop all tracks to release mic
-                        stream.getTracks().forEach(track => track.stop());
-                    });
-
-                    mediaRecorder.start();
+                    mediaRecorder.startRecording();
                     isRecording = true;
                     recordBtn.innerHTML = '<i class="fas fa-stop"></i>';
                     recordBtn.classList.add('recording');
                     if (recordLabel) recordLabel.textContent = 'Recording... Tap to stop';
-                    
+
                     if (resultArea) resultArea.innerHTML = 'Listening...';
 
                 } catch (err) {
@@ -125,11 +119,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 // Dừng ghi âm
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                recordBtn.classList.remove('recording');
-                if (recordLabel) recordLabel.textContent = 'Processing...';
+                mediaRecorder.stopRecording(function () {
+                    isRecording = false;
+                    recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    recordBtn.classList.remove('recording');
+                    if (recordLabel) recordLabel.textContent = 'Processing...';
+
+                    // Lấy file WAV từ thư viện
+                    let audioBlob = mediaRecorder.getBlob();
+
+                    console.log("Đã tạo file WAV, kích thước:", audioBlob.size, "bytes");
+
+                    // Gửi file lên backend
+                    sendAudioToBackend(audioBlob);
+
+                    // Tắt mic
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                });
             }
         });
     }
@@ -148,18 +154,18 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.json();
-        })
-        .then(data => {
-            displayEvaluationResult(data);
-        })
-        .catch(error => {
-            console.error('Error evaluating speaking:', error);
-            if (resultArea) resultArea.innerHTML = '<span style="color:red">Error evaluating audio. Please try again.</span>';
-            if (recordLabel) recordLabel.textContent = 'Tap to speak again';
-        });
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                displayEvaluationResult(data);
+            })
+            .catch(error => {
+                console.error('Error evaluating speaking:', error);
+                if (resultArea) resultArea.innerHTML = '<span style="color:red">Error evaluating audio. Please try again.</span>';
+                if (recordLabel) recordLabel.textContent = 'Tap to speak again';
+            });
     }
 
     function displayEvaluationResult(data) {
@@ -167,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // data = { referenceText, transcribedText, score, feedback }
         let colorClass = data.score >= 80 ? 'text-success' : (data.score >= 50 ? 'text-warning' : 'text-danger');
-        
+
         let html = `
             <div style="font-size: 1.1em; margin-bottom: 10px;">
                 <strong>You said:</strong> <span style="color: #555;">${data.transcribedText || '(Nothing detected)'}</span>
@@ -177,12 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="font-style: italic;">${data.feedback}</div>
         `;
-        
+
         resultArea.innerHTML = html;
         resultArea.className = 'speaking-result-box'; // remove placeholder styling
 
         if (recordLabel) recordLabel.textContent = 'Tap to try again';
-        
+
         if (skipBtn) skipBtn.style.display = 'none';
         const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
         if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
