@@ -1,4 +1,5 @@
 /* [MODULE: SPEAKING UI] XỬ LÝ GIAO DIỆN LUYỆN NÓI.
+ * Hiển thị 2 kết quả: Best (điểm cao nhất) và Current (lần mới nhất).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -6,7 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Elements
     const refTextEl = document.getElementById('speakingRefText');
     const hintArea = document.getElementById('hintArea');
-    const resultArea = document.getElementById('speakingResultArea');
+
+    const bestResultArea = document.getElementById('bestResultArea');
+    const bestResultBody = document.getElementById('bestResultBody');
+    const currentResultArea = document.getElementById('currentResultArea');
+    const currentResultBody = document.getElementById('currentResultBody');
 
     const checkBtn = document.getElementById('checkBtn');
     const skipBtn = document.getElementById('skipBtn');
@@ -25,11 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Biến cho Recording
     let mediaRecorder;
-    let audioChunks = [];
     let isRecording = false;
-
-    // Helper Functions
-    // Shared utilities are in LessonCommonUI
 
     // 2. State Listeners
     function handleSentenceChange(index, sentence) {
@@ -39,10 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Reset UI
-        if (resultArea) {
-            resultArea.innerHTML = 'Your results will appear here';
-            resultArea.className = 'speaking-result-placeholder';
-        }
+        resetResultAreas();
         if (nextBtn2) nextBtn2.style.display = 'none';
         if (replayBtn) replayBtn.style.display = 'none';
         if (skipBtn) skipBtn.style.display = '';
@@ -64,6 +62,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 hintArea.style.display = 'none';
             }
+        }
+
+        // Load saved results (nếu đã đăng nhập)
+        if (window.CURRENT_USER_ID && sentence.id) {
+            loadSavedResults(sentence.id);
         }
     }
 
@@ -115,9 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     mediaRecorder = new RecordRTC(stream, {
                         type: 'audio',
                         mimeType: 'audio/wav',
-                        recorderType: RecordRTC.StereoAudioRecorder, // Ép dùng bộ mã hóa WAV
-                        desiredSampRate: 16000, // 16kHz là tần số lý tưởng nhất cho Wit.ai
-                        numberOfAudioChannels: 1 // Ghi âm Mono để file nhẹ hơn
+                        recorderType: RecordRTC.StereoAudioRecorder,
+                        desiredSampRate: 16000,
+                        numberOfAudioChannels: 1
                     });
 
                     mediaRecorder.startRecording();
@@ -126,7 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     recordBtn.classList.add('recording');
                     if (recordLabel) recordLabel.textContent = 'Recording... Tap to stop';
 
-                    if (resultArea) resultArea.innerHTML = 'Listening...';
+                    if (currentResultBody) {
+                        currentResultBody.innerHTML = '<span class="speaking-listening-text">Listening...</span>';
+                        currentResultBody.className = 'speaking-result-card-body';
+                    }
 
                 } catch (err) {
                     console.error("Lỗi Microphone:", err);
@@ -140,12 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     recordBtn.classList.remove('recording');
                     if (recordLabel) recordLabel.textContent = 'Processing...';
 
-                    // Lấy file WAV từ thư viện
                     let audioBlob = mediaRecorder.getBlob();
-
                     console.log("Đã tạo file WAV, kích thước:", audioBlob.size, "bytes");
 
-                    // Gửi file lên backend
                     sendAudioToBackend(audioBlob);
 
                     // Tắt mic
@@ -155,17 +158,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gửi Audio lên Spring Backend
+    // --- Reset Result Areas ---
+    function resetResultAreas() {
+        if (bestResultArea) bestResultArea.style.display = 'none';
+        if (bestResultBody) bestResultBody.innerHTML = '';
+        if (currentResultBody) {
+            currentResultBody.innerHTML = 'Your results will appear here';
+            currentResultBody.className = 'speaking-result-card-body speaking-result-placeholder';
+        }
+    }
+
+    // --- Load Saved Results when switching sentences ---
+    function loadSavedResults(sentenceId) {
+        fetch('/api/speaking/results?sentenceId=' + sentenceId)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    displaySavedResults(data);
+                }
+            })
+            .catch(err => console.error('Error loading saved results:', err));
+    }
+
+    function displaySavedResults(data) {
+        // Hiển thị Best
+        if (data.bestResult) {
+            renderBestResult(data.bestResult);
+        }
+
+        // Hiển thị Current
+        if (data.transcribedText) {
+            renderCurrentResult(data);
+        }
+    }
+
+    // --- Gửi Audio lên Spring Backend ---
     function sendAudioToBackend(audioBlob) {
         const formData = new FormData();
-        // audio.webm (hoặc tùy định dạng mediaRecorder)
-        formData.append('audio', audioBlob, 'speaking-audio.webm');
         
-        // Gửi sentenceId thay vì referenceText
-        const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex].id;
-        formData.append('sentenceId', sentenceId);
+        // Gửi audio dạng wav
+        formData.append('audio', audioBlob, 'speaking-audio.wav');
+        
+        // Gửi referenceText
+        const referenceText = refTextEl ? refTextEl.textContent : '';
+        formData.append('referenceText', referenceText);
 
-        if (resultArea) resultArea.innerHTML = '<div class="spinner"></div> Evaluating your pronunciation...';
+        // Gửi thêm sentenceId
+        const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
+        if (currentSentence && currentSentence.id) {
+            formData.append('sentenceId', currentSentence.id);
+        }
+
+        if (currentResultBody) {
+            currentResultBody.innerHTML = '<div class="spinner"></div> Evaluating your pronunciation...';
+            currentResultBody.className = 'speaking-result-card-body';
+        }
 
         fetch('/api/speaking/evaluate', {
             method: 'POST',
@@ -180,51 +227,99 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 console.error('Error evaluating speaking:', error);
-                if (resultArea) resultArea.innerHTML = '<span style="color:red">Error evaluating audio. Please try again.</span>';
+                if (currentResultBody) {
+                    currentResultBody.innerHTML = '<span style="color:red">Error evaluating audio. Please try again.</span>';
+                }
                 if (recordLabel) recordLabel.textContent = 'Tap to speak again';
             });
     }
 
+    // --- Display Evaluation Result (After Recording) ---
     function displayEvaluationResult(data) {
-        if (!resultArea) return;
+        // Hiển thị Current Result
+        renderCurrentResult(data);
 
-        // data = { referenceText, transcribedText, score, feedback }
-        let colorClass = data.score >= 80 ? 'text-success' : (data.score >= 50 ? 'text-warning' : 'text-danger');
-
-        let html = `
-            <div style="font-size: 1.1em; margin-bottom: 10px;">
-                <strong>You said:</strong> <span style="color: #555;">${data.transcribedText || '(Nothing detected)'}</span>
-            </div>
-            <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;" class="${colorClass}">
-                Score: ${data.score}%
-            </div>
-            <div style="font-style: italic;">${data.feedback}</div>
-        `;
-
-        resultArea.innerHTML = html;
-        resultArea.className = 'speaking-result-box'; // remove placeholder styling
+        // Hiển thị / Cập nhật Best Result
+        if (data.bestResult) {
+            renderBestResult(data.bestResult);
+        }
 
         if (recordLabel) recordLabel.textContent = 'Tap to try again';
-
+        
+        // Cập nhật các nút điều hướng
         if (skipBtn) skipBtn.style.display = 'none';
-        const isLastSentence = window.LessonCommonUI.isLastSentence();
+        const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
         if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
         if (replayBtn) replayBtn.style.display = '';
 
         // --- LƯU TIẾN ĐỘ NGƯỜI DÙNG ---
         // Coi như hoàn thành nếu đạt từ 50% trở lên
-        if (data.score >= 50) {
+        if (data.score >= 50 && window.LessonCommonUI) {
             const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex].id;
             window.LessonCommonUI.saveProgressCompleted(sentenceId, function() {
                 console.log("Speaking progress saved");
             });
 
-            // --- CHỈ HIỆN COMPLETION SCREEN NẾU LESSON ĐÃ HOÀN THÀNH TOÀN BỘ ---
+            // CHỈ HIỆN COMPLETION SCREEN NẾU LESSON ĐÃ HOÀN THÀNH TOÀN BỘ
             window.LessonCommonUI.checkAndDisplayCompletion();
         }
     }
 
-    // 4. Repeat Lesson Button Handler is in LessonCommonUI.
+    // --- Render Functions ---
+    function renderCurrentResult(data) {
+        if (!currentResultBody) return;
+
+        let colorClass = data.score >= 80 ? 'score-success' : (data.score >= 50 ? 'score-warning' : 'score-danger');
+
+        let html = `
+            <div class="speaking-result-you-said">
+                <strong>You said:</strong> <span>${data.transcribedText || '(Nothing detected)'}</span>
+            </div>
+            <div class="speaking-result-score ${colorClass}">
+                Score: ${data.score}%
+            </div>
+            <div class="speaking-result-feedback">${data.feedback || ''}</div>
+        `;
+
+        // Audio playback nếu có URL
+        if (data.audioUrl) {
+            html += `
+                <div class="speaking-result-audio">
+                    <audio controls src="${data.audioUrl}" preload="none"></audio>
+                </div>
+            `;
+        }
+
+        currentResultBody.innerHTML = html;
+        currentResultBody.className = 'speaking-result-card-body';
+    }
+
+    function renderBestResult(best) {
+        if (!bestResultBody || !bestResultArea) return;
+
+        let colorClass = best.score >= 80 ? 'score-success' : (best.score >= 50 ? 'score-warning' : 'score-danger');
+
+        let html = `
+            <div class="speaking-result-you-said">
+                <strong>You said:</strong> <span>${best.transcribedText || '(Nothing detected)'}</span>
+            </div>
+            <div class="speaking-result-score ${colorClass}">
+                Score: ${best.score}%
+            </div>
+            <div class="speaking-result-feedback">${best.feedback || ''}</div>
+        `;
+
+        if (best.audioUrl) {
+            html += `
+                <div class="speaking-result-audio">
+                    <audio controls src="${best.audioUrl}" preload="none"></audio>
+                </div>
+            `;
+        }
+
+        bestResultBody.innerHTML = html;
+        bestResultArea.style.display = '';
+    }
 
     // 5. Proactive Init
     if (window.LessonState && window.LessonState.sentences && window.LessonState.sentences.length > 0) {

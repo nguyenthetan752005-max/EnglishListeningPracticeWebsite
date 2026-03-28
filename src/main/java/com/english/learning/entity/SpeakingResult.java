@@ -1,8 +1,9 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.SpeakingResultType;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -14,12 +15,22 @@ public class SpeakingResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Double accuracy;
-    private String recognizedText;
-    private String userAudioUrl;
+    private Integer score; // 0-100
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @Column(columnDefinition = "TEXT")
+    private String recognizedText;
+
+    private String userAudioUrl; // Cloudinary URL
+
+    @Column(columnDefinition = "TEXT")
+    private String feedback; // AI feedback text
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "result_type")
+    private SpeakingResultType resultType; // BEST or CURRENT
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "sentence_id")

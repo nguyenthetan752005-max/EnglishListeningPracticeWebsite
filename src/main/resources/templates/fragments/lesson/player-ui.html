@@ -162,9 +162,24 @@
             </button>
             <span class="speaking-record-label">Tap to speak</span>
         </div>
-        <!-- Result Placeholder -->
-        <div class="speaking-result-placeholder" id="speakingResultArea">
-            Your results will appear here
+        <!-- Results: Best + Current -->
+        <div class="speaking-results-container" id="speakingResultsContainer">
+            <!-- Best Result -->
+            <div class="speaking-result-card speaking-result-best" id="bestResultArea" style="display:none;">
+                <div class="speaking-result-card-header">
+                    <i class="fas fa-trophy"></i> Best Result
+                </div>
+                <div class="speaking-result-card-body" id="bestResultBody"></div>
+            </div>
+            <!-- Current Result -->
+            <div class="speaking-result-card speaking-result-current" id="currentResultArea">
+                <div class="speaking-result-card-header">
+                    <i class="fas fa-microphone-alt"></i> Current Result
+                </div>
+                <div class="speaking-result-card-body speaking-result-placeholder" id="currentResultBody">
+                    Your results will appear here
+                </div>
+            </div>
         </div>
     </div>
 
