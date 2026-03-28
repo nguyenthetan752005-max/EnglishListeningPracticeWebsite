@@ -5,15 +5,17 @@ import com.english.learning.entity.Section;
 import com.english.learning.service.LessonService;
 import com.english.learning.service.SectionService;
 import com.english.learning.service.SentenceService;
+import com.english.learning.service.UserProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.english.learning.entity.Sentence;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Controller
 public class LessonController {
@@ -28,32 +30,63 @@ public class LessonController {
     private SentenceService sentenceService;
 
     @Autowired
+    private UserProgressService userProgressService;
+
+    @Autowired
     private com.english.learning.service.HintService hintService;
 
     @GetMapping("/section/{id}/lessons")
     public String getLessons(@PathVariable Long id, Model model) {
         Section section = sectionService.getSectionById(id)
                 .orElseThrow(() -> new RuntimeException("Section không tồn tại!"));
+        
+        // Chỉ lấy các bài học có practiceType là LISTENING cho trang Dictation
+        List<Lesson> listeningLessons = lessonService.getLessonsBySectionId(id).stream()
+                .filter(l -> l.getPracticeType() == com.english.learning.enums.PracticeType.LISTENING)
+                .toList();
+
         model.addAttribute("section", section);
-        model.addAttribute("lessons", lessonService.getLessonsBySectionId(id));
+        model.addAttribute("lessons", listeningLessons);
         return "section/lessons";
     }
 
     @GetMapping("/lesson/{id}")
-    public String getLesson(@PathVariable Long id, Model model) {
-        Lesson lesson = lessonService.getLessonById(id)
-                .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
-        
-        // Lấy danh sách câu
+    public String getLesson(@PathVariable Long id, 
+                            @RequestParam(required = false) Integer sentenceIndex,
+                            Model model, HttpSession session) {
+        Optional<Lesson> lessonOpt = lessonService.getLessonById(id);
+        if (lessonOpt.isEmpty()) {
+            return "redirect:/";
+        }
+
+        Lesson lesson = lessonOpt.get();
         List<Sentence> sentences = sentenceService.getSentencesByLessonId(id);
-        
-        // Dùng HintService để lấy map
-        Map<Long, List<String>> hintsMap = hintService.getHintsMap(sentences);
+
+        if (sentences == null || sentences.isEmpty()) {
+            return "redirect:/";
+        }
+
+        com.english.learning.dto.LessonNavigationDTO navigation = lessonService.getLessonNavigation(lesson, com.english.learning.enums.PracticeType.LISTENING);
+        Lesson nextLesson = navigation.getNextLesson();
+        boolean isLastLessonInSection = navigation.isLastLessonInSection();
+        Section section = lesson.getSection();
 
         model.addAttribute("lesson", lesson);
         model.addAttribute("sentences", sentences);
-        model.addAttribute("hintsMap", hintsMap); // Truyền map này xuống Thymeleaf
-        model.addAttribute("category", lesson.getSection().getCategory());
+        model.addAttribute("hintsMap", hintService.getHintsMap(sentences));
+
+        if (session.getAttribute("loggedInUser") != null) {
+            com.english.learning.entity.User user = (com.english.learning.entity.User) session.getAttribute("loggedInUser");
+            model.addAttribute("userProgressMap", userProgressService.getUserProgressMapAsStrings(user.getId(), id));
+        } else {
+            model.addAttribute("userProgressMap", new java.util.HashMap<>());
+        }
+
+        model.addAttribute("category", section != null ? section.getCategory() : null);
+        model.addAttribute("section", section);
+        model.addAttribute("nextLesson", nextLesson);
+        model.addAttribute("isLastLessonInSection", isLastLessonInSection);
+        model.addAttribute("initialSentenceIndex", sentenceIndex != null ? sentenceIndex : 0);
         
         return "lesson/dictation";
     }

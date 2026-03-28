@@ -24,4 +24,33 @@ public class LessonServiceImpl implements LessonService {
     public Optional<Lesson> getLessonById(Long id) {
         return lessonRepository.findById(id);
     }
+
+    @Override
+    public com.english.learning.dto.LessonNavigationDTO getLessonNavigation(Lesson currentLesson, com.english.learning.enums.PracticeType practiceType) {
+        com.english.learning.entity.Section section = currentLesson.getSection();
+        Lesson nextLesson = null;
+        boolean isLastLessonInSection = false;
+
+        if (section != null) {
+            List<Lesson> sectionLessons = getLessonsBySectionId(section.getId()).stream()
+                    .filter(l -> l.getPracticeType() == practiceType)
+                    .sorted(java.util.Comparator.comparing(Lesson::getId))
+                    .toList();
+            
+            int currentIndex = -1;
+            for (int i = 0; i < sectionLessons.size(); i++) {
+                if (sectionLessons.get(i).getId().equals(currentLesson.getId())) {
+                    currentIndex = i;
+                    break;
+                }
+            }
+            
+            if (currentIndex >= 0 && currentIndex < sectionLessons.size() - 1) {
+                nextLesson = sectionLessons.get(currentIndex + 1);
+            } else if (currentIndex == sectionLessons.size() - 1) {
+                isLastLessonInSection = true;
+            }
+        }
+        return new com.english.learning.dto.LessonNavigationDTO(nextLesson, isLastLessonInSection);
+    }
 }

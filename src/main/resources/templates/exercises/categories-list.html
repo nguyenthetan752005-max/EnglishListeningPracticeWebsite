@@ -19,8 +19,17 @@
         <div class="grid-container">
             <!-- Loop over categories -->
             <a th:href="@{'/category/' + ${cat.id} + '/sections'}" class="category-card" th:each="cat : ${categories}">
-                <!-- Thumbnail from DB (Cloudinary URL) -->
-                <img th:src="${cat.imageUrl}" alt="Cover Image" class="category-image">
+                <!-- Avatar + Status Wrapper -->
+                <div class="category-avatar-wrapper">
+                    <!-- Thumbnail from DB (Cloudinary URL) -->
+                    <img th:src="${cat.imageUrl}" alt="Cover Image" class="category-image">
+
+                    <!-- Status Badge under avatar -->
+                    <div th:if="${categoryStatuses != null and categoryStatuses.get(cat.id) != null}" 
+                         th:class="'category-status-badge status-' + ${categoryStatuses.get(cat.id).name().toLowerCase()}"
+                         th:text="${categoryStatuses.get(cat.id).name() == 'COMPLETED' ? 'Completed' : 'In Progress'}">
+                    </div>
+                </div>
 
                 <div class="category-info">
                     <!-- Title -->
