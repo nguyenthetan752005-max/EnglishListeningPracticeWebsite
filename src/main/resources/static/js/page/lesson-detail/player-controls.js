@@ -23,22 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
-    const statusBadge = document.getElementById('sentenceStatusBadge');
-    
     // 2. State Listeners
-    function updateStatusBadge(sentenceId) {
-        if (!statusBadge || !window.USER_PROGRESS_MAP) return;
-        
-        const status = window.USER_PROGRESS_MAP[sentenceId];
-        if (status) {
-            statusBadge.style.display = 'inline-block';
-            statusBadge.textContent = status.replace('_', ' ');
-            statusBadge.className = 'sentence-status-badge status-' + status.toLowerCase().replace('_', '-');
-        } else {
-            statusBadge.style.display = 'none';
-        }
-    }
-
     function updateNavArrows(index) {
         if (!nextBtn) return;
         const isLastSentence = index >= window.LessonState.sentences.length - 1;
@@ -54,48 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeDisplay) timeDisplay.textContent = '0:00 / 0:00';
         
         updateNavArrows(e.detail.index);
-        updateStatusBadge(e.detail.sentence.id);
-    });
-
-    document.addEventListener('progress:updated', (e) => {
-        const { sentenceId, status } = e.detail;
-        if (window.USER_PROGRESS_MAP) {
-            window.USER_PROGRESS_MAP[sentenceId] = status;
-            const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
-            if (currentSentence && currentSentence.id == sentenceId) {
-                updateStatusBadge(sentenceId);
-            }
-        }
     });
 
     document.addEventListener('lesson:playState', (e) => {
         const icon = e.detail.isPlaying ? window.LessonState.pauseSvg : window.LessonState.playSvg;
         if (playBtnAudio) playBtnAudio.innerHTML = icon;
         if (playBtnVideo) playBtnVideo.innerHTML = icon;
-
-        // --- LƯU TIẾN ĐỘ IN_PROGRESS KHI PLAY ---
-        if (e.detail.isPlaying && window.CURRENT_USER_ID) {
-            const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
-            const currentStatus = window.USER_PROGRESS_MAP[currentSentence.id];
-            
-            if (!currentStatus) {
-                const formData = new URLSearchParams();
-                formData.append('userId', window.CURRENT_USER_ID);
-                formData.append('sentenceId', currentSentence.id);
-
-                fetch('/progress/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
-                })
-                .then(r => r.json())
-                .then(data => {
-                    window.USER_PROGRESS_MAP[currentSentence.id] = 'IN_PROGRESS';
-                    updateStatusBadge(currentSentence.id);
-                })
-                .catch(err => console.error("Failed to update progress:", err));
-            }
-        }
     });
 
     document.addEventListener('lesson:timeUpdate', (e) => {
@@ -143,6 +92,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (counterEl) counterEl.textContent = idx + 1;
         if (totalEl) totalEl.textContent = window.LessonState.sentences.length;
         updateNavArrows(idx);
-        updateStatusBadge(window.LessonState.sentences[idx].id);
     }
 });

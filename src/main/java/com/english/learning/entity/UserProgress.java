@@ -1,6 +1,5 @@
 package com.english.learning.entity;
 
-import com.english.learning.enums.UserProgressStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "user_progress", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "sentence_id"})
+    @UniqueConstraint(columnNames = {"user_id", "lesson_id"})
 })
 public class UserProgress {
     @Id
@@ -22,11 +21,11 @@ public class UserProgress {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "sentence_id")
-    private Sentence sentence;
+    @JoinColumn(name = "lesson_id")
+    private Lesson lesson;
 
-    @Enumerated(EnumType.STRING)
-    private UserProgressStatus status;
+    private Integer completedSentences;
+    private String status;
 
     @UpdateTimestamp
     private LocalDateTime lastAccessed;

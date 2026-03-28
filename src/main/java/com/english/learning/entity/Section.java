@@ -1,6 +1,5 @@
 package com.english.learning.entity;
 
-import com.english.learning.enums.PracticeType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,9 +14,6 @@ public class Section {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
-
-    @Enumerated(EnumType.STRING)
-    private PracticeType practiceType = PracticeType.LISTENING;
 
     private String name;
     private String description;

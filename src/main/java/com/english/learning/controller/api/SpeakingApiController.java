@@ -1,17 +1,12 @@
 package com.english.learning.controller.api;
 
 import com.english.learning.dto.SpeakingResultDTO;
-import com.english.learning.entity.Sentence;
-import com.english.learning.repository.SentenceRepository;
-import com.english.learning.service.WitAIAudioService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import java.util.Arrays;
-
 import com.english.learning.entity.User;
 import com.english.learning.service.SpeakingService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/speaking")

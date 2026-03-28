@@ -1,5 +1,6 @@
 package com.english.learning.service.impl;
 
+import com.english.learning.enums.CommentType;
 import com.english.learning.repository.CommentRepository;
 import com.english.learning.repository.CommentVoteRepository;
 import com.english.learning.repository.SentenceRepository;
@@ -36,9 +37,9 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<Comment> getTopLevelCommentsWithVotes(Long sentenceId) {
+    public List<Comment> getTopLevelCommentsWithVotes(Long sentenceId, CommentType commentType) {
         List<Comment> comments = commentRepository
-                .findBySentence_IdAndParentIsNullOrderByCreatedAtDesc(sentenceId);
+                .findBySentence_IdAndCommentTypeAndParentIsNullOrderByCreatedAtDesc(sentenceId, commentType);
         comments.forEach(this::populateVoteCounts);
         return comments;
     }
@@ -63,9 +64,14 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Comment addComment(Long sentenceId, Long userId, String content, Long parentId) {
+    public Comment addComment(Long sentenceId, Long userId, String content, Long parentId, CommentType source) {
         Comment comment = new Comment();
         comment.setContent(content);
+        if (source != null) {
+            comment.setCommentType(source);
+        } else {
+            comment.setCommentType(CommentType.LISTENING);
+        }
 
         Sentence sentence = sentenceRepository.findById(sentenceId)
                 .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));

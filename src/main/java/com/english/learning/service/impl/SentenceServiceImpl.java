@@ -24,17 +24,8 @@ public class SentenceServiceImpl implements SentenceService {
     @Override
     public List<Sentence> getSentencesByLessonId(Long lessonId) {
         List<Sentence> sentences = sentenceRepository.findByLesson_IdOrderByOrderIndex(lessonId);
-        for (Sentence sentence : sentences) {
-            String text = sentence.getContent();
-            text = text.replaceAll("<[^>]*>", "");
-            text = text.replaceAll("\\[.*?\\]", "").trim();
-            if (text.startsWith("- ")) {
-                text = text.substring(2).trim();
-            }
-            text = text.replaceAll("\\s+", " ");
-            sentence.setContent(text);
-            sentence.setProperNouns(hintService.extractProperNouns(text));
-        }
+        // Enrich từng câu với danh từ riêng dùng HintService
+        sentences.forEach(s -> s.setProperNouns(hintService.extractProperNouns(s.getContent())));
         return sentences;
     }
 

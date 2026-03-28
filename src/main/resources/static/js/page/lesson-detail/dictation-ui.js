@@ -16,14 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextBtn2 = document.getElementById('nextBtn2');
     const replayBtn = document.getElementById('replayBtn');
 
-    // Lesson completion elements
-    const completionScreen = document.getElementById('lessonCompletionScreen');
-    const repeatLessonBtn = document.getElementById('repeatLessonBtn');
-
-    // 2. Helper Functions
-    // Shared utilities are in LessonCommonUI
-
-    // 3. State Listeners
+    // 2. State Listeners
     function handleSentenceChange(index, sentence) {
         // Reset Inputs & UI
         if (inputEl) {
@@ -89,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join(' ');
     }
 
-    function showCompleted(result, statusClass, statusHtml, shouldSaveProgress = true) {
+    function showCompleted(result, statusClass, statusHtml) {
         feedbackEl.style.display = 'block';
         feedbackEl.className = 'feedback-area ' + statusClass;
         feedbackEl.innerHTML = statusHtml;
@@ -103,11 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputEl) inputEl.disabled = true;
         if (checkBtn) checkBtn.style.display = 'none';
         if (skipBtn) skipBtn.style.display = 'none';
-        
-        // Check if this is the last sentence
-        const lastSentence = window.LessonCommonUI.isLastSentence();
         if (nextBtn2) {
-            nextBtn2.style.display = lastSentence ? 'none' : '';
+            const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
+            nextBtn2.style.display = isLastSentence ? 'none' : '';
         }
         if (replayBtn) replayBtn.style.display = '';
 
@@ -121,15 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lessonId = (typeof LESSON_ID !== 'undefined') ? LESSON_ID : 0;
                 window.renderMockComments(lessonId, currentSentence.content);
             }
-        }
-
-        // --- CHỈ HIỆN COMPLETION SCREEN NẾU LESSON ĐÃ HOÀN THÀNH TOÀN BỘ ---
-        window.LessonCommonUI.checkAndDisplayCompletion();
-
-        // --- LƯU TIẾN ĐỘ NGƯỜI DÙNG (chỉ khi shouldSaveProgress = true) ---
-        if (shouldSaveProgress) {
-            const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex].id;
-            window.LessonCommonUI.saveProgressCompleted(sentenceId);
         }
     }
 
@@ -162,21 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (skipBtn) {
-        skipBtn.addEventListener('click', () => {
-            const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
-            if (currentSentence) {
-                // --- LƯU TIẾN ĐỘ SKIPPED ---
-                window.LessonCommonUI.saveProgressSkipped(currentSentence.id);
-
-                showCompleted({ correct: false, correctSentence: currentSentence.content }, 'feedback-skipped', 
-                    '<strong>Answer:</strong> ' + currentSentence.content, false);
+        skipBtn.addEventListener('click', async () => {
+            const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex].id;
+            try {
+                const response = await fetch('/api/dictation/skip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sentenceId: sentenceId })
+                });
+                if (!response.ok) throw new Error('API error');
+                const result = await response.json();
+                showCompleted(result, 'feedback-skipped', 'Skipped.');
+            } catch (err) {
+                console.error('Dictation skip failed:', err);
             }
         });
     }
 
-    // 4. Repeat Lesson Button Handler is in LessonCommonUI.
-
-    // 5. Proactive Init
+    // 4. Proactive Init
     if (window.LessonState && window.LessonState.sentences.length > 0) {
         const curIdx = window.LessonState.currentIndex;
         handleSentenceChange(curIdx, window.LessonState.sentences[curIdx]);

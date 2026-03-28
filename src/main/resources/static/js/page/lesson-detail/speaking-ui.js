@@ -21,10 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const recordBtn = document.getElementById('recordBtn');
     const recordLabel = document.querySelector('.speaking-record-label');
 
-    // Lesson completion elements
-    const completionScreen = document.getElementById('lessonCompletionScreen');
-    const repeatLessonBtn = document.getElementById('repeatLessonBtn');
-
     // Mặc định ẩn nút Check vì Speaking dùng RecordBtn để check luôn
     if (checkBtn) checkBtn.style.display = 'none';
 
@@ -57,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hintArea) {
             const nouns = sentence.properNouns || [];
             if (nouns.length > 0) {
-                hintArea.innerHTML = ' <strong>Hint:</strong> ' + nouns.map(n => '<span class="hint-proper-noun">' + n + '</span>').join(', ');
+                hintArea.innerHTML = '💡 <strong>Hint:</strong> ' + nouns.map(n => '<span class="hint-proper-noun">' + n + '</span>').join(', ');
                 hintArea.style.display = 'block';
             } else {
                 hintArea.style.display = 'none';
@@ -96,14 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
             if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
             if (replayBtn) replayBtn.style.display = '';
-
-            // --- LƯU TIẾN ĐỘ KHI NHẤN SKIP ---
-            const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
-            if (currentSentence && currentSentence.id) {
-                window.LessonCommonUI.saveProgressSkipped(currentSentence.id, function() {
-                    console.log("Progress saved (skipped)");
-                });
-            }
         });
     }
 
@@ -195,11 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Gửi Audio lên Spring Backend ---
     function sendAudioToBackend(audioBlob) {
         const formData = new FormData();
-        
-        // Gửi audio dạng wav
         formData.append('audio', audioBlob, 'speaking-audio.wav');
-        
-        // Gửi referenceText
         const referenceText = refTextEl ? refTextEl.textContent : '';
         formData.append('referenceText', referenceText);
 
@@ -245,24 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (recordLabel) recordLabel.textContent = 'Tap to try again';
-        
-        // Cập nhật các nút điều hướng
         if (skipBtn) skipBtn.style.display = 'none';
         const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
         if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
         if (replayBtn) replayBtn.style.display = '';
-
-        // --- LƯU TIẾN ĐỘ NGƯỜI DÙNG ---
-        // Coi như hoàn thành nếu đạt từ 50% trở lên
-        if (data.score >= 50 && window.LessonCommonUI) {
-            const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex].id;
-            window.LessonCommonUI.saveProgressCompleted(sentenceId, function() {
-                console.log("Speaking progress saved");
-            });
-
-            // CHỈ HIỆN COMPLETION SCREEN NẾU LESSON ĐÃ HOÀN THÀNH TOÀN BỘ
-            window.LessonCommonUI.checkAndDisplayCompletion();
-        }
     }
 
     // --- Render Functions ---
@@ -321,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bestResultArea.style.display = '';
     }
 
-    // 5. Proactive Init
+    // 4. Proactive Init
     if (window.LessonState && window.LessonState.sentences && window.LessonState.sentences.length > 0) {
         const curIdx = window.LessonState.currentIndex || 0;
         handleSentenceChange(curIdx, window.LessonState.sentences[curIdx]);

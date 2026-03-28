@@ -38,9 +38,6 @@
                 <h2 class="section-title">
                     <span th:text="${dto.section.name}">Section 1</span>
                     <span class="lesson-count" th:text="'(' + ${dto.lessons.size()} + ' lessons)'">(11 lessons)</span>
-                    <span th:if="${dto.sectionStatus != null}" 
-                          th:class="'status-badge status-' + ${dto.sectionStatus.name().toLowerCase()}"
-                          th:text="${dto.sectionStatus.name() == 'COMPLETED' ? 'Completed' : 'In Progress'}"></span>
                 </h2>
                 <span class="toggle-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -52,12 +49,7 @@
             <!-- Accordion Body (Các Lesson) -->
             <div class="lessons-grid" style="display: none;">
                 <a th:href="@{'/lesson/' + ${lesson.id}}" class="lesson-card" th:each="lesson : ${dto.lessons}" th:attr="data-level=${lesson.level}">
-                    <h3 class="lesson-title">
-                        <span th:text="${lesson.title}">1. First snowfall</span>
-                        <span th:if="${dto.lessonStatuses != null and dto.lessonStatuses.get(lesson.id) != null}" 
-                              th:class="'status-badge status-' + ${dto.lessonStatuses.get(lesson.id).name().toLowerCase()}"
-                              th:text="${dto.lessonStatuses.get(lesson.id).name() == 'COMPLETED' ? 'Completed' : 'In Progress'}"></span>
-                    </h3>
+                    <h3 class="lesson-title" th:text="${lesson.title}">1. First snowfall</h3>
                     <p class="lesson-meta" th:text="${lesson.totalSentences} + ' parts - Vocab level: ' + ${lesson.level}">21 parts - Vocab level: A1</p>
                 </a>
             </div>
