@@ -265,6 +265,22 @@
         } else {
             const sentence = window.LessonState.sentences[window.LessonState.currentIndex];
             currentSentenceEndTime = sentence.endTime;
+            
+            // Nếu video đang dừng lại ở cuối câu (hoặc đã hết video), 
+            // bấm Play sẽ phát lại từ đầu câu (giống với audio).
+            const currentTime = player.getCurrentTime();
+            if (sentence.endTime != null && currentTime >= sentence.endTime - 0.2) {
+                if (sentence.startTime != null) {
+                    player.seekTo(sentence.startTime, true);
+                }
+            } else if (state === YT.PlayerState.ENDED) {
+                if (sentence.startTime != null) {
+                    player.seekTo(sentence.startTime, true);
+                } else {
+                    player.seekTo(0, true);
+                }
+            }
+            
             player.playVideo();
         }
     });
