@@ -23,8 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function loadComments(sentenceId) {
-        const sourceParam = window.COMMENT_SOURCE ? `?source=${window.COMMENT_SOURCE}` : '';
-        fetch(`/sentence/${sentenceId}/comments${sourceParam}`)
+        fetch(`/sentence/${sentenceId}/comments`)
             .then(r => r.json())
             .then(comments => {
                 renderComments(comments);
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('sentenceId', currentSentenceId);
             formData.append('content', content);
             formData.append('parentId', parentId);
-            if (window.COMMENT_SOURCE) formData.append('source', window.COMMENT_SOURCE);
 
             fetch('/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
                 .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); throw new Error('401'); } return r.json(); })
@@ -185,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new URLSearchParams();
             formData.append('sentenceId', currentSentenceId);
             formData.append('content', content);
-            if (window.COMMENT_SOURCE) formData.append('source', window.COMMENT_SOURCE);
 
             fetch('/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
                 .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); throw new Error('401'); } return r.json(); })

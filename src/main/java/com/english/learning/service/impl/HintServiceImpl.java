@@ -7,10 +7,21 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class HintServiceImpl implements HintService {
+
+    private static final Set<String> EXCLUDED_WORDS = Set.of(
+            "i", "me", "my", "mine", "myself",
+            "we", "us", "our", "ours", "ourselves",
+            "you", "your", "yours", "yourself", "yourselves",
+            "he", "him", "his", "himself",
+            "she", "her", "hers", "herself",
+            "it", "its", "itself",
+            "they", "them", "their", "theirs", "themselves"
+    );
 
     @Override
     public List<String> extractProperNouns(String content) {
@@ -38,7 +49,7 @@ public class HintServiceImpl implements HintService {
             if (Character.isUpperCase(firstChar)) {
                 // Loại bỏ dấu câu đi kèm (ví dụ: "Smith," → "Smith")
                 String cleanWord = currentWord.replaceAll("[^a-zA-Z'-]", "");
-                if (!cleanWord.isEmpty()) {
+                if (!cleanWord.isEmpty() && !EXCLUDED_WORDS.contains(cleanWord.toLowerCase())) {
                     properNouns.add(cleanWord);
                 }
             }

@@ -1,5 +1,6 @@
 package com.english.learning.entity;
 
+import com.english.learning.enums.PracticeType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,6 +19,9 @@ public class Sentence {
     @ManyToOne
     @JoinColumn(name = "lesson_id")
     private Lesson lesson;
+
+    @Enumerated(EnumType.STRING)
+    private PracticeType practiceType = PracticeType.LISTENING;
 
     private String audioUrl;
     

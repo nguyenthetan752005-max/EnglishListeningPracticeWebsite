@@ -1,32 +1,40 @@
 package com.english.learning.controller.api;
 
 import com.english.learning.dto.SpeakingResultDTO;
+import com.english.learning.entity.Sentence;
+import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.WitAIAudioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/speaking")
 public class SpeakingApiController {
 
     private final WitAIAudioService witAIAudioService;
+    private final SentenceRepository sentenceRepository;
 
-    public SpeakingApiController(WitAIAudioService witAIAudioService) {
+    public SpeakingApiController(WitAIAudioService witAIAudioService, SentenceRepository sentenceRepository) {
         this.witAIAudioService = witAIAudioService;
+        this.sentenceRepository = sentenceRepository;
     }
 
     @PostMapping("/evaluate")
     public ResponseEntity<SpeakingResultDTO> evaluateSpeaking(
             @RequestParam("audio") MultipartFile audio,
-            @RequestParam("referenceText") String referenceText) {
+            @RequestParam("sentenceId") Long sentenceId) {
         try {
-            // 1. Gửi file ghi âm qua Whisper để nhận dạng văn bản
+            // 1. Lấy reference text từ DB dựa trên sentenceId
+            Sentence sentence = sentenceRepository.findById(sentenceId)
+                    .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
+            String referenceText = sentence.getContent();
+
+            // 2. Gửi file ghi âm qua Whisper để nhận dạng văn bản
             String transcribedText = witAIAudioService.transcribeAudio(audio);
 
-            // 2. Chấm điểm văn bản vừa nhận dạng với câu mẫu
+            // 3. Chấm điểm văn bản vừa nhận dạng với câu mẫu
             SpeakingResultDTO result = calculateResult(referenceText, transcribedText);
 
             return ResponseEntity.ok(result);

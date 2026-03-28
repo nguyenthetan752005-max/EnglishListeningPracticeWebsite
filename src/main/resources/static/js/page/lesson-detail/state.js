@@ -10,9 +10,12 @@ sentencesList.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
 
 const isVideo = (typeof LESSON_TYPE !== 'undefined') && LESSON_TYPE === 'VIDEO';
 
+// Get initial sentence index from URL parameter (passed from backend)
+const initialIndex = (typeof INITIAL_SENTENCE_INDEX !== 'undefined') ? INITIAL_SENTENCE_INDEX : 0;
+
 window.LessonState = {
     sentences: sentencesList,
-    currentIndex: 0,
+    currentIndex: initialIndex,
     isPlaying: false,
     isVideo: isVideo,
     playSvg: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>',
@@ -141,9 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init first sentence
     if (window.LessonState.sentences.length > 0) {
+        // Use INITIAL_SENTENCE_INDEX if provided, otherwise default to 0
+        const startIndex = (typeof INITIAL_SENTENCE_INDEX !== 'undefined') ? INITIAL_SENTENCE_INDEX : 0;
+        const validIndex = Math.max(0, Math.min(startIndex, window.LessonState.sentences.length - 1));
+        
         // Delay 1 chút để các listener ở UI scripts kịp đăng ký
         setTimeout(() => {
-            window.LessonState.loadSentence(0);
+            window.LessonState.loadSentence(validIndex);
         }, 50);
     }
 });

@@ -45,6 +45,13 @@
     border: 1px solid var(--border-color);
 }
 
+/* Wrapper for avatar + status badge */
+.category-avatar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .category-info {
     flex: 1;
     display: flex;
@@ -103,6 +110,51 @@
     line-height: normal;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Đổ bóng nhẹ tạo độ nổi */
     flex-shrink: 0;           /* Không cho badge bị bóp méo khi tiêu đề dài */
+}
+
+/* Status Badge positioned under avatar */
+.category-status-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    text-align: center;
+    align-self: flex-start;
+}
+
+.category-status-badge.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.category-status-badge.status-in_progress {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+/* Status Badge for Categories (inline version - legacy) */
+.status-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.status-badge.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-in_progress {
+    background-color: #e2e3e5;
+    color: #383d41;
 }
 
 /* Các phần phụ khác */

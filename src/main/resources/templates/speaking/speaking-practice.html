@@ -134,6 +134,9 @@
 
     </main>
 
+    <!-- LESSON COMPLETION SCREEN OVERLAY -->
+    <div th:replace="~{fragments/lesson/completion-screen :: completionScreen}"></div>
+
     <div th:replace="~{fragments/footer :: footer}"></div>
 
     <!-- Pass sentence data and lesson type from Thymeleaf to JavaScript -->
@@ -152,14 +155,22 @@
                 }
             });
         }
+
+        // --- LESSON NAVIGATION DATA ---
+        const NEXT_LESSON_ID = /*[[${nextLesson != null ? nextLesson.id : null}]]*/ null;
+        const NEXT_LESSON_TITLE = /*[[${nextLesson != null ? nextLesson.title : null}]]*/ null;
+        const IS_LAST_LESSON_IN_SECTION = /*[[${isLastLessonInSection}]]*/ false;
+        const SECTION_ID = /*[[${section != null ? section.id : null}]]*/ null;
+        const INITIAL_SENTENCE_INDEX = /*[[${initialSentenceIndex}]]*/ 0;
     </script>
     <script src="/js/page/lesson-detail/state.js?v=9.0"></script>
+    <script src="/js/page/lesson-detail/lesson-common-ui.js?v=9.0"></script>
     <script src="/js/page/lesson-detail/tabs.js?v=9.0"></script>
     <script src="/js/page/lesson-detail/player-controls.js?v=9.0"></script>
     <script src="/js/page/lesson-detail/speaking-ui.js?v=9.0"></script>
     <script th:inline="javascript">
         window.CURRENT_USER_ID = /*[[${session.loggedInUser != null ? session.loggedInUser.id : null}]]*/ null;
-        window.COMMENT_SOURCE = 'SPEAKING';
+        window.USER_PROGRESS_MAP = /*[[${userProgressMap}]]*/ {};
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.6.2/RecordRTC.min.js"></script>
