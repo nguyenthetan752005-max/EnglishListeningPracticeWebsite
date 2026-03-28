@@ -11,6 +11,7 @@ import com.english.learning.entity.Sentence;
 import com.english.learning.exception.SentenceNotFoundException;
 import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.DictationService;
+import com.english.learning.service.TextComparisonService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,82 +21,22 @@ import java.util.List;
 public class DictationServiceImpl implements DictationService {
 
     private final SentenceRepository sentenceRepository;
+    private final TextComparisonService textComparisonService;
 
-    public DictationServiceImpl(SentenceRepository sentenceRepository) {
+    public DictationServiceImpl(SentenceRepository sentenceRepository, TextComparisonService textComparisonService) {
         this.sentenceRepository = sentenceRepository;
+        this.textComparisonService = textComparisonService;
     }
 
     /**
-     * Loại bỏ dấu câu để so sánh công bằng.
-     * "Jane?" -> "jane", "Hello!" -> "hello"
-     */
-    private String normalizeWord(String word) {
-        return word.replaceAll("[.,?!;:'\"-]", "").toLowerCase().trim();
-    }
-
-    /**
-     * THUẬT TOÁN CHÍNH: Chấm đáp án theo từng từ.
-     *
-     * Luật:
-     * - So sánh không phân biệt hoa thường, bỏ qua dấu câu.
-     * - Đếm số từ đúng liên tiếp từ đầu (matchedCount).
-     * - Gợi ý: hiện (matchedCount + 1) từ gốc, ẩn phần còn lại.
-     * - Từ thứ (matchedCount) là từ MỚI được gợi ý (tô xanh).
+     * Chấm đáp án theo từng từ. (Sử dụng TextComparisonService chung)
      */
     @Override
     public DictationResultDTO checkAnswer(Long sentenceId, String userInput) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
                 .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
-        String correctContent = sentence.getContent();
-
-        // Tách từ (giữ nguyên dấu câu gốc để hiển thị)
-        String[] correctWords = correctContent.trim().split("\\s+");
-        String[] userWords = userInput.trim().split("\\s+");
-
-        // Đếm số từ đúng liên tiếp (bỏ qua dấu câu khi so sánh)
-        int matchedCount = 0;
-        for (int i = 0; i < Math.min(correctWords.length, userWords.length); i++) {
-            if (normalizeWord(correctWords[i]).equals(normalizeWord(userWords[i]))) {
-                matchedCount++;
-            } else {
-                break;
-            }
-        }
-
-        boolean isCorrect = (matchedCount == correctWords.length);
-
-        // Tạo mảng hint
-        List<String> hintWords = new ArrayList<>();
-        int newHintIndex = -1;
-
-        if (isCorrect) {
-            // Đúng hết: hiện toàn bộ câu gốc
-            for (String w : correctWords) {
-                hintWords.add(w);
-            }
-        } else {
-            // Số từ hiện ra = matchedCount + 1
-            int revealCount = Math.min(matchedCount + 1, correctWords.length);
-            newHintIndex = matchedCount; // Từ mới gợi ý = vị trí ngay sau phần đúng
-
-            for (int i = 0; i < correctWords.length; i++) {
-                if (i < revealCount) {
-                    hintWords.add(correctWords[i]); // Hiện từ gốc (giữ nguyên hoa/thường + dấu câu)
-                } else {
-                    hintWords.add("***");
-                }
-            }
-        }
-
-        return new DictationResultDTO(
-                isCorrect,
-                matchedCount,
-                correctWords.length,
-                hintWords,
-                newHintIndex,
-                isCorrect ? correctContent : null
-        );
+        return textComparisonService.compareSequential(sentence.getContent(), userInput);
     }
 
     /**
