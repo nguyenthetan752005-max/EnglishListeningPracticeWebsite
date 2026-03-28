@@ -621,13 +621,42 @@
     font-size: 0.85rem;
     color: var(--text-muted);
 }
+/* Result Cards Container */
+.speaking-results-container {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
 
-/* Result Placeholder */
+/* Result Card (chung cho Best + Current) */
+.speaking-result-card {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    transition: box-shadow 0.3s;
+}
+
+.speaking-result-card-header {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.speaking-result-card-body {
+    padding: 16px;
+}
+
+/* Result Placeholder (khi chưa nói) */
 .speaking-result-placeholder {
     padding: 40px 20px;
-    margin-bottom: 24px;
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
+    border: none;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -635,6 +664,106 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Best card: gold/amber theme */
+.speaking-result-best {
+    border-color: #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+}
+
+.speaking-result-best .speaking-result-card-header {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    color: #92400e;
+    border-bottom: 1px solid #fde68a;
+}
+
+[data-theme="dark"] .speaking-result-best .speaking-result-card-header {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
+    color: #fbbf24;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+[data-theme="dark"] .speaking-result-best {
+    border-color: rgba(245, 158, 11, 0.35);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.06);
+}
+
+/* Current card: blue theme */
+.speaking-result-current {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(26, 115, 232, 0.1);
+}
+
+.speaking-result-current .speaking-result-card-header {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    color: #1e40af;
+    border-bottom: 1px solid #bfdbfe;
+}
+
+[data-theme="dark"] .speaking-result-current .speaking-result-card-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08));
+    color: #60a5fa;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="dark"] .speaking-result-current {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
+}
+
+/* Result content styles */
+.speaking-result-you-said {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.speaking-result-you-said span {
+    color: var(--text-secondary);
+}
+
+.speaking-result-score {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.score-success { color: #059669; }
+.score-warning { color: #d97706; }
+.score-danger  { color: #dc2626; }
+
+[data-theme="dark"] .score-success { color: #34d399; }
+[data-theme="dark"] .score-warning { color: #fbbf24; }
+[data-theme="dark"] .score-danger  { color: #f87171; }
+
+.speaking-result-feedback {
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.speaking-result-audio {
+    margin-top: 8px;
+}
+
+.speaking-result-audio audio {
+    width: 100%;
+    height: 36px;
+    border-radius: 6px;
+}
+
+.speaking-listening-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Responsive: Stack cards vertically on small screens */
+@media (max-width: 640px) {
+    .speaking-results-container {
+        flex-direction: column;
+    }
 }
 
 /* Pronunciation Area (hiện khi đúng hoặc skip) */
