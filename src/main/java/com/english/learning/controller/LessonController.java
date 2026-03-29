@@ -42,7 +42,7 @@ public class LessonController {
         
         // Chỉ lấy các bài học có practiceType là LISTENING cho trang Dictation
         List<Lesson> listeningLessons = lessonService.getLessonsBySectionId(id).stream()
-                .filter(l -> l.getPracticeType() == com.english.learning.enums.PracticeType.LISTENING)
+                .filter(l -> l.getSection().getCategory().getPracticeType() == com.english.learning.enums.PracticeType.LISTENING)
                 .toList();
 
         model.addAttribute("section", section);

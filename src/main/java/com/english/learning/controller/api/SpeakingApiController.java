@@ -1,42 +1,42 @@
 package com.english.learning.controller.api;
 
 import com.english.learning.dto.SpeakingResultDTO;
-import com.english.learning.entity.Sentence;
-import com.english.learning.repository.SentenceRepository;
-import com.english.learning.service.WitAIAudioService;
+import com.english.learning.entity.User;
+import com.english.learning.service.SpeakingService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/speaking")
 public class SpeakingApiController {
 
-    private final WitAIAudioService witAIAudioService;
-    private final SentenceRepository sentenceRepository;
+    private final SpeakingService speakingService;
 
-    public SpeakingApiController(WitAIAudioService witAIAudioService, SentenceRepository sentenceRepository) {
-        this.witAIAudioService = witAIAudioService;
-        this.sentenceRepository = sentenceRepository;
+    public SpeakingApiController(SpeakingService speakingService) {
+        this.speakingService = speakingService;
     }
 
+    /**
+     * Chấm điểm speaking: nhận audio + referenceText + sentenceId.
+     * Tự động lấy userId từ session.
+     */
     @PostMapping("/evaluate")
     public ResponseEntity<SpeakingResultDTO> evaluateSpeaking(
             @RequestParam("audio") MultipartFile audio,
-            @RequestParam("sentenceId") Long sentenceId) {
+            @RequestParam("referenceText") String referenceText,
+            @RequestParam(value = "sentenceId", required = false) Long sentenceId,
+            HttpSession session) {
         try {
-            // 1. Lấy reference text từ DB dựa trên sentenceId
-            Sentence sentence = sentenceRepository.findById(sentenceId)
-                    .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
-            String referenceText = sentence.getContent();
+            // Lấy userId từ session (có thể null nếu chưa đăng nhập)
+            Long userId = null;
+            User loggedInUser = (User) session.getAttribute("loggedInUser");
+            if (loggedInUser != null) {
+                userId = loggedInUser.getId();
+            }
 
-            // 2. Gửi file ghi âm qua Whisper để nhận dạng văn bản
-            String transcribedText = witAIAudioService.transcribeAudio(audio);
-
-            // 3. Chấm điểm văn bản vừa nhận dạng với câu mẫu
-            SpeakingResultDTO result = calculateResult(referenceText, transcribedText);
-
+            SpeakingResultDTO result = speakingService.evaluateSpeaking(audio, referenceText, userId, sentenceId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -44,41 +44,19 @@ public class SpeakingApiController {
         }
     }
 
-    private SpeakingResultDTO calculateResult(String reference, String transcribed) {
-        String refClean = reference.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase().trim();
-        String transClean = transcribed.replaceAll("[^a-zA-Z0-9 ]", "").toLowerCase().trim();
-
-        String[] refWords = refClean.split("\\s+");
-        String[] transWords = transClean.split("\\s+");
-
-        int matchCount = 0;
-        // Basic evaluation checking for presence of target words.
-        for (String word : refWords) {
-            if (Arrays.asList(transWords).contains(word)) {
-                matchCount++;
-            }
+    /**
+     * Lấy kết quả BEST + CURRENT đã lưu cho 1 câu (khi chuyển câu).
+     */
+    @GetMapping("/results")
+    public ResponseEntity<SpeakingResultDTO> getSavedResults(
+            @RequestParam("sentenceId") Long sentenceId,
+            HttpSession session) {
+        User loggedInUser = (User) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return ResponseEntity.ok(null);
         }
 
-        int score = 0;
-        if (refWords.length > 0) {
-            score = Math.min((matchCount * 100) / refWords.length, 100);
-        }
-
-        SpeakingResultDTO result = new SpeakingResultDTO();
-        result.setReferenceText(reference);
-        result.setTranscribedText(transcribed);
-        result.setScore(score);
-
-        // Highlight logic can be generated or sent as HTML text if needed,
-        // Here we just use a generic feedback message based on score
-        if (score >= 90) {
-            result.setFeedback("Excellent! You sound like a native.");
-        } else if (score >= 70) {
-            result.setFeedback("Good job! But there's room for improvement.");
-        } else {
-            result.setFeedback("Keep practicing! Make sure to pronounce every word clearly.");
-        }
-
-        return result;
+        SpeakingResultDTO result = speakingService.getSavedResults(loggedInUser.getId(), sentenceId);
+        return ResponseEntity.ok(result);
     }
 }

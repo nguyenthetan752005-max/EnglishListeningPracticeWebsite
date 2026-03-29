@@ -33,7 +33,7 @@ public class LessonServiceImpl implements LessonService {
 
         if (section != null) {
             List<Lesson> sectionLessons = getLessonsBySectionId(section.getId()).stream()
-                    .filter(l -> l.getPracticeType() == practiceType)
+                    .filter(l -> l.getSection().getCategory().getPracticeType() == practiceType)
                     .sorted(java.util.Comparator.comparing(Lesson::getId))
                     .toList();
             

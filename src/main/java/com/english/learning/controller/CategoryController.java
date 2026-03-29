@@ -67,7 +67,7 @@ public class CategoryController {
         List<SectionWithLessonsDTO> sectionDtos = sections.stream()
                 .map(sec -> {
                     List<Lesson> listeningLessons = lessonService.getLessonsBySectionId(sec.getId()).stream()
-                            .filter(l -> l.getPracticeType() == PracticeType.LISTENING)
+                            .filter(l -> l.getSection().getCategory().getPracticeType() == PracticeType.LISTENING)
                             .toList();
                     
                     Map<Long, UserProgressStatus> lessonStatuses = new HashMap<>();

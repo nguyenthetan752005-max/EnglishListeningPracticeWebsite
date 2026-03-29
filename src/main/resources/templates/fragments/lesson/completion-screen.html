@@ -14,12 +14,12 @@
             <div class="completion-buttons">
                 <!-- nextLessonUrl and backToSectionUrl should be set by the caller or derived from nextLesson/section -->
                 <a th:if="${nextLesson != null}" 
-                   th:href="${lesson.practiceType.name() == 'SPEAKING' ? '/speaking/lesson/' + nextLesson.id : '/lesson/' + nextLesson.id}" 
+                   th:href="${lesson.section.category.practiceType.name() == 'SPEAKING' ? '/speaking/lesson/' + nextLesson.id : '/lesson/' + nextLesson.id}" 
                    id="nextLessonBtn" class="btn btn-primary">
                     Next Lesson
                 </a>
                 <a th:if="${isLastLessonInSection and section != null}" 
-                   th:href="${lesson.practiceType.name() == 'SPEAKING' ? '/speaking/category/' + category.id + '/sections' : '/category/' + category.id + '/sections'}" 
+                   th:href="${lesson.section.category.practiceType.name() == 'SPEAKING' ? '/speaking/category/' + category.id + '/sections' : '/category/' + category.id + '/sections'}" 
                    id="backToSectionBtn" class="btn btn-primary">
                     Back to Section
                 </a>

@@ -242,7 +242,7 @@ public class UserProgressServiceImpl implements UserProgressService {
                 lesson.getTitle(),
                 category != null ? category.getName() : "",
                 section != null ? section.getName() : "",
-                lesson.getPracticeType() != null ? lesson.getPracticeType().name() : "LISTENING",
+                lesson.getSection().getCategory().getPracticeType() != null ? lesson.getSection().getCategory().getPracticeType().name() : "LISTENING",
                 (int) totalSentences,
                 (int) completedCount,
                 firstUncompletedSentenceId,
