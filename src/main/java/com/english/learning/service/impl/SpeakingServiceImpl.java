@@ -9,7 +9,6 @@ import com.english.learning.repository.SentenceRepository;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.AiScoringService;
-import com.english.learning.service.AiScoringService.AiScoreResult;
 import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.SpeakingService;
 import com.english.learning.service.WitAIAudioService;
@@ -54,14 +53,14 @@ public class SpeakingServiceImpl implements SpeakingService {
         }
 
         // 2. Chấm điểm bằng AI (Groq)
-        AiScoreResult aiScore = aiScoringService.scoreSpeaking(referenceText, transcribedText);
-        String feedback = aiScore.explanation + " " + aiScore.advice;
+        SpeakingResult aiScore = aiScoringService.scoreSpeaking(referenceText, transcribedText);
+        String feedback = aiScore.getFeedback();
 
         // 3. Build DTO kết quả hiện tại (Current)
         SpeakingResultDTO dto = new SpeakingResultDTO();
         dto.setReferenceText(referenceText);
         dto.setTranscribedText(transcribedText);
-        dto.setScore(aiScore.score);
+        dto.setScore(aiScore.getScore());
         dto.setFeedback(feedback);
 
         // 4. Nếu đã đăng nhập → upload Cloudinary + lưu DB
@@ -87,7 +86,7 @@ public class SpeakingServiceImpl implements SpeakingService {
                 currentResult.setUser(user);
                 currentResult.setSentence(sentence);
                 currentResult.setResultType(SpeakingResultType.CURRENT);
-                currentResult.setScore(aiScore.score);
+                currentResult.setScore(aiScore.getScore());
                 currentResult.setRecognizedText(transcribedText);
                 currentResult.setFeedback(feedback);
                 currentResult.setUserAudioUrl(audioUrl);
@@ -99,12 +98,12 @@ public class SpeakingServiceImpl implements SpeakingService {
 
                 if (bestOpt.isPresent()) {
                     SpeakingResult bestResult = bestOpt.get();
-                    if (aiScore.score > bestResult.getScore()) {
+                    if (aiScore.getScore() > bestResult.getScore()) {
                         // Điểm mới cao hơn → upload audio best và cập nhật
                         String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
                         String bestAudioUrl = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
 
-                        bestResult.setScore(aiScore.score);
+                        bestResult.setScore(aiScore.getScore());
                         bestResult.setRecognizedText(transcribedText);
                         bestResult.setFeedback(feedback);
                         bestResult.setUserAudioUrl(bestAudioUrl);
@@ -112,7 +111,7 @@ public class SpeakingServiceImpl implements SpeakingService {
 
                         // Trả DTO với best mới
                         dto.setBestResult(new SpeakingResultDTO.BestResult(
-                                aiScore.score, transcribedText, feedback, bestAudioUrl));
+                                aiScore.getScore(), transcribedText, feedback, bestAudioUrl));
                     } else {
                         // Giữ best cũ
                         dto.setBestResult(new SpeakingResultDTO.BestResult(
@@ -128,14 +127,14 @@ public class SpeakingServiceImpl implements SpeakingService {
                     newBest.setUser(user);
                     newBest.setSentence(sentence);
                     newBest.setResultType(SpeakingResultType.BEST);
-                    newBest.setScore(aiScore.score);
+                    newBest.setScore(aiScore.getScore());
                     newBest.setRecognizedText(transcribedText);
                     newBest.setFeedback(feedback);
                     newBest.setUserAudioUrl(bestAudioUrl);
                     speakingResultRepository.save(newBest);
 
                     dto.setBestResult(new SpeakingResultDTO.BestResult(
-                            aiScore.score, transcribedText, feedback, bestAudioUrl));
+                            aiScore.getScore(), transcribedText, feedback, bestAudioUrl));
                 }
             } catch (Exception e) {
                 System.err.println("============= LỖI UPLOAD/LƯU SPEAKING RESULT =============");

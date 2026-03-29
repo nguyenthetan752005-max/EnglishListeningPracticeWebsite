@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.english.learning.entity.SpeakingResult;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +31,7 @@ public class AiScoringService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AiScoreResult scoreSpeaking(String expectedText, String userText) {
+    public SpeakingResult scoreSpeaking(String expectedText, String userText) {
         try {
             // 2. Setup Header (Sử dụng Bearer Token)
             HttpHeaders headers = new HttpHeaders();
@@ -77,24 +79,17 @@ public class AiScoringService {
             String explanation = scoreNode.path("explanation").asText("No explanation");
             String advice = scoreNode.path("advice").asText("Keep practicing!");
 
-            return new AiScoreResult(score, explanation, advice);
+            SpeakingResult result = new SpeakingResult();
+            result.setScore(score);
+            result.setFeedback(explanation + " " + advice);
+            return result;
 
         } catch (Exception e) {
             System.err.println("Lỗi gọi Groq AI: " + e.getMessage());
-            return new AiScoreResult(0, "System error", "Please try again later.");
-        }
-    }
-
-    // Lớp DTO giữ nguyên
-    public static class AiScoreResult {
-        public int score;
-        public String explanation;
-        public String advice;
-
-        public AiScoreResult(int score, String explanation, String advice) {
-            this.score = score;
-            this.explanation = explanation;
-            this.advice = advice;
+            SpeakingResult result = new SpeakingResult();
+            result.setScore(0);
+            result.setFeedback("System error Please try again later.");
+            return result;
         }
     }
 }
