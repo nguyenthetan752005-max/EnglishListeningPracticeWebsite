@@ -7,6 +7,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -14,6 +16,7 @@ import java.util.Properties;
 import java.util.Map;
 
 @SpringBootApplication
+@EnableScheduling
 public class EnglishLearningProjectApplication {
 
     @Autowired

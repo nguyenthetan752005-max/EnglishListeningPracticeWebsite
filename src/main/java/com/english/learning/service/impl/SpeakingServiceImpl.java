@@ -45,11 +45,13 @@ public class SpeakingServiceImpl implements SpeakingService {
     @Override
     public SpeakingResultDTO evaluateSpeaking(MultipartFile audio, String referenceText, Long userId, Long sentenceId) {
         // 1. Transcribe audio bằng Wit.AI
-        String transcribedText;
+        String transcribedText = "";
         try {
             transcribedText = witAIAudioService.transcribeAudio(audio);
         } catch (Exception e) {
-            throw new RuntimeException("Error transcribing audio", e);
+            System.err.println("Error transcribing audio (silent or noisy?): " + e.getMessage());
+            // Instead of throwing an exception (which causes 500 error), just treat it as empty text.
+            transcribedText = "";
         }
 
         // 2. Chấm điểm bằng AI (Groq)
