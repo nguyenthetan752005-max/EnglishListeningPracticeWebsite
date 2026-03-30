@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Biến cho Recording
     let mediaRecorder;
     let isRecording = false;
+    let speakingStartTime = Date.now(); // TRACKING
 
     // 2. State Listeners
     function handleSentenceChange(index, sentence) {
@@ -64,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.CURRENT_USER_ID && sentence.id) {
             loadSavedResults(sentence.id);
         }
+        
+        speakingStartTime = Date.now(); // Reset time for new sentence
     }
 
     document.addEventListener('lesson:sentenceChanged', (e) => {
@@ -88,6 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (skipBtn) {
         skipBtn.addEventListener('click', () => {
+            // --- SAVE PROGRESS: SKIPPED ---
+            const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
+            if (currentSentence && currentSentence.id) {
+                window.LessonCommonUI.saveProgressSkipped(currentSentence.id);
+            }
+
             if (skipBtn) skipBtn.style.display = 'none';
             const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
             if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
@@ -182,6 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Gửi Audio lên Spring Backend ---
     function sendAudioToBackend(audioBlob) {
+        // --- TRACK ACTIVE TIME ---
+        const durationSeconds = Math.round((Date.now() - speakingStartTime) / 1000);
+        if (durationSeconds > 0) {
+            fetch('/api/tracking/time', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ durationSeconds: durationSeconds })
+            }).catch(e => console.error("Error logging time", e));
+        }
+
         const formData = new FormData();
         formData.append('audio', audioBlob, 'speaking-audio.wav');
         const referenceText = refTextEl ? refTextEl.textContent : '';
@@ -219,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Display Evaluation Result (After Recording) ---
+    // Score >= 70 → COMPLETED, else → IN_PROGRESS (mirrors dictation logic)
     function displayEvaluationResult(data) {
         // Hiển thị Current Result
         renderCurrentResult(data);
@@ -228,11 +248,38 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBestResult(data.bestResult);
         }
 
+        // --- SAVE PROGRESS based on score ---
+        const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex]?.id;
+        if (sentenceId && data.score != null) {
+            if (data.score >= 70) {
+                window.LessonCommonUI.saveProgressCompleted(sentenceId);
+            } else {
+                // Score < 70: mark as IN_PROGRESS (user attempted but not yet passing)
+                const userId = window.CURRENT_USER_ID;
+                if (userId) {
+                    const formData = new URLSearchParams();
+                    formData.append('userId', userId);
+                    formData.append('sentenceId', sentenceId);
+                    fetch('/progress/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    }).then(() => {
+                        window.USER_PROGRESS_MAP[sentenceId] = 'IN_PROGRESS';
+                        document.dispatchEvent(new CustomEvent('progress:updated', { detail: { sentenceId, status: 'IN_PROGRESS' } }));
+                    }).catch(e => console.error('Failed to update progress:', e));
+                }
+            }
+        }
+
         if (recordLabel) recordLabel.textContent = 'Tap to try again';
         if (skipBtn) skipBtn.style.display = 'none';
         const isLastSentence = window.LessonState.currentIndex >= window.LessonState.sentences.length - 1;
         if (nextBtn2) nextBtn2.style.display = isLastSentence ? 'none' : '';
         if (replayBtn) replayBtn.style.display = '';
+
+        // Check lesson completion
+        window.LessonCommonUI.checkAndDisplayCompletion();
     }
 
     // --- Render Functions ---

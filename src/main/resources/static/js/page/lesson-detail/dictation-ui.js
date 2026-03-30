@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Lesson completion elements
     const completionScreen = document.getElementById('lessonCompletionScreen');
     const repeatLessonBtn = document.getElementById('repeatLessonBtn');
+    
+    let dictationStartTime = Date.now(); // TRACKING
 
     // 2. Helper Functions
     // Shared utilities are in LessonCommonUI
@@ -54,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hintArea.style.display = 'none';
             }
         }
+        
+        dictationStartTime = Date.now(); // Reset time for new sentence
     }
 
     document.addEventListener('lesson:sentenceChanged', (e) => {
@@ -147,6 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!response.ok) throw new Error('API error');
                 const result = await response.json();
                 if (result.correct) {
+                    // --- TRACK ACTIVE TIME ---
+                    const durationSeconds = Math.round((Date.now() - dictationStartTime) / 1000);
+                    if (durationSeconds > 0) {
+                        fetch('/api/tracking/time', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ durationSeconds: durationSeconds })
+                        }).catch(e => console.error("Error logging time", e));
+                    }
+
                     inputEl.value = result.correctSentence;
                     showCompleted(result, 'feedback-correct', '✅ You are correct!');
                 } else {
@@ -163,6 +177,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (skipBtn) {
         skipBtn.addEventListener('click', () => {
+            // --- TRACK ACTIVE TIME ---
+            const durationSeconds = Math.round((Date.now() - dictationStartTime) / 1000);
+            if (durationSeconds > 0) {
+                fetch('/api/tracking/time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ durationSeconds: durationSeconds })
+                }).catch(e => console.error("Error logging time", e));
+            }
+
             const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
             if (currentSentence) {
                 // --- LƯU TIẾN ĐỘ SKIPPED ---

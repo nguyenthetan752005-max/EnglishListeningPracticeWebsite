@@ -116,7 +116,7 @@ public class SpeakingExerciseController {
     private com.english.learning.service.HintService hintService;
 
     @GetMapping("/speaking/lesson/{id}")
-    public String getSpeakingPractice(@PathVariable Long id, Model model) {
+    public String getSpeakingPractice(@PathVariable Long id, Model model, HttpSession session) {
         Lesson lesson = lessonService.getLessonById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
         
@@ -126,9 +126,17 @@ public class SpeakingExerciseController {
         // Dùng HintService để lấy map
         java.util.Map<Long, java.util.List<String>> hintsMap = hintService.getHintsMap(sentences);
 
+        // Map lưu trạng thái hoàn thành (COMPLETED/IN_PROGRESS/SKIPPED)
+        Map<Long, String> userProgressMap = new HashMap<>();
+        com.english.learning.entity.User user = (com.english.learning.entity.User) session.getAttribute("loggedInUser");
+        if (user != null) {
+            userProgressMap = userProgressService.getUserProgressMapAsStrings(user.getId(), id);
+        }
+
         model.addAttribute("lesson", lesson);
         model.addAttribute("sentences", sentences);
         model.addAttribute("hintsMap", hintsMap); // Truyền map này xuống Thymeleaf
+        model.addAttribute("userProgressMap", userProgressMap);
         model.addAttribute("category", lesson.getSection().getCategory());
         return "speaking/speaking-practice";
     }

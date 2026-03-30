@@ -33,6 +33,13 @@ public class User {
     private String providerId;
     private Integer totalActiveTime = 0;
 
+    // Cached values updated by Leaderboard Cron Job to ensure ultra-fast Leaderboard Retrieval
+    @Column(name = "active_time_7d")
+    private Integer activeTime7d = 0;
+
+    @Column(name = "active_time_30d")
+    private Integer activeTime30d = 0;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }
