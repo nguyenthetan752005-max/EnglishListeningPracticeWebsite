@@ -3,6 +3,8 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+compile_out_utf8.txt
+compile_output.txt
 
 ### STS ###
 .apt_generated
@@ -31,6 +33,8 @@ build/
 src/main/resources/application-secret.properties
 Lady Meng Jiang.html
 db_sync_tool.py
+compile_out_utf8.txt
+compile_output.txt
 
 ### VS Code ###
 .vscode/

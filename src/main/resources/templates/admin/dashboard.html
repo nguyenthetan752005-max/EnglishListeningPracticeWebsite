@@ -1,62 +1,512 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | English Listening Practice</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/pages/admin-login.css}">
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Admin Dashboard - Management')}"></head>
 <body>
-    <div class="admin-login-wrapper" style="justify-content: flex-start; padding-top: 40px;">
-        <!-- Decorative background -->
-        <div class="admin-bg-decoration">
-            <div class="bg-circle bg-circle-1"></div>
-            <div class="bg-circle bg-circle-2"></div>
-            <div class="bg-circle bg-circle-3"></div>
-        </div>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <div class="admin-dashboard-header">
-            <div class="admin-shield-icon" style="width: 48px; height: 48px;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
+    <style>
+        /* CSS cho Admin Dashboard tương thích Dark/Light Mode của trang */
+        .admin-layout { 
+            display: flex; 
+            min-height: calc(100vh - 60px); 
+            margin: 0;
+            background: var(--bg-body, #f4f6f8);
+        }
+
+        /* SIDEBAR */
+        .admin-sidebar { 
+            width: 260px; 
+            background: var(--card-bg, #ffffff); 
+            border-right: 1px solid var(--border-color, #e5e7eb); 
+            padding: 24px 0; 
+            flex-shrink: 0;
+        }
+        .admin-sidebar-header {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+            margin-bottom: 16px;
+        }
+        .admin-sidebar-header h2 { font-size: 18px; color: var(--text-primary); margin: 0; font-weight: 700; }
+        .admin-sidebar-header p { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0 0; }
+        
+        .admin-sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .admin-sidebar-item { 
+            padding: 14px 24px; 
+            display: flex; align-items: center; gap: 14px; 
+            color: var(--text-secondary, #6b7280); 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-weight: 500;
+            font-size: 15px; 
+        }
+        .admin-sidebar-item:hover { 
+            background: var(--border-color, #f3f4f6); 
+            color: var(--primary-color, #2563eb); 
+        }
+        .admin-sidebar-item.active { 
+            background: rgba(37, 99, 235, 0.08); 
+            color: var(--primary-color, #2563eb); 
+            border-right: 3px solid var(--primary-color, #2563eb); 
+            font-weight: 600;
+        }
+        .admin-sidebar-icon { width: 20px; text-align: center; }
+
+        /* MAIN CONTENT */
+        .admin-main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+        .admin-tab-pane { display: none; animation: fadeIn 0.4s ease; }
+        .admin-tab-pane.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .admin-main-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .admin-main-header h1 { font-size: 28px; margin: 0; color: var(--text-primary); font-weight: 700; }
+        .admin-main-header p { color: var(--text-secondary); margin: 8px 0 0 0; }
+
+        /* OVERVIEW CARDS */
+        .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .admin-stat-card { 
+            background: var(--card-bg, #ffffff); 
+            border-radius: 12px; padding: 24px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); 
+            display: flex; align-items: center; gap: 20px; 
+            border: 1px solid var(--border-color, transparent);
+        }
+        .admin-stat-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .admin-stat-icon.users { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .admin-stat-icon.lessons { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .admin-stat-icon.time { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .admin-stat-info h3 { margin: 0; font-size: 15px; color: var(--text-secondary); font-weight: 500; }
+        .admin-stat-info p { margin: 8px 0 0 0; font-size: 32px; font-weight: 700; color: var(--text-primary); }
+
+        /* PANELS & TABLES */
+        .admin-panel { 
+            background: var(--card-bg, #ffffff); 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            margin-bottom: 24px; 
+            border: 1px solid var(--border-color);
+        }
+        .admin-panel-header { 
+            padding: 20px 24px; 
+            border-bottom: 1px solid var(--border-color, #e5e7eb); 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .admin-panel-header h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .admin-table-wrapper { overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { 
+            text-align: left; padding: 16px 24px; 
+            border-bottom: 1px solid var(--border-color, #e5e7eb); 
+            color: var(--text-secondary); font-weight: 600; font-size: 12px; 
+            text-transform: uppercase; letter-spacing: 0.5px; 
+            background: rgba(0,0,0,0.02); 
+        }
+        .admin-table td { 
+            padding: 16px 24px; 
+            border-bottom: 1px solid var(--border-color, #e5e7eb); 
+            color: var(--text-primary); font-size: 14px; vertical-align: middle; 
+        }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-table tr:hover td { background: rgba(0,0,0,0.01); }
+
+        /* BADGES */
+        .admin-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-inactive { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .badge-admin { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .badge-user { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .badge-listening { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-speaking { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+
+        /* BUTTONS */
+        .admin-btn { 
+            padding: 8px 16px; border-radius: 8px; border: none; 
+            font-size: 14px; font-weight: 500; cursor: pointer; 
+            display: inline-flex; align-items: center; gap: 8px; 
+            transition: all 0.2s; text-decoration: none; 
+        }
+        .admin-btn-primary { background: var(--primary-color, #2563eb); color: white; }
+        .admin-btn-primary:hover { filter: brightness(0.9); color: white; }
+        .admin-btn-outline { background: transparent; border: 1px solid var(--border-color, #e5e7eb); color: var(--text-primary); }
+        .admin-btn-outline:hover { background: var(--border-color, #f3f4f6); }
+        .admin-btn-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .admin-btn-danger:hover { background: #ef4444; color: white; }
+        .admin-btn-small { padding: 6px 12px; font-size: 13px; }
+        .admin-action-group { display: flex; gap: 8px; }
+
+        /* FORMS */
+        .admin-form-group { margin-bottom: 24px; }
+        .admin-form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary); font-size: 14px; }
+        .admin-form-control { 
+            width: 100%; padding: 12px 16px; 
+            border: 1px solid var(--border-color, #d1d5db); border-radius: 8px; 
+            font-size: 14px; background: var(--card-bg, #fff); color: var(--text-primary); 
+            transition: border-color 0.2s; 
+        }
+        .admin-form-control:focus { outline: none; border-color: var(--primary-color, #2563eb); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .admin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .admin-form-help { font-size: 13px; color: var(--text-secondary); margin-top: 6px; display: block; }
+    </style>
+
+    <div class="admin-layout">
+        <!-- Dashboard Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-header">
+                <h2>CPanel</h2>
+                <p>Hello, <strong th:text="${admin != null ? admin.username : 'Admin'}">Admin</strong></p>
             </div>
-            <h1 style="font-size: 24px; color: #f1f5f9; margin: 0;">Admin Dashboard</h1>
-            <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">
-                Xin chào, <strong th:text="${admin.username}" style="color: #e2e8f0;">Admin</strong>
-            </p>
-        </div>
+            <ul class="admin-sidebar-menu">
+                <li class="admin-sidebar-item active" onclick="switchTab('overview', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-chart-pie"></i></div>
+                    Tổng quan
+                </li>
+                <li class="admin-sidebar-item" onclick="switchTab('users', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-users"></i></div>
+                    Tài khoản
+                </li>
+                <li class="admin-sidebar-item" onclick="switchTab('lessons', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-book-open"></i></div>
+                    Bài học & Kỹ năng
+                </li>
+                <li class="admin-sidebar-item" onclick="switchTab('media', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-video"></i></div>
+                    Media & Nguồn
+                </li>
+                <li class="admin-sidebar-item" onclick="switchTab('settings', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-cog"></i></div>
+                    Cài đặt
+                </li>
+                <li class="admin-sidebar-item" style="color: #ef4444; margin-top: 20px;">
+                    <div class="admin-sidebar-icon"><i class="fas fa-sign-out-alt"></i></div>
+                    <a th:href="@{/admin/logout}" style="color: inherit; text-decoration: none; width: 100%;">Đăng xuất</a>
+                </li>
+            </ul>
+        </aside>
 
-        <div class="admin-login-card" style="max-width: 600px; margin-top: 24px; text-align: center;">
-            <h2 style="font-size: 18px; margin-bottom: 12px; color: #f1f5f9;">🚧 Trang quản trị đang phát triển</h2>
-            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">
-                Chức năng quản trị sẽ được bổ sung trong các bản cập nhật sắp tới.
-            </p>
+        <!-- Main Content Area -->
+        <main class="admin-main">
+            <!-- OVERVIEW TAB -->
+            <div id="tab-overview" class="admin-tab-pane active">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Tổng quan hệ thống</h1>
+                        <p>Thông kê nhanh về tương tác và nội dung của website.</p>
+                    </div>
+                    <button class="admin-btn admin-btn-outline"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                </div>
 
-            <div style="margin-top: 24px;">
-                <a th:href="@{/admin/logout}" class="admin-login-btn" style="display: inline-flex; text-decoration: none; width: auto; padding: 10px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                    Đăng xuất
-                </a>
+                <div class="admin-stat-grid">
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon users"><i class="fas fa-user-friends"></i></div>
+                        <div class="admin-stat-info">
+                            <h3>Tổng Tài Khoản</h3>
+                            <p>1,248</p>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon lessons"><i class="fas fa-layer-group"></i></div>
+                        <div class="admin-stat-info">
+                            <h3>Tổng Bài Học</h3>
+                            <p>342</p>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon time"><i class="fas fa-clock"></i></div>
+                        <div class="admin-stat-info">
+                            <h3>Giờ Luyện Tập (30 ngày)</h3>
+                            <p>4,820</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Users Mock Table -->
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Tài khoản đăng ký gần đây</h2>
+                        <a href="#" onclick="switchTab('users', document.querySelectorAll('.admin-sidebar-item')[1])" style="font-size: 14px; color: var(--primary-color); text-decoration: none; font-weight: 500;">Xem tất cả</a>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Tên hiển thị</th>
+                                    <th>Email</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><div style="display: flex; align-items: center; gap: 10px;"><div style="width: 32px; height: 32px; background: #e0e7ff; color: #3730a3; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;">H</div> Hoang Minh</div></td>
+                                    <td>hoangminh99@gmail.com</td>
+                                    <td>2024-05-12 14:30</td>
+                                    <td><span class="admin-badge badge-active">Hoạt động</span></td>
+                                </tr>
+                                <tr>
+                                    <td><div style="display: flex; align-items: center; gap: 10px;"><div style="width: 32px; height: 32px; background: #fee2e2; color: #991b1b; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;">L</div> Le Thi Thu</div></td>
+                                    <td>thule_k38@yahoo.com</td>
+                                    <td>2024-05-11 09:15</td>
+                                    <td><span class="admin-badge badge-active">Hoạt động</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="admin-login-footer" style="margin-top: 24px;">
-            <a href="/" class="admin-back-link">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="19" y1="12" x2="5" y2="12"/>
-                    <polyline points="12 19 5 12 12 5"/>
-                </svg>
-                Quay về trang chính
-            </a>
-        </div>
+            <!-- USERS TAB -->
+            <div id="tab-users" class="admin-tab-pane">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Quản lý Tài khoản</h1>
+                        <p>Danh sách người dùng và phân quyền hệ thống.</p>
+                    </div>
+                    <button class="admin-btn admin-btn-primary"><i class="fas fa-user-plus"></i> Thêm User</button>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <input type="text" class="admin-form-control" placeholder="Tìm kiếm user theo email, tên..." style="max-width: 300px; padding: 8px 12px;">
+                        <div>
+                            <select class="admin-form-control" style="padding: 8px 12px; width: auto; display: inline-block;">
+                                <option>Tất cả Role</option>
+                                <option>USER</option>
+                                <option>ADMIN</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Quyền hạn</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td><strong>admin_system</strong></td>
+                                    <td>admin@englishweb.com</td>
+                                    <td><span class="admin-badge badge-admin">ADMIN</span></td>
+                                    <td><span class="admin-badge badge-active">Active</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>25</td>
+                                    <td><strong>student_102</strong></td>
+                                    <td>student102@gmail.com</td>
+                                    <td><span class="admin-badge badge-user">USER</span></td>
+                                    <td><span class="admin-badge badge-active">Active</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small" title="Khóa tài khoản"><i class="fas fa-lock"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>42</td>
+                                    <td><strong>spam_bot33</strong></td>
+                                    <td>bot12345@spam.com</td>
+                                    <td><span class="admin-badge badge-user">USER</span></td>
+                                    <td><span class="admin-badge badge-inactive">Banned</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Mở khóa"><i class="fas fa-unlock"></i></button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small" title="Xóa vĩnh viễn"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LESSONS TAB -->
+            <div id="tab-lessons" class="admin-tab-pane">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Bài học & Chuyên đề</h1>
+                        <p>Thiết lập danh sách và cấu trúc bài tập cho website.</p>
+                    </div>
+                    <button class="admin-btn admin-btn-primary"><i class="fas fa-plus"></i> Tạo Bài Mới</button>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Danh sách Bài học gần đây</h2>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tiêu đề Bài Học</th>
+                                    <th>Cấp độ</th>
+                                    <th>Chuyên mục</th>
+                                    <th>Loại kỹ năng</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>101</td>
+                                    <td><strong>Basic Greetings (Xin chào cơ bản)</strong></td>
+                                    <td><span class="admin-badge" style="background: #e0f2fe; color: #0284c7;">A1 (Beginner)</span></td>
+                                    <td>Giao tiếp hàng ngày</td>
+                                    <td><span class="admin-badge badge-listening">LISTENING</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-outline admin-btn-small">Sửa</button>
+                                            <button class="admin-btn admin-btn-outline admin-btn-small">Câu hỏi (25)</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>102</td>
+                                    <td><strong>Ordering Food at a Restaurant</strong></td>
+                                    <td><span class="admin-badge" style="background: #fef3c7; color: #d97706;">A2 (Pre-Int)</span></td>
+                                    <td>Nhà hàng & Ăn uống</td>
+                                    <td><span class="admin-badge badge-speaking">SPEAKING</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-outline admin-btn-small">Sửa</button>
+                                            <button class="admin-btn admin-btn-outline admin-btn-small">Câu hỏi (15)</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEDIA TAB -->
+            <div id="tab-media" class="admin-tab-pane">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Media & YouTube</h1>
+                        <p>Quản lý link Video và Audio sử dụng trong các bài học.</p>
+                    </div>
+                    <button class="admin-btn admin-btn-primary"><i class="fas fa-upload"></i> Upload Audio</button>
+                </div>
+                
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Nguồn Video (YouTube)</h2>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Bài Học</th>
+                                    <th>Loại</th>
+                                    <th>Media ID / URL</th>
+                                    <th>Trạng thái Link</th>
+                                    <th>Kiểm tra</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>101</td>
+                                    <td><strong>AUDIO</strong></td>
+                                    <td>/resources/audio/lesson_101.mp3</td>
+                                    <td><span class="admin-badge badge-active">OK</span></td>
+                                    <td><button class="admin-btn admin-btn-outline admin-btn-small"><i class="fas fa-play"></i> Test</button></td>
+                                </tr>
+                                <tr>
+                                    <td>105</td>
+                                    <td><strong>VIDEO (YouTube)</strong></td>
+                                    <td>dQw4w9WgXcQ</td>
+                                    <td><span class="admin-badge badge-active">Active</span></td>
+                                    <td><button class="admin-btn admin-btn-outline admin-btn-small"><i class="fab fa-youtube color-red"></i> Xem</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="tab-settings" class="admin-tab-pane">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Cài đặt Hệ thống</h1>
+                        <p>Cấu hình chung cho toàn bộ website.</p>
+                    </div>
+                    <button class="admin-btn admin-btn-primary"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
+                </div>
+
+                <div class="admin-panel" style="padding: 32px;">
+                    <form>
+                        <h3 style="margin-top: 0; margin-bottom: 24px; color: var(--text-primary); font-size: 18px;">Thông tin chung</h3>
+                        
+                        <div class="admin-form-group">
+                            <label>Tên Website (Site Name)</label>
+                            <input type="text" class="admin-form-control" value="English Listening Practice">
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label>Mô tả trang (SEO Meta Description)</label>
+                            <textarea class="admin-form-control" rows="3">Nền tảng luyện nghe và nói tiếng Anh hoàn toàn miễn phí, bám sát các đoạn hội thoại thực tế.</textarea>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 32px 0;">
+                        <h3 style="margin-top: 0; margin-bottom: 24px; color: var(--text-primary); font-size: 18px;">Cấu hình Tính năng</h3>
+
+                        <div class="admin-grid-2">
+                            <div class="admin-form-group">
+                                <label>Giới hạn bài học tối đa hiển thị trên Dashboard</label>
+                                <input type="number" class="admin-form-control" value="10">
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Tiêu chuẩn Điểm Speaking để qua bài ( >= % )</label>
+                                <input type="number" class="admin-form-control" value="70">
+                            </div>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: var(--primary-color);">
+                                Cho phép đăng ký người dùng mới (User Registration)
+                            </label>
+                            <span class="admin-form-help">Bỏ check sẽ chặn người dùng tạo tài khoản ở màn hình /register.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
     </div>
+
+    <!-- Script to handle switching tabs -->
+    <script>
+        function switchTab(tabId, element) {
+            // Remove active class from all menu items
+            document.querySelectorAll('.admin-sidebar-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Add active class to clicked item
+            element.classList.add('active');
+
+            // Hide all tab panes
+            document.querySelectorAll('.admin-tab-pane').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Show target tab pane
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+    </script>
 </body>
 </html>
