@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.english.learning.service.UserProgressService;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.enums.PracticeType;
@@ -116,7 +117,9 @@ public class SpeakingExerciseController {
     private com.english.learning.service.HintService hintService;
 
     @GetMapping("/speaking/lesson/{id}")
-    public String getSpeakingPractice(@PathVariable Long id, Model model, HttpSession session) {
+    public String getSpeakingPractice(@PathVariable Long id, 
+                                      @RequestParam(required = false) Integer sentenceIndex,
+                                      Model model, HttpSession session) {
         Lesson lesson = lessonService.getLessonById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
         
@@ -138,6 +141,13 @@ public class SpeakingExerciseController {
         model.addAttribute("hintsMap", hintsMap); // Truyền map này xuống Thymeleaf
         model.addAttribute("userProgressMap", userProgressMap);
         model.addAttribute("category", lesson.getSection().getCategory());
+
+        com.english.learning.dto.LessonNavigationDTO navigation = lessonService.getLessonNavigation(lesson, PracticeType.SPEAKING);
+        model.addAttribute("section", lesson.getSection());
+        model.addAttribute("nextLesson", navigation.getNextLesson());
+        model.addAttribute("isLastLessonInSection", navigation.isLastLessonInSection());
+        model.addAttribute("initialSentenceIndex", sentenceIndex != null ? sentenceIndex : 0);
+
         return "speaking/speaking-practice";
     }
 }

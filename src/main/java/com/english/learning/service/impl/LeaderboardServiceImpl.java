@@ -1,9 +1,11 @@
 package com.english.learning.service.impl;
 
 import com.english.learning.entity.User;
+import com.english.learning.enums.Role;
 import com.english.learning.repository.DailyStudyStatisticRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.LeaderboardService;
+import com.english.learning.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -57,12 +59,12 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
     @Override
     public List<Map<String, Object>> getTopUsers7Days() {
-        return buildLeaderboardRows(userRepository.findTop30ByOrderByActiveTime7dDesc(), true);
+        return buildLeaderboardRows(userRepository.findTop30ByRoleOrderByActiveTime7dDesc(Role.USER), true);
     }
 
     @Override
     public List<Map<String, Object>> getTopUsers30Days() {
-        return buildLeaderboardRows(userRepository.findTop30ByOrderByActiveTime30dDesc(), false);
+        return buildLeaderboardRows(userRepository.findTop30ByRoleOrderByActiveTime30dDesc(Role.USER), false);
     }
 
     /**
@@ -82,18 +84,9 @@ public class LeaderboardServiceImpl implements LeaderboardService {
             int seconds = is7Day
                     ? (u.getActiveTime7d() != null ? u.getActiveTime7d() : 0)
                     : (u.getActiveTime30d() != null ? u.getActiveTime30d() : 0);
-            row.put("activeTime", formatActiveTime(seconds));
+            row.put("activeTime", TimeFormatUtil.formatActiveTime(seconds));
             rows.add(row);
         }
         return rows;
-    }
-
-    @Override
-    public String formatActiveTime(int totalSeconds) {
-        double hours = totalSeconds / 3600.0;
-        if (hours < 1) {
-            return String.format("%.1f hours", hours);
-        }
-        return String.format("%.0f+ hours", hours);
     }
 }

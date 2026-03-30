@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
 import com.english.learning.service.CloudinaryService;
+import com.english.learning.util.TimeFormatUtil;
 
 import java.util.Optional;
 import java.util.Map;
@@ -40,7 +41,13 @@ public class ProfileController {
         // Lấy dữ liệu mới nhất từ DB đề phòng update sửa lỗi
         Optional<User> userOpt = userService.findById(loggedInUser.getId());
         if (userOpt.isPresent()) {
-            model.addAttribute("user", userOpt.get());
+            User user = userOpt.get();
+            model.addAttribute("user", user);
+            
+            // Format total active time (MVC - Controller prepares data for View)
+            String formattedTime = TimeFormatUtil.formatActiveTime(user.getTotalActiveTime() != null ? user.getTotalActiveTime() : 0);
+            model.addAttribute("formattedActiveTime", formattedTime);
+            
             return "user/profile";
         }
 

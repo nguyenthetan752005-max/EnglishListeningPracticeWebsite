@@ -2,6 +2,7 @@ package com.english.learning.service.impl;
 
 import com.english.learning.entity.Sentence;
 import com.english.learning.service.HintService;
+import com.english.learning.util.TextNormalizerUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -47,8 +48,8 @@ public class HintServiceImpl implements HintService {
             
             char firstChar = currentWord.charAt(0);
             if (Character.isUpperCase(firstChar)) {
-                // Loại bỏ dấu câu đi kèm (ví dụ: "Smith," → "Smith")
-                String cleanWord = currentWord.replaceAll("[^a-zA-Z'-]", "");
+                // Loại bỏ dấu câu đi kèm (ví dụ: "Smith," → "Smith") bằng TextNormalizerUtil
+                String cleanWord = TextNormalizerUtil.keepLettersAndHyphens(currentWord);
                 if (!cleanWord.isEmpty() && !EXCLUDED_WORDS.contains(cleanWord.toLowerCase())) {
                     properNouns.add(cleanWord);
                 }

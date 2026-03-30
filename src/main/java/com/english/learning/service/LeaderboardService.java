@@ -15,5 +15,4 @@ public interface LeaderboardService {
     void refreshLeaderboardCaches();
     List<Map<String, Object>> getTopUsers7Days();
     List<Map<String, Object>> getTopUsers30Days();
-    String formatActiveTime(int totalSeconds);
 }

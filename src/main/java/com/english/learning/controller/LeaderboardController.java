@@ -2,6 +2,7 @@ package com.english.learning.controller;
 
 import com.english.learning.entity.User;
 import com.english.learning.service.LeaderboardService;
+import com.english.learning.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,8 +34,8 @@ public class LeaderboardController {
         if (loggedInUser != null) {
             int t7 = loggedInUser.getActiveTime7d() != null ? loggedInUser.getActiveTime7d() : 0;
             int t30 = loggedInUser.getActiveTime30d() != null ? loggedInUser.getActiveTime30d() : 0;
-            model.addAttribute("currentUserTime7d", leaderboardService.formatActiveTime(t7));
-            model.addAttribute("currentUserTime30d", leaderboardService.formatActiveTime(t30));
+            model.addAttribute("currentUserTime7d", TimeFormatUtil.formatActiveTime(t7));
+            model.addAttribute("currentUserTime30d", TimeFormatUtil.formatActiveTime(t30));
         }
 
         return "leaderboard/top-users";
