@@ -15,7 +15,8 @@ import com.english.learning.entity.User;
 import com.english.learning.entity.UserProgress;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.service.UserProgressService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.english.learning.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,25 +26,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserProgressServiceImpl implements UserProgressService {
 
-    @Autowired
-    private UserProgressRepository userProgressRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SentenceRepository sentenceRepository;
-
-    @Autowired
-    private LessonRepository lessonRepository;
-
-    @Autowired
-    private SectionRepository sectionRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final UserRepository userRepository;
+    private final SentenceRepository sentenceRepository;
+    private final LessonRepository lessonRepository;
+    private final SectionRepository sectionRepository;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public Optional<UserProgress> getProgress(Long userId, Long sentenceId) {
@@ -143,9 +134,9 @@ public class UserProgressServiceImpl implements UserProgressService {
         } else {
             UserProgress progress = new UserProgress();
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại!"));
             Sentence sentence = sentenceRepository.findById(sentenceId)
-                    .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Sentence không tồn tại!"));
             progress.setUser(user);
             progress.setSentence(sentence);
             progress.setStatus(UserProgressStatus.IN_PROGRESS);
@@ -163,9 +154,9 @@ public class UserProgressServiceImpl implements UserProgressService {
         } else {
             progress = new UserProgress();
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại!"));
             Sentence sentence = sentenceRepository.findById(sentenceId)
-                    .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Sentence không tồn tại!"));
             progress.setUser(user);
             progress.setSentence(sentence);
         }
@@ -187,9 +178,9 @@ public class UserProgressServiceImpl implements UserProgressService {
         } else {
             progress = new UserProgress();
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại!"));
             Sentence sentence = sentenceRepository.findById(sentenceId)
-                    .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Sentence không tồn tại!"));
             progress.setUser(user);
             progress.setSentence(sentence);
         }
@@ -237,17 +228,19 @@ public class UserProgressServiceImpl implements UserProgressService {
                 }
             }
             
-            InProgressLessonDTO dto = new InProgressLessonDTO(
-                lessonId,
-                lesson.getTitle(),
-                category != null ? category.getName() : "",
-                section != null ? section.getName() : "",
-                lesson.getSection().getCategory().getPracticeType() != null ? lesson.getSection().getCategory().getPracticeType().name() : "LISTENING",
-                (int) totalSentences,
-                (int) completedCount,
-                firstUncompletedSentenceId,
-                firstUncompletedIndex
-            );
+            int progressPercent = totalSentences > 0 ? (int) (completedCount * 100 / totalSentences) : 0;
+            InProgressLessonDTO dto = InProgressLessonDTO.builder()
+                .lessonId(lessonId)
+                .lessonTitle(lesson.getTitle())
+                .categoryName(category != null ? category.getName() : "")
+                .sectionName(section != null ? section.getName() : "")
+                .practiceType(lesson.getSection().getCategory().getPracticeType() != null ? lesson.getSection().getCategory().getPracticeType().name() : "LISTENING")
+                .totalSentences((int) totalSentences)
+                .completedSentences((int) completedCount)
+                .progressPercent(progressPercent)
+                .firstUncompletedSentenceId(firstUncompletedSentenceId)
+                .firstUncompletedSentenceIndex(firstUncompletedIndex)
+                .build();
             result.add(dto);
         }
         

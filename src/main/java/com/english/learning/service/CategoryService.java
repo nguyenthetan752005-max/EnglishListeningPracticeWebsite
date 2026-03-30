@@ -12,4 +12,5 @@ public interface CategoryService {
     List<Category> getCategoriesByPracticeType(PracticeType practiceType);
     Optional<Category> getCategoryById(Long id);
     List<String> getExpandedLevels(String levelRange);
+    List<com.english.learning.dto.SectionWithLessonsDTO> getSectionWithLessonsDTOs(Long categoryId, com.english.learning.entity.User user, PracticeType practiceType);
 }

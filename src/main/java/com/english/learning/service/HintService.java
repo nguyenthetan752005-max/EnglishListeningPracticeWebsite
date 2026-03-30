@@ -1,5 +1,6 @@
 package com.english.learning.service;
 
+import com.english.learning.entity.Sentence;
 import java.util.List;
 import java.util.Map;
 
@@ -12,5 +13,5 @@ public interface HintService {
     /**
      * Tạo Map chứa hints cho danh sách các câu.
      */
-    Map<Long, List<String>> getHintsMap(List<com.english.learning.entity.Sentence> sentences);
+    Map<Long, List<String>> getHintsMap(List<Sentence> sentences);
 }

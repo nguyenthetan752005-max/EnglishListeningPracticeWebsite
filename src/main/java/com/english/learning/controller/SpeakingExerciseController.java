@@ -7,38 +7,42 @@ import com.english.learning.service.SectionService;
 import com.english.learning.service.LessonService;
 import com.english.learning.dto.SectionWithLessonsDTO;
 import com.english.learning.entity.Section;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.english.learning.enums.UserProgressStatus;
+import com.english.learning.enums.PracticeType;
+import com.english.learning.service.UserProgressService;
+import com.english.learning.service.SentenceService;
+import com.english.learning.service.HintService;
+import com.english.learning.entity.Sentence;
+import com.english.learning.entity.User;
+import com.english.learning.dto.LessonNavigationDTO;
+import com.english.learning.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import com.english.learning.service.UserProgressService;
-import com.english.learning.enums.UserProgressStatus;
-import com.english.learning.enums.PracticeType;
 import jakarta.servlet.http.HttpSession;
+
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
 
 @Controller
+@RequiredArgsConstructor
 public class SpeakingExerciseController {
 
-    @Autowired
-    private CategoryService categoryService;
-
-    @Autowired
-    private SectionService sectionService;
-
-    @Autowired
-    private LessonService lessonService;
-
-    @Autowired
-    private UserProgressService userProgressService;
+    private final CategoryService categoryService;
+    private final LessonService lessonService;
+    private final UserProgressService userProgressService;
+    private final SentenceService sentenceService;
+    private final HintService hintService;
 
     @GetMapping("/speaking-exercises")
     public String showAllTopics(Model model, HttpSession session) {
-        java.util.List<Category> categories = categoryService.getCategoriesByPracticeType(com.english.learning.enums.PracticeType.SPEAKING);
-        com.english.learning.entity.User user = (com.english.learning.entity.User) session.getAttribute("loggedInUser");
+        List<Category> categories = categoryService
+                .getCategoriesByPracticeType(PracticeType.SPEAKING);
+        User user = (User) session.getAttribute("loggedInUser");
 
         Map<Long, UserProgressStatus> categoryStatuses = new HashMap<>();
         if (user != null) {
@@ -58,50 +62,12 @@ public class SpeakingExerciseController {
     @GetMapping("/speaking/category/{id}/sections")
     public String getSections(@PathVariable Long id, Model model, HttpSession session) {
         Category category = categoryService.getCategoryById(id)
-                .orElseThrow(() -> new RuntimeException("Category không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại!"));
 
-        com.english.learning.entity.User user = (com.english.learning.entity.User) session.getAttribute("loggedInUser");
+        User user = (User) session.getAttribute("loggedInUser");
 
-        java.util.List<Section> sections = sectionService.getSectionsByCategoryId(id);
-        java.util.List<SectionWithLessonsDTO> sectionDtos = sections.stream()
-                .map(sec -> {
-                    java.util.List<Lesson> speakingLessons = lessonService.getLessonsBySectionId(sec.getId()).stream()
-                            .filter(l -> l.getSection().getCategory().getPracticeType() == PracticeType.SPEAKING)
-                            .toList();
-                    
-                    Map<Long, UserProgressStatus> lessonStatuses = new HashMap<>();
-                    UserProgressStatus sectionStatus = null;
-                    
-                    if (user != null) {
-                        for (Lesson l : speakingLessons) {
-                            UserProgressStatus lStatus = userProgressService.getLessonStatus(user.getId(), l.getId());
-                            if (lStatus != null) lessonStatuses.put(l.getId(), lStatus);
-                        }
-                        sectionStatus = userProgressService.getSectionStatus(user.getId(), sec.getId());
-                    }
-                    
-                    return new SectionWithLessonsDTO(sec, speakingLessons, lessonStatuses, sectionStatus);
-                })
-                .filter(dto -> !dto.getLessons().isEmpty())
-                .toList();
-
-        // Expand category.levelRange into individual levels
-        java.util.List<String> ALL_LEVELS = java.util.List.of("A1", "A2", "B1", "B2", "C1", "C2");
-        java.util.List<String> expandedLevels = new java.util.ArrayList<>();
-
-        String range = category.getLevelRange();
-        if (range != null && range.contains("-")) {
-            String[] parts = range.split("-");
-            String start = parts[0].trim().toUpperCase();
-            String end = parts[1].trim().toUpperCase();
-            int startIdx = ALL_LEVELS.indexOf(start);
-            int endIdx = ALL_LEVELS.indexOf(end);
-            if (startIdx >= 0 && endIdx >= 0 && startIdx <= endIdx) {
-                expandedLevels = ALL_LEVELS.subList(startIdx, endIdx + 1);
-            }
-        } else if (range != null && !range.trim().isEmpty()) {
-            expandedLevels = java.util.List.of(range.trim().toUpperCase());
-        }
+        List<SectionWithLessonsDTO> sectionDtos = categoryService.getSectionWithLessonsDTOs(id, user, PracticeType.SPEAKING);
+        List<String> expandedLevels = categoryService.getExpandedLevels(category.getLevelRange());
 
         model.addAttribute("category", category);
         model.addAttribute("sections", sectionDtos);
@@ -110,28 +76,24 @@ public class SpeakingExerciseController {
         return "speaking/sections";
     }
 
-    @Autowired
-    private com.english.learning.service.SentenceService sentenceService;
 
-    @Autowired
-    private com.english.learning.service.HintService hintService;
 
     @GetMapping("/speaking/lesson/{id}")
-    public String getSpeakingPractice(@PathVariable Long id, 
-                                      @RequestParam(required = false) Integer sentenceIndex,
-                                      Model model, HttpSession session) {
+    public String getSpeakingPractice(@PathVariable Long id,
+            @RequestParam(required = false) Integer sentenceIndex,
+            Model model, HttpSession session) {
         Lesson lesson = lessonService.getLessonById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
-        
+
         // Lấy danh sách câu
-        java.util.List<com.english.learning.entity.Sentence> sentences = sentenceService.getSentencesByLessonId(id);
+        List<Sentence> sentences = sentenceService.getSentencesByLessonId(id);
 
         // Dùng HintService để lấy map
-        java.util.Map<Long, java.util.List<String>> hintsMap = hintService.getHintsMap(sentences);
+        Map<Long, List<String>> hintsMap = hintService.getHintsMap(sentences);
 
         // Map lưu trạng thái hoàn thành (COMPLETED/IN_PROGRESS/SKIPPED)
         Map<Long, String> userProgressMap = new HashMap<>();
-        com.english.learning.entity.User user = (com.english.learning.entity.User) session.getAttribute("loggedInUser");
+        User user = (User) session.getAttribute("loggedInUser");
         if (user != null) {
             userProgressMap = userProgressService.getUserProgressMapAsStrings(user.getId(), id);
         }
@@ -142,7 +104,7 @@ public class SpeakingExerciseController {
         model.addAttribute("userProgressMap", userProgressMap);
         model.addAttribute("category", lesson.getSection().getCategory());
 
-        com.english.learning.dto.LessonNavigationDTO navigation = lessonService.getLessonNavigation(lesson, PracticeType.SPEAKING);
+        LessonNavigationDTO navigation = lessonService.getLessonNavigation(lesson, PracticeType.SPEAKING);
         model.addAttribute("section", lesson.getSection());
         model.addAttribute("nextLesson", navigation.getNextLesson());
         model.addAttribute("isLastLessonInSection", navigation.isLastLessonInSection());

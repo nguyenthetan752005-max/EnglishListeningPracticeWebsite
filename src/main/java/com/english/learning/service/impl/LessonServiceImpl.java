@@ -51,6 +51,18 @@ public class LessonServiceImpl implements LessonService {
                 isLastLessonInSection = true;
             }
         }
-        return new com.english.learning.dto.LessonNavigationDTO(nextLesson, isLastLessonInSection);
+        com.english.learning.dto.LessonDTO nextLessonDto = null;
+        if (nextLesson != null) {
+            nextLessonDto = com.english.learning.dto.LessonDTO.builder()
+                .id(nextLesson.getId())
+                .sectionId(nextLesson.getSection() != null ? nextLesson.getSection().getId() : null)
+                .type(nextLesson.getType())
+                .youtubeVideoId(nextLesson.getYoutubeVideoId())
+                .title(nextLesson.getTitle())
+                .level(nextLesson.getLevel())
+                .totalSentences(nextLesson.getTotalSentences())
+                .build();
+        }
+        return new com.english.learning.dto.LessonNavigationDTO(nextLessonDto, isLastLessonInSection);
     }
 }
