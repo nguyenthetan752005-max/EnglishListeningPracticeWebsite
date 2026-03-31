@@ -41,7 +41,7 @@ public class AdminAuthController {
             session.setAttribute("loggedInAdmin", adminOpt.get());
             return "redirect:/admin/dashboard";
         } else {
-            model.addAttribute("error", "Sai tài khoản hoặc mật khẩu, hoặc bạn không có quyền admin!");
+            model.addAttribute("error", "Invalid credentials or insufficient permissions!");
             return "admin/login";
         }
     }
@@ -59,14 +59,23 @@ public class AdminAuthController {
             return "redirect:/admin/login";
         }
 
+        // Refresh admin data from DB
+        Optional<User> freshAdmin = userService.findById(admin.getId());
+        if (freshAdmin.isPresent()) {
+            admin = freshAdmin.get();
+            session.setAttribute("loggedInAdmin", admin);
+        }
+
         // Delegate ALL data aggregation to Service (Thin Controller / SRP)
         AdminDashboardDTO dashboard = adminDashboardService.getDashboardData();
 
         model.addAttribute("totalUsers", dashboard.getTotalUsers());
+        model.addAttribute("totalAdmins", dashboard.getTotalAdmins());
         model.addAttribute("totalLessons", dashboard.getTotalLessons());
         model.addAttribute("totalTime", dashboard.getFormattedTotalTime());
         model.addAttribute("recentUsers", dashboard.getRecentUsers());
-        model.addAttribute("allUsers", dashboard.getAllUsers());
+        model.addAttribute("regularUsers", dashboard.getRegularUsers());
+        model.addAttribute("adminUsers", dashboard.getAdminUsers());
         model.addAttribute("allLessons", dashboard.getAllLessons());
         model.addAttribute("deletedUsers", dashboard.getDeletedUsers());
         model.addAttribute("deletedSentences", dashboard.getDeletedSentences());

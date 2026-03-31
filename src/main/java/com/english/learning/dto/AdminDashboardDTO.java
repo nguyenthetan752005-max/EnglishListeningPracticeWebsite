@@ -10,17 +10,27 @@ import java.util.List;
 
 /**
  * DTO aggregating all data needed to render the Admin Dashboard.
- * Encapsulates statistics, user lists, and recycle bin data.
+ * Separates regular users from admin accounts for independent management.
  */
 @Data
 @Builder
 public class AdminDashboardDTO {
+    // Overview Stats
     private long totalUsers;
+    private long totalAdmins;
     private long totalLessons;
     private String formattedTotalTime;
 
+    // Recent Users (overview tab)
     private List<User> recentUsers;
-    private List<User> allUsers;
+
+    // User Management (role=USER only)
+    private List<User> regularUsers;
+
+    // Admin Management (role=ADMIN only)
+    private List<User> adminUsers;
+
+    // Lessons
     private List<Lesson> allLessons;
 
     // Recycle Bin

@@ -26,4 +26,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
     Optional<User> findAnyUserById(@org.springframework.data.repository.query.Param("id") Long id);
+
+    // Separate queries for User/Admin management tabs
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE role = 'USER' AND is_deleted = false", nativeQuery = true)
+    List<User> findAllRegularUsers();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE role = 'ADMIN' AND is_deleted = false", nativeQuery = true)
+    List<User> findAllAdmins();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM users WHERE role = 'ADMIN' AND is_deleted = false", nativeQuery = true)
+    long countAdmins();
 }

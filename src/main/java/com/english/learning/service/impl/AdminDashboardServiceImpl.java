@@ -15,7 +15,7 @@ import java.util.Collections;
 /**
  * Implementation of AdminDashboardService.
  * Aggregates all data needed for the admin dashboard, including
- * statistics, user lists, and recycle bin items.
+ * separate lists for regular users vs admin accounts.
  */
 @Service
 @RequiredArgsConstructor
@@ -33,51 +33,60 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         // Overview Stats
         try {
             builder.totalUsers(userRepository.count());
+            builder.totalAdmins(userRepository.countAdmins());
             builder.totalLessons(lessonRepository.count());
             Long totalTime = userRepository.sumTotalActiveTime();
             if (totalTime == null) totalTime = 0L;
             builder.formattedTotalTime(TimeFormatUtil.formatActiveTime(totalTime.intValue()));
         } catch (Exception e) {
-            log.error("Lỗi khi lấy thống kê tổng quan: {}", e.getMessage());
-            builder.totalUsers(0).totalLessons(0).formattedTotalTime("0 phút");
+            log.error("Error fetching overview stats: {}", e.getMessage());
+            builder.totalUsers(0).totalAdmins(0).totalLessons(0).formattedTotalTime("0 min");
         }
 
-        // Recent Users
+        // Recent Users (overview)
         try {
             builder.recentUsers(userRepository.findRecentActiveUsers());
         } catch (Exception e) {
-            log.error("Lỗi khi lấy danh sách user gần đây: {}", e.getMessage());
+            log.error("Error fetching recent users: {}", e.getMessage());
             builder.recentUsers(Collections.emptyList());
         }
 
-        // All Users
+        // Regular Users (role=USER)
         try {
-            builder.allUsers(userRepository.findAll());
+            builder.regularUsers(userRepository.findAllRegularUsers());
         } catch (Exception e) {
-            log.error("Lỗi khi lấy tất cả users: {}", e.getMessage());
-            builder.allUsers(Collections.emptyList());
+            log.error("Error fetching regular users: {}", e.getMessage());
+            builder.regularUsers(Collections.emptyList());
+        }
+
+        // Admin Users (role=ADMIN)
+        try {
+            builder.adminUsers(userRepository.findAllAdmins());
+        } catch (Exception e) {
+            log.error("Error fetching admin users: {}", e.getMessage());
+            builder.adminUsers(Collections.emptyList());
         }
 
         // All Lessons
         try {
             builder.allLessons(lessonRepository.findAll());
         } catch (Exception e) {
-            log.error("Lỗi khi lấy tất cả lessons: {}", e.getMessage());
+            log.error("Error fetching lessons: {}", e.getMessage());
             builder.allLessons(Collections.emptyList());
         }
 
-        // Recycle Bin (bypass @SQLRestriction via native queries)
+        // Recycle Bin
         try {
             builder.deletedUsers(userRepository.findDeletedUsers());
         } catch (Exception e) {
-            log.error("Lỗi khi lấy deleted users: {}", e.getMessage());
+            log.error("Error fetching deleted users: {}", e.getMessage());
             builder.deletedUsers(Collections.emptyList());
         }
 
         try {
             builder.deletedSentences(sentenceRepository.findDeletedSentences());
         } catch (Exception e) {
-            log.error("Lỗi khi lấy deleted sentences: {}", e.getMessage());
+            log.error("Error fetching deleted sentences: {}", e.getMessage());
             builder.deletedSentences(Collections.emptyList());
         }
 
