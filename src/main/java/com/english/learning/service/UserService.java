@@ -20,4 +20,5 @@ public interface UserService {
     Optional<User> findByEmail(String email);
 
     void updatePassword(User user, String newPassword);
+    void softDeleteUser(Long id);
 }

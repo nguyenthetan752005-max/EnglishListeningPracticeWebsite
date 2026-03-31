@@ -22,6 +22,8 @@ public class SpeakingResult {
 
     private String userAudioUrl; // Cloudinary URL
 
+    private String userAudioPublicId; // Cloudinary Public ID for deletion
+
     @Column(columnDefinition = "TEXT")
     private String feedback; // AI feedback text
 

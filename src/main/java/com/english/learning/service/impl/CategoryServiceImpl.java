@@ -4,7 +4,6 @@ import com.english.learning.repository.CategoryRepository;
 import com.english.learning.entity.Category;
 import com.english.learning.service.CategoryService;
 import com.english.learning.enums.PracticeType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

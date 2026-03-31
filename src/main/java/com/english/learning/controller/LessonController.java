@@ -10,7 +10,7 @@ import com.english.learning.service.HintService;
 import com.english.learning.dto.LessonNavigationDTO;
 import com.english.learning.enums.PracticeType;
 import com.english.learning.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,22 +23,14 @@ import java.util.Optional;
 import java.util.HashMap;
 
 @Controller
+@RequiredArgsConstructor
 public class LessonController {
 
-    @Autowired
-    private LessonService lessonService;
-
-    @Autowired
-    private SectionService sectionService;
-
-    @Autowired
-    private SentenceService sentenceService;
-
-    @Autowired
-    private UserProgressService userProgressService;
-
-    @Autowired
-    private HintService hintService;
+    private final LessonService lessonService;
+    private final SectionService sectionService;
+    private final SentenceService sentenceService;
+    private final UserProgressService userProgressService;
+    private final HintService hintService;
 
     @GetMapping("/section/{id}/lessons")
     public String getLessons(@PathVariable Long id, Model model) {

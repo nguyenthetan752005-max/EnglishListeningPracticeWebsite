@@ -177,6 +177,10 @@
                     <div class="admin-sidebar-icon"><i class="fas fa-cog"></i></div>
                     Cài đặt
                 </li>
+                <li class="admin-sidebar-item" onclick="switchTab('trash', this)">
+                    <div class="admin-sidebar-icon"><i class="fas fa-trash-alt"></i></div>
+                    Thùng rác
+                </li>
                 <li class="admin-sidebar-item" style="color: #ef4444; margin-top: 20px;">
                     <div class="admin-sidebar-icon"><i class="fas fa-sign-out-alt"></i></div>
                     <a th:href="@{/admin/logout}" style="color: inherit; text-decoration: none; width: 100%;">Đăng xuất</a>
@@ -201,21 +205,21 @@
                         <div class="admin-stat-icon users"><i class="fas fa-user-friends"></i></div>
                         <div class="admin-stat-info">
                             <h3>Tổng Tài Khoản</h3>
-                            <p>1,248</p>
+                            <p th:text="${totalUsers}">1,248</p>
                         </div>
                     </div>
                     <div class="admin-stat-card">
                         <div class="admin-stat-icon lessons"><i class="fas fa-layer-group"></i></div>
                         <div class="admin-stat-info">
                             <h3>Tổng Bài Học</h3>
-                            <p>342</p>
+                            <p th:text="${totalLessons}">342</p>
                         </div>
                     </div>
                     <div class="admin-stat-card">
                         <div class="admin-stat-icon time"><i class="fas fa-clock"></i></div>
                         <div class="admin-stat-info">
-                            <h3>Giờ Luyện Tập (30 ngày)</h3>
-                            <p>4,820</p>
+                            <h3>Giờ Luyện Tập</h3>
+                            <p th:text="${totalTime}">4,820</p>
                         </div>
                     </div>
                 </div>
@@ -237,16 +241,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><div style="display: flex; align-items: center; gap: 10px;"><div style="width: 32px; height: 32px; background: #e0e7ff; color: #3730a3; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;">H</div> Hoang Minh</div></td>
-                                    <td>hoangminh99@gmail.com</td>
-                                    <td>2024-05-12 14:30</td>
-                                    <td><span class="admin-badge badge-active">Hoạt động</span></td>
-                                </tr>
-                                <tr>
-                                    <td><div style="display: flex; align-items: center; gap: 10px;"><div style="width: 32px; height: 32px; background: #fee2e2; color: #991b1b; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;">L</div> Le Thi Thu</div></td>
-                                    <td>thule_k38@yahoo.com</td>
-                                    <td>2024-05-11 09:15</td>
+                                <tr th:each="u : ${recentUsers}">
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 32px; height: 32px; background: #e0e7ff; color: #3730a3; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px;" th:text="${#strings.substring(u.username, 0, 1).toUpperCase()}">H</div>
+                                            <span th:text="${u.username}">Hoang Minh</span>
+                                        </div>
+                                    </td>
+                                    <td th:text="${u.email}">hoangminh99@gmail.com</td>
+                                    <td th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd HH:mm')}">2024-05-12 14:30</td>
                                     <td><span class="admin-badge badge-active">Hoạt động</span></td>
                                 </tr>
                             </tbody>
@@ -289,41 +292,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td><strong>admin_system</strong></td>
-                                    <td>admin@englishweb.com</td>
-                                    <td><span class="admin-badge badge-admin">ADMIN</span></td>
+                                <tr th:each="user : ${allUsers}">
+                                    <td th:text="${user.id}">1</td>
+                                    <td><strong th:text="${user.username}">admin_system</strong></td>
+                                    <td th:text="${user.email}">admin@englishweb.com</td>
+                                    <td><span th:classappend="${user.role.name() == 'ADMIN'} ? 'admin-badge badge-admin' : 'admin-badge badge-user'" th:text="${user.role}">ADMIN</span></td>
                                     <td><span class="admin-badge badge-active">Active</span></td>
                                     <td>
-                                        <div class="admin-action-group">
-                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>25</td>
-                                    <td><strong>student_102</strong></td>
-                                    <td>student102@gmail.com</td>
-                                    <td><span class="admin-badge badge-user">USER</span></td>
-                                    <td><span class="admin-badge badge-active">Active</span></td>
-                                    <td>
-                                        <div class="admin-action-group">
-                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
-                                            <button class="admin-btn admin-btn-danger admin-btn-small" title="Khóa tài khoản"><i class="fas fa-lock"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>42</td>
-                                    <td><strong>spam_bot33</strong></td>
-                                    <td>bot12345@spam.com</td>
-                                    <td><span class="admin-badge badge-user">USER</span></td>
-                                    <td><span class="admin-badge badge-inactive">Banned</span></td>
-                                    <td>
-                                        <div class="admin-action-group">
-                                            <button class="admin-btn admin-btn-outline admin-btn-small" title="Mở khóa"><i class="fas fa-unlock"></i></button>
-                                            <button class="admin-btn admin-btn-danger admin-btn-small" title="Xóa vĩnh viễn"><i class="fas fa-trash"></i></button>
+                                        <div class="admin-action-group" th:if="${user.role.name() != 'ADMIN'}">
+                                            <button class="admin-btn admin-btn-danger admin-btn-small" th:onclick="'deleteUser(' + ${user.id} + ')'" title="Khóa tài khoản (Soft Delete)"><i class="fas fa-lock"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -360,29 +337,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>101</td>
-                                    <td><strong>Basic Greetings (Xin chào cơ bản)</strong></td>
-                                    <td><span class="admin-badge" style="background: #e0f2fe; color: #0284c7;">A1 (Beginner)</span></td>
-                                    <td>Giao tiếp hàng ngày</td>
-                                    <td><span class="admin-badge badge-listening">LISTENING</span></td>
+                                <tr th:each="lesson : ${allLessons}">
+                                    <td th:text="${lesson.id}">101</td>
+                                    <td><strong th:text="${lesson.title}">Basic Greetings</strong></td>
+                                    <td><span class="admin-badge" style="background: #e0f2fe; color: #0284c7;" th:text="${lesson.level}">A1</span></td>
+                                    <td th:text="${lesson.section != null ? lesson.section.name : 'N/A'}">Giao tiếp hàng ngày</td>
+                                    <td><span class="admin-badge badge-listening" th:text="${lesson.section != null && lesson.section.category != null ? lesson.section.category.practiceType : 'N/A'}">LISTENING</span></td>
                                     <td>
                                         <div class="admin-action-group">
-                                            <button class="admin-btn admin-btn-outline admin-btn-small">Sửa</button>
-                                            <button class="admin-btn admin-btn-outline admin-btn-small">Câu hỏi (25)</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>102</td>
-                                    <td><strong>Ordering Food at a Restaurant</strong></td>
-                                    <td><span class="admin-badge" style="background: #fef3c7; color: #d97706;">A2 (Pre-Int)</span></td>
-                                    <td>Nhà hàng & Ăn uống</td>
-                                    <td><span class="admin-badge badge-speaking">SPEAKING</span></td>
-                                    <td>
-                                        <div class="admin-action-group">
-                                            <button class="admin-btn admin-btn-outline admin-btn-small">Sửa</button>
-                                            <button class="admin-btn admin-btn-outline admin-btn-small">Câu hỏi (15)</button>
+                                            <button class="admin-btn admin-btn-outline admin-btn-small"><i class="fas fa-edit"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -487,6 +450,76 @@
                 </div>
             </div>
 
+            <!-- TRASH TAB -->
+            <div id="tab-trash" class="admin-tab-pane">
+                <div class="admin-main-header">
+                    <div>
+                        <h1>Thùng Rác</h1>
+                        <p>Quản lý các bản ghi đã bị vô hiệu hóa hoặc xóa tạm thời.</p>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Tài khoản đã khóa (Khôi phục)</h2>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email thay thế</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="u : ${deletedUsers}">
+                                    <td th:text="${u.id}">1</td>
+                                    <td th:text="${u.username}">deleted_user</td>
+                                    <td th:text="${u.email}">user@deleted</td>
+                                    <td>
+                                        <button class="admin-btn admin-btn-primary admin-btn-small" th:onclick="'restoreUser(' + ${u.id} + ')'">Khôi phục</button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedUsers)}">
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">Trống</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Nội dung câu (Xóa cứng)</h2>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nội dung</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="s : ${deletedSentences}">
+                                    <td th:text="${s.id}">1</td>
+                                    <td th:text="${s.content}">Sentence content</td>
+                                    <td>
+                                        <button class="admin-btn admin-btn-danger admin-btn-small" th:onclick="'hardDeleteSentence(' + ${s.id} + ')'">Xóa Vĩnh Viễn</button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedSentences)}">
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary);">Trống</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -506,6 +539,36 @@
             });
             // Show target tab pane
             document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        async function deleteUser(id) {
+            if(!confirm('Bạn có chắc muốn khóa người dùng này?')) return;
+            try {
+                let res = await fetch('/api/admin/users/' + id, {method: 'DELETE'});
+                let json = await res.json();
+                if(json.success) location.reload();
+                else alert(json.message);
+            } catch(e) { alert('Lỗi server'); }
+        }
+
+        async function restoreUser(id) {
+            if(!confirm('Bạn muốn khôi phục tài khoản này?')) return;
+            try {
+                let res = await fetch('/api/admin/users/' + id + '/restore', {method: 'POST'});
+                let json = await res.json();
+                if(json.success) location.reload();
+                else alert(json.message);
+            } catch(e) { alert('Lỗi server'); }
+        }
+
+        async function hardDeleteSentence(id) {
+            if(!confirm('Cảnh báo: Hành động này sẽ xóa vĩnh viễn audio trên Cloudinary và dữ liệu DB.\nTiếp tục?')) return;
+            try {
+                let res = await fetch('/api/admin/trash/sentences/' + id, {method: 'DELETE'});
+                let json = await res.json();
+                if(json.success) location.reload();
+                else alert(json.message);
+            } catch(e) { alert('Lỗi server'); }
         }
     </script>
 </body>

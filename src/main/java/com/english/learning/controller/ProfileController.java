@@ -3,7 +3,7 @@ package com.english.learning.controller;
 import com.english.learning.entity.User;
 import com.english.learning.service.UserService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,13 +21,11 @@ import java.util.Map;
 import java.util.HashMap;
 
 @Controller
+@RequiredArgsConstructor
 public class ProfileController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private CloudinaryService cloudinaryService;
+    private final UserService userService;
+    private final CloudinaryService cloudinaryService;
 
     @GetMapping("/profile")
     public String viewProfile(HttpSession session, Model model) {
@@ -88,7 +86,8 @@ public class ProfileController {
         }
 
         try {
-            String avatarUrl = cloudinaryService.uploadFile(file);
+            Map<String, String> uploadResult = cloudinaryService.uploadFile(file);
+            String avatarUrl = uploadResult.get("url");
             userService.updateAvatarUrl(loggedInUser.getId(), avatarUrl);
             
             loggedInUser.setAvatarUrl(avatarUrl);

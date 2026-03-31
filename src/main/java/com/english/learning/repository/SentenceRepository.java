@@ -10,4 +10,7 @@ public interface SentenceRepository extends JpaRepository<Sentence, Long> {
     long countByLesson_Id(Long lessonId);
     long countByLesson_Section_Id(Long sectionId);
     long countByLesson_Section_Category_Id(Long categoryId);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM sentences WHERE is_deleted = true", nativeQuery = true)
+    List<Sentence> findDeletedSentences();
 }

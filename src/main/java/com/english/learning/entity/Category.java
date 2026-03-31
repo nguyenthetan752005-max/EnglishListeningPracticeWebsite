@@ -1,5 +1,7 @@
 package com.english.learning.entity;
 
+import org.hibernate.annotations.SQLRestriction;
+import com.english.learning.enums.ContentStatus;
 import com.english.learning.enums.LessonType;
 import com.english.learning.enums.PracticeType;
 import jakarta.persistence.*;
@@ -8,7 +10,21 @@ import lombok.Data;
 @Entity
 @Data
 @Table(name = "categories")
+@SQLRestriction("is_deleted = false")
 public class Category {
+    
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ContentStatus status = ContentStatus.DRAFT;
+
+    @Column(name = "order_index")
+    private Integer orderIndex = 0;
+
+    private String cloudImageId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

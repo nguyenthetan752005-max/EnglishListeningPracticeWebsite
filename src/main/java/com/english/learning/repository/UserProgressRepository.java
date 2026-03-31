@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface UserProgressRepository extends JpaRepository<UserProgress, Long> {
     Optional<UserProgress> findByUser_IdAndSentence_Id(Long userId, Long sentenceId);
     List<UserProgress> findByUser_Id(Long userId);
+    long countBySentence_Id(Long sentenceId);
 
     @Query("SELECT COUNT(up) FROM UserProgress up WHERE up.user.id = :userId AND up.sentence.lesson.id = :lessonId AND up.status = :status")
     long countByUserIdAndLessonIdAndStatus(@Param("userId") Long userId, @Param("lessonId") Long lessonId, @Param("status") UserProgressStatus status);

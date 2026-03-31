@@ -14,4 +14,5 @@ public interface SentenceService {
      * Trả về Map<sentenceId, List<properNouns>> cho tất cả câu trong lesson.
      */
     Map<Long, List<String>> getProperNounHints(Long lessonId);
+    void hardDeleteSentence(Long id) throws Exception;
 }

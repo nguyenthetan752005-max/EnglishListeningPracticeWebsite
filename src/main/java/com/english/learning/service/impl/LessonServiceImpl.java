@@ -3,17 +3,17 @@ package com.english.learning.service.impl;
 import com.english.learning.repository.LessonRepository;
 import com.english.learning.entity.Lesson;
 import com.english.learning.service.LessonService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class LessonServiceImpl implements LessonService {
 
-    @Autowired
-    private LessonRepository lessonRepository;
+    private final LessonRepository lessonRepository;
 
     @Override
     public List<Lesson> getLessonsBySectionId(Long sectionId) {

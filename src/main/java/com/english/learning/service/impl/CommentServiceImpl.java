@@ -9,26 +9,20 @@ import com.english.learning.entity.CommentVote;
 import com.english.learning.entity.Sentence;
 import com.english.learning.entity.User;
 import com.english.learning.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
-    private CommentVoteRepository commentVoteRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SentenceRepository sentenceRepository;
+    private final CommentRepository commentRepository;
+    private final CommentVoteRepository commentVoteRepository;
+    private final UserRepository userRepository;
+    private final SentenceRepository sentenceRepository;
 
     @Override
     public List<Comment> getCommentsBySentenceId(Long sentenceId) {

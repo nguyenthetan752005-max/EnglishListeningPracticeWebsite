@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface SectionService {
     List<Section> getSectionsByCategoryId(Long categoryId);
     Optional<Section> getSectionById(Long id);
+    void deleteSection(Long id);
 }

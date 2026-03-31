@@ -1,8 +1,10 @@
 package com.english.learning.controller;
 
+import com.english.learning.dto.AdminDashboardDTO;
 import com.english.learning.entity.User;
+import com.english.learning.service.AdminDashboardService;
 import com.english.learning.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,14 +17,14 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminAuthController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final AdminDashboardService adminDashboardService;
 
     @GetMapping("/login")
     public String adminLogin(HttpSession session) {
-        // Nếu đã đăng nhập admin rồi thì chuyển hướng
         User admin = (User) session.getAttribute("loggedInAdmin");
         if (admin != null) {
             return "redirect:/admin/dashboard";
@@ -56,7 +58,20 @@ public class AdminAuthController {
         if (admin == null) {
             return "redirect:/admin/login";
         }
+
+        // Delegate ALL data aggregation to Service (Thin Controller / SRP)
+        AdminDashboardDTO dashboard = adminDashboardService.getDashboardData();
+
+        model.addAttribute("totalUsers", dashboard.getTotalUsers());
+        model.addAttribute("totalLessons", dashboard.getTotalLessons());
+        model.addAttribute("totalTime", dashboard.getFormattedTotalTime());
+        model.addAttribute("recentUsers", dashboard.getRecentUsers());
+        model.addAttribute("allUsers", dashboard.getAllUsers());
+        model.addAttribute("allLessons", dashboard.getAllLessons());
+        model.addAttribute("deletedUsers", dashboard.getDeletedUsers());
+        model.addAttribute("deletedSentences", dashboard.getDeletedSentences());
         model.addAttribute("admin", admin);
+
         return "admin/dashboard";
     }
 }

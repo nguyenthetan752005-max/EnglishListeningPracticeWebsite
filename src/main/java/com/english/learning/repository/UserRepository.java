@@ -14,4 +14,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Queries for the Leaderboard
     List<User> findTop30ByRoleOrderByActiveTime7dDesc(Role role);
     List<User> findTop30ByRoleOrderByActiveTime30dDesc(Role role);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE is_deleted = false ORDER BY created_at DESC LIMIT 5", nativeQuery = true)
+    List<User> findRecentActiveUsers();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE is_deleted = true", nativeQuery = true)
+    List<User> findDeletedUsers();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT SUM(total_active_time) FROM users WHERE is_deleted = false", nativeQuery = true)
+    Long sumTotalActiveTime();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
+    Optional<User> findAnyUserById(@org.springframework.data.repository.query.Param("id") Long id);
 }

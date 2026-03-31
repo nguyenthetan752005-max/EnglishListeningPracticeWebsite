@@ -1,13 +1,9 @@
 package com.english.learning.controller;
 
 import com.english.learning.entity.Category;
-import com.english.learning.entity.Lesson;
 import com.english.learning.service.CategoryService;
-import com.english.learning.service.SectionService;
-import com.english.learning.service.LessonService;
 import com.english.learning.service.UserProgressService;
 import com.english.learning.dto.SectionWithLessonsDTO;
-import com.english.learning.entity.Section;
 import com.english.learning.enums.PracticeType;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.entity.User;

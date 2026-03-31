@@ -3,7 +3,7 @@ package com.english.learning.controller;
 import com.english.learning.entity.User;
 import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class PasswordResetController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PasswordResetService passwordResetService;
+    private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     // === FORGOT PASSWORD (Nhập email) ===
 

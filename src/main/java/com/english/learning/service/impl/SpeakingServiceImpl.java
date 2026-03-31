@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -71,7 +72,8 @@ public class SpeakingServiceImpl implements SpeakingService {
             try {
                 // Upload audio lên Cloudinary (ghi đè file cũ cùng public_id)
                 String currentPublicId = "user_" + userId + "_sentence_" + sentenceId + "_current";
-                String audioUrl = cloudinaryService.uploadAudio(audio.getBytes(), currentPublicId);
+                Map<String, String> uploadResult = cloudinaryService.uploadAudio(audio.getBytes(), currentPublicId);
+                String audioUrl = uploadResult.get("url");
                 dto.setAudioUrl(audioUrl);
 
                 // Lấy user + sentence entity
@@ -103,7 +105,8 @@ public class SpeakingServiceImpl implements SpeakingService {
                     if (aiScore.getScore() > bestResult.getScore()) {
                         // Điểm mới cao hơn → upload audio best và cập nhật
                         String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
-                        String bestAudioUrl = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
+                        Map<String, String> uploadBestResult = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
+                        String bestAudioUrl = uploadBestResult.get("url");
 
                         bestResult.setScore(aiScore.getScore());
                         bestResult.setRecognizedText(transcribedText);
@@ -123,7 +126,8 @@ public class SpeakingServiceImpl implements SpeakingService {
                 } else {
                     // Chưa có BEST → tạo mới (lần nói đầu tiên)
                     String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
-                    String bestAudioUrl = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
+                    Map<String, String> uploadBestResult = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
+                    String bestAudioUrl = uploadBestResult.get("url");
 
                     SpeakingResult newBest = new SpeakingResult();
                     newBest.setUser(user);

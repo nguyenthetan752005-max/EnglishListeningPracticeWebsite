@@ -1,5 +1,7 @@
 package com.english.learning.entity;
 
+import org.hibernate.annotations.SQLRestriction;
+import com.english.learning.enums.ContentStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -10,7 +12,17 @@ import java.util.List;
 @Table(name = "sentences", indexes = {
     @Index(name = "idx_lesson_order", columnList = "lesson_id, orderIndex")
 })
+@SQLRestriction("is_deleted = false")
 public class Sentence {
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ContentStatus status = ContentStatus.DRAFT;
+    
+    private String cloudAudioId;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

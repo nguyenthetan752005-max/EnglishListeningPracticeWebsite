@@ -4,17 +4,17 @@ import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.entity.User;
 import com.english.learning.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     public User register(User user) {
@@ -109,6 +109,21 @@ public class UserServiceImpl implements UserService {
     public void updatePassword(User user, String newPassword) {
         String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         user.setPassword(hashedPassword);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void softDeleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new com.english.learning.exception.ResourceNotFoundException("Người dùng không tồn tại"));
+
+        String modifier = "_deleted_" + System.currentTimeMillis();
+        user.setEmail(user.getEmail() + modifier);
+        user.setUsername(user.getUsername() + modifier);
+        
+        user.setIsDeleted(true);
+        user.setIsActive(false);
+
         userRepository.save(user);
     }
 }

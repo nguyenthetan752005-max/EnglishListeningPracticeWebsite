@@ -5,7 +5,7 @@ import com.english.learning.entity.User;
 import com.english.learning.repository.PasswordResetTokenRepository;
 import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,18 +17,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PasswordResetServiceImpl implements PasswordResetService {
 
     private static final int TOKEN_EXPIRY_MINUTES = 30;
 
-    @Autowired
-    private PasswordResetTokenRepository tokenRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JavaMailSender mailSender;
+    private final PasswordResetTokenRepository tokenRepository;
+    private final UserService userService;
+    private final JavaMailSender mailSender;
 
     @Value("${app.url}")
     private String appUrl;

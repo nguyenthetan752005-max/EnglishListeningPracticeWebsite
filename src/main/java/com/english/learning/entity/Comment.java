@@ -3,6 +3,7 @@ package com.english.learning.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,14 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "comments")
+@SQLRestriction("is_deleted = false")
 public class Comment {
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "is_hidden", nullable = false)
+    private Boolean isHidden = false;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
