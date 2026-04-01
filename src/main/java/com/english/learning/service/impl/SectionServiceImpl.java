@@ -9,6 +9,7 @@ import com.english.learning.exception.ResourceNotFoundException;
 import com.english.learning.repository.CategoryRepository;
 import com.english.learning.repository.LessonRepository;
 import com.english.learning.repository.SectionRepository;
+import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.SectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class SectionServiceImpl implements SectionService {
     private final SectionRepository sectionRepository;
     private final CategoryRepository categoryRepository;
     private final LessonRepository lessonRepository;
+    private final SentenceRepository sentenceRepository;
 
     @Override
     public List<Section> getSectionsByCategoryId(Long categoryId) {
@@ -49,6 +51,7 @@ public class SectionServiceImpl implements SectionService {
     @Override
     @Transactional
     public Section createSection(AdminSectionRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Section section = new Section();
         applySectionRequest(section, request);
         return sectionRepository.save(section);
@@ -57,8 +60,10 @@ public class SectionServiceImpl implements SectionService {
     @Override
     @Transactional
     public Section updateSection(Long id, AdminSectionRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        validateSectionStatusTransition(section.getId(), request.getStatus());
         assertSectionChanged(section, request);
         applySectionRequest(section, request);
         return sectionRepository.save(section);
@@ -75,7 +80,35 @@ public class SectionServiceImpl implements SectionService {
         }
 
         section.setIsDeleted(true);
+        section.setStatus(ContentStatus.ARCHIVED);
         sectionRepository.save(section);
+    }
+
+    @Override
+    @Transactional
+    public void restoreSection(Long id) {
+        Section section = sectionRepository.findAnySectionById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        Long categoryId = section.getCategory() != null ? section.getCategory().getId() : null;
+        Category category = categoryId != null ? categoryRepository.findAnyCategoryById(categoryId).orElse(null) : null;
+        if (category == null || Boolean.TRUE.equals(category.getIsDeleted())) {
+            throw new ResourceNotFoundException("Không thể khôi phục Section khi Category cha đang bị xóa.");
+        }
+        section.setCategory(category);
+        section.setIsDeleted(false);
+        section.setStatus(ContentStatus.DRAFT);
+        sectionRepository.save(section);
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteSection(Long id) {
+        Section section = sectionRepository.findAnySectionById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        if (lessonRepository.countAnyBySectionId(id) > 0) {
+            throw new ResourceInUseException("Không thể xóa vĩnh viễn Section khi vẫn còn Lesson bên dưới. Hãy xóa cứng dữ liệu tầng dưới trước.");
+        }
+        sectionRepository.deleteById(section.getId());
     }
 
     private void applySectionRequest(Section section, AdminSectionRequest request) {
@@ -86,6 +119,23 @@ public class SectionServiceImpl implements SectionService {
         section.setDescription(normalizeBlank(request.getDescription()));
         section.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         section.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+    }
+
+    private void validateStatusForAdminMutation(ContentStatus status) {
+        if (status == ContentStatus.ARCHIVED) {
+            throw new IllegalArgumentException("ARCHIVED chỉ được dùng nội bộ cho thùng rác, không được chọn khi thêm hoặc sửa.");
+        }
+    }
+
+    private void validateSectionStatusTransition(Long sectionId, ContentStatus nextStatus) {
+        if (nextStatus != ContentStatus.DRAFT) {
+            return;
+        }
+        boolean hasPublishedChildren = lessonRepository.countBySection_IdAndStatus(sectionId, ContentStatus.PUBLISHED) > 0
+                || sentenceRepository.countByLesson_Section_IdAndStatus(sectionId, ContentStatus.PUBLISHED) > 0;
+        if (hasPublishedChildren) {
+            throw new ResourceInUseException("Không thể chuyển Section về DRAFT khi bên dưới vẫn còn dữ liệu PUBLISHED.");
+        }
     }
 
     private void assertSectionChanged(Section section, AdminSectionRequest request) {

@@ -1,4 +1,10 @@
 // Profile JS Logic
+function triggerAvatarPicker() {
+    if (avatarInput) {
+        avatarInput.click();
+    }
+}
+
 function toggleEditName() {
     var displayBox = document.getElementById('nameDisplayBox');
     var editForm = document.getElementById('editNameForm');
@@ -16,6 +22,7 @@ let cropper;
 const avatarInput = document.getElementById('avatarInput');
 const cropperModal = document.getElementById('cropperModal');
 const imageToCrop = document.getElementById('imageToCrop');
+const avatarUploadEndpoint = document.body?.dataset?.uploadEndpoint || '/profile/update-avatar';
 
 if (avatarInput) {
     avatarInput.addEventListener('change', function (e) {
@@ -78,7 +85,7 @@ function uploadAvatar() {
         const formData = new FormData();
         formData.append('avatar', blob, 'avatar.png');
 
-        fetch('/profile/update-avatar', {
+        fetch(avatarUploadEndpoint, {
             method: 'POST',
             body: formData
         })

@@ -5,6 +5,7 @@ import com.english.learning.entity.SpeakingResult;
 import com.english.learning.repository.CategoryRepository;
 import com.english.learning.repository.CommentRepository;
 import com.english.learning.repository.LessonRepository;
+import com.english.learning.repository.SectionRepository;
 import com.english.learning.repository.SentenceRepository;
 import com.english.learning.repository.SlideshowRepository;
 import com.english.learning.repository.SpeakingResultRepository;
@@ -32,6 +33,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final SectionRepository sectionRepository;
     private final LessonRepository lessonRepository;
     private final SentenceRepository sentenceRepository;
     private final CommentRepository commentRepository;
@@ -119,10 +121,45 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         }
 
         try {
+            builder.deletedCategories(categoryRepository.findDeletedCategories());
+        } catch (Exception e) {
+            log.error("Error fetching deleted categories: {}", e.getMessage());
+            builder.deletedCategories(Collections.emptyList());
+        }
+
+        try {
+            builder.deletedSections(sectionRepository.findDeletedSections());
+        } catch (Exception e) {
+            log.error("Error fetching deleted sections: {}", e.getMessage());
+            builder.deletedSections(Collections.emptyList());
+        }
+
+        try {
+            builder.deletedLessons(lessonRepository.findDeletedLessons());
+        } catch (Exception e) {
+            log.error("Error fetching deleted lessons: {}", e.getMessage());
+            builder.deletedLessons(Collections.emptyList());
+        }
+
+        try {
             builder.deletedSentences(sentenceRepository.findDeletedSentences());
         } catch (Exception e) {
             log.error("Error fetching deleted sentences: {}", e.getMessage());
             builder.deletedSentences(Collections.emptyList());
+        }
+
+        try {
+            builder.deletedComments(commentRepository.findDeletedComments());
+        } catch (Exception e) {
+            log.error("Error fetching deleted comments: {}", e.getMessage());
+            builder.deletedComments(Collections.emptyList());
+        }
+
+        try {
+            builder.deletedSlideshows(slideshowRepository.findDeletedSlideshows());
+        } catch (Exception e) {
+            log.error("Error fetching deleted slideshows: {}", e.getMessage());
+            builder.deletedSlideshows(Collections.emptyList());
         }
 
         // Recent Comments (for moderation)
@@ -140,9 +177,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
         // Slideshows (all positions, ordered by displayOrder)
         try {
-            builder.slideshows(
-                    slideshowRepository.findAll(Sort.by(Sort.Direction.ASC, "displayOrder"))
-            );
+            builder.slideshows(slideshowRepository.findAllByOrderByDisplayOrderAscIdAsc());
         } catch (Exception e) {
             log.error("Error fetching slideshows: {}", e.getMessage());
             builder.slideshows(Collections.emptyList());

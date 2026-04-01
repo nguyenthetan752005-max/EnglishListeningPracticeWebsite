@@ -37,6 +37,7 @@ public class User {
     private Role role = Role.USER;
 
     private String avatarUrl;
+    private String avatarPublicId;
     private String provider;
     private String providerId;
     private Integer totalActiveTime = 0;

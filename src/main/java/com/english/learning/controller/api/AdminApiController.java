@@ -4,19 +4,21 @@ import com.english.learning.dto.AdminCategoryRequest;
 import com.english.learning.dto.AdminLessonRequest;
 import com.english.learning.dto.AdminSectionRequest;
 import com.english.learning.dto.AdminSentenceRequest;
+import com.english.learning.dto.AdminSlideshowRequest;
 import com.english.learning.entity.Comment;
 import com.english.learning.entity.Lesson;
 import com.english.learning.entity.Section;
 import com.english.learning.entity.Sentence;
 import com.english.learning.entity.Slideshow;
-import com.english.learning.entity.User;
+import com.english.learning.repository.CommentVoteRepository;
 import com.english.learning.repository.CommentRepository;
-import com.english.learning.repository.SlideshowRepository;
+import com.english.learning.repository.SentenceRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.CategoryService;
 import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.LessonService;
 import com.english.learning.service.SectionService;
+import com.english.learning.service.SlideshowService;
 import com.english.learning.service.SentenceService;
 import com.english.learning.service.UserService;
 import jakarta.validation.ConstraintViolationException;
@@ -53,9 +55,11 @@ public class AdminApiController {
     private final SectionService sectionService;
     private final SentenceService sentenceService;
     private final LessonService lessonService;
-    private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-    private final SlideshowRepository slideshowRepository;
+    private final CommentVoteRepository commentVoteRepository;
+    private final SentenceRepository sentenceRepository;
+    private final SlideshowService slideshowService;
+    private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
 
     @DeleteMapping("/users/{id}")
@@ -65,20 +69,12 @@ public class AdminApiController {
 
     @PostMapping("/users/{id}/restore")
     public ResponseEntity<Map<String, Object>> restoreUser(@PathVariable Long id) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            User user = userRepository.findAnyUserById(id)
-                    .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
-            user.setIsDeleted(false);
-            user.setIsActive(true);
-            userRepository.save(user);
-            response.put("success", true);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+        return handleAction(() -> userService.restoreUser(id), "Đã khôi phục người dùng");
+    }
+
+    @DeleteMapping("/trash/users/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteUser(@PathVariable Long id) {
+        return handleActionThrows(() -> userService.hardDeleteUser(id), "Đã xóa vĩnh viễn tài khoản và toàn bộ dữ liệu liên quan");
     }
 
     @PostMapping("/categories")
@@ -97,6 +93,16 @@ public class AdminApiController {
         return handleAction(() -> categoryService.deleteCategory(id), "Đã xóa mềm Category");
     }
 
+    @PostMapping("/categories/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreCategory(@PathVariable Long id) {
+        return handleAction(() -> categoryService.restoreCategory(id), "Đã khôi phục Category");
+    }
+
+    @DeleteMapping("/trash/categories/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteCategory(@PathVariable Long id) {
+        return handleActionThrows(() -> categoryService.hardDeleteCategory(id), "Đã xóa vĩnh viễn Category");
+    }
+
     @PostMapping("/sections")
     public ResponseEntity<Map<String, Object>> createSection(@Valid @RequestBody AdminSectionRequest request) {
         return handleEntityAction(() -> sectionService.createSection(request), "Đã tạo Section");
@@ -111,6 +117,16 @@ public class AdminApiController {
     @DeleteMapping("/sections/{id}")
     public ResponseEntity<Map<String, Object>> softDeleteSection(@PathVariable Long id) {
         return handleAction(() -> sectionService.deleteSection(id), "Đã xóa mềm Section");
+    }
+
+    @PostMapping("/sections/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreSection(@PathVariable Long id) {
+        return handleAction(() -> sectionService.restoreSection(id), "Đã khôi phục Section");
+    }
+
+    @DeleteMapping("/trash/sections/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteSection(@PathVariable Long id) {
+        return handleAction(() -> sectionService.hardDeleteSection(id), "Đã xóa vĩnh viễn Section");
     }
 
     @PostMapping("/lessons")
@@ -129,6 +145,16 @@ public class AdminApiController {
         return handleAction(() -> lessonService.deleteLesson(id), "Đã xóa mềm Lesson");
     }
 
+    @PostMapping("/lessons/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreLesson(@PathVariable Long id) {
+        return handleAction(() -> lessonService.restoreLesson(id), "Đã khôi phục Lesson");
+    }
+
+    @DeleteMapping("/trash/lessons/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteLesson(@PathVariable Long id) {
+        return handleAction(() -> lessonService.hardDeleteLesson(id), "Đã xóa vĩnh viễn Lesson");
+    }
+
     @PostMapping("/sentences")
     public ResponseEntity<Map<String, Object>> createSentence(@Valid @RequestBody AdminSentenceRequest request) {
         return handleEntityAction(() -> sentenceService.createSentence(request), "Đã tạo Sentence");
@@ -143,6 +169,11 @@ public class AdminApiController {
     @DeleteMapping("/sentences/{id}")
     public ResponseEntity<Map<String, Object>> softDeleteSentence(@PathVariable Long id) {
         return handleAction(() -> sentenceService.softDeleteSentence(id), "Đã xóa mềm Sentence");
+    }
+
+    @PostMapping("/sentences/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreSentence(@PathVariable Long id) {
+        return handleAction(() -> sentenceService.restoreSentence(id), "Đã khôi phục Sentence");
     }
 
     @DeleteMapping("/trash/sentences/{id}")
@@ -175,6 +206,7 @@ public class AdminApiController {
             Comment comment = commentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Comment không tồn tại"));
             comment.setIsDeleted(true);
+            comment.setIsHidden(true);
             commentRepository.save(comment);
             response.put("success", true);
             return ResponseEntity.ok(response);
@@ -185,16 +217,29 @@ public class AdminApiController {
         }
     }
 
-    @PatchMapping("/slideshows/{id}/toggle-active")
-    public ResponseEntity<Map<String, Object>> toggleSlideshowActive(@PathVariable Long id) {
+    @PostMapping("/comments/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreComment(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
-            Slideshow slideshow = slideshowRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Slideshow không tồn tại"));
-            slideshow.setIsActive(Boolean.TRUE.equals(slideshow.getIsActive()) ? false : true);
-            slideshowRepository.save(slideshow);
+            Comment comment = commentRepository.findAnyCommentById(id)
+                    .orElseThrow(() -> new RuntimeException("Comment không tồn tại"));
+            Long sentenceId = comment.getSentence() != null ? comment.getSentence().getId() : null;
+            Long userId = comment.getUser() != null ? comment.getUser().getId() : null;
+            Sentence sentence = sentenceId != null ? sentenceRepository.findAnySentenceById(sentenceId).orElse(null) : null;
+            com.english.learning.entity.User user = userId != null ? userRepository.findAnyUserById(userId).orElse(null) : null;
+            if (sentence == null || Boolean.TRUE.equals(sentence.getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Sentence cha đang bị xóa.");
+            }
+            if (user == null || Boolean.TRUE.equals(user.getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi User đã bị xóa.");
+            }
+            comment.setSentence(sentence);
+            comment.setUser(user);
+            comment.setIsDeleted(false);
+            comment.setIsHidden(false);
+            commentRepository.save(comment);
             response.put("success", true);
-            response.put("active", slideshow.getIsActive());
+            response.put("message", "Đã khôi phục Comment");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
@@ -203,21 +248,56 @@ public class AdminApiController {
         }
     }
 
+    @DeleteMapping("/trash/comments/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteComment(@PathVariable Long id) {
+        return handleAction(() -> hardDeleteCommentTree(id), "Đã xóa vĩnh viễn Comment");
+    }
+
+    @PostMapping("/slideshows")
+    public ResponseEntity<Map<String, Object>> createSlideshow(@Valid @RequestBody AdminSlideshowRequest request) {
+        return handleEntityAction(() -> slideshowService.createSlideshow(request), "Đã tạo Slideshow");
+    }
+
+    @PutMapping("/slideshows/{id}")
+    public ResponseEntity<Map<String, Object>> updateSlideshow(@PathVariable Long id,
+                                                               @Valid @RequestBody AdminSlideshowRequest request) {
+        return handleEntityAction(() -> slideshowService.updateSlideshow(id, request), "Đã cập nhật Slideshow");
+    }
+
+    @PatchMapping("/slideshows/{id}/toggle-active")
+    public ResponseEntity<Map<String, Object>> toggleSlideshowActive(@PathVariable Long id) {
+        return handleAction(() -> slideshowService.toggleActive(id), "Đã cập nhật trạng thái slideshow");
+    }
+
     @DeleteMapping("/slideshows/{id}")
     public ResponseEntity<Map<String, Object>> deleteSlideshow(@PathVariable Long id) {
-        return handleAction(() -> slideshowRepository.deleteById(id), "Đã xóa slideshow");
+        return handleAction(() -> slideshowService.softDeleteSlideshow(id), "Đã xóa mềm slideshow");
+    }
+
+    @PostMapping("/slideshows/{id}/restore")
+    public ResponseEntity<Map<String, Object>> restoreSlideshow(@PathVariable Long id) {
+        return handleAction(() -> slideshowService.restoreSlideshow(id), "Đã khôi phục slideshow");
+    }
+
+    @DeleteMapping("/trash/slideshows/{id}")
+    public ResponseEntity<Map<String, Object>> hardDeleteSlideshow(@PathVariable Long id) {
+        return handleActionThrows(() -> slideshowService.hardDeleteSlideshow(id), "Đã xóa vĩnh viễn slideshow");
     }
 
     @PostMapping("/uploads")
     public ResponseEntity<Map<String, Object>> uploadAsset(@RequestParam("file") MultipartFile file,
                                                            @RequestParam(value = "resourceType", defaultValue = "auto") String resourceType,
-                                                           @RequestParam(value = "folder", required = false) String folder) {
+                                                           @RequestParam(value = "folder", required = false) String folder,
+                                                           @RequestParam(value = "publicId", required = false) String publicId,
+                                                           @RequestParam(value = "overwrite", defaultValue = "false") boolean overwrite) {
         Map<String, Object> response = new HashMap<>();
         try {
             if (file.isEmpty()) {
                 throw new IllegalArgumentException("File upload không được để trống.");
             }
-            Map<String, String> uploadResult = cloudinaryService.uploadFile(file, resourceType, folder);
+            Map<String, String> uploadResult = (publicId != null && !publicId.isBlank())
+                    ? cloudinaryService.uploadFile(file, resourceType, folder, publicId, overwrite)
+                    : cloudinaryService.uploadFile(file, resourceType, folder);
             response.put("success", true);
             response.put("message", "Tải file lên thành công.");
             response.put("data", uploadResult);
@@ -294,6 +374,16 @@ public class AdminApiController {
     @FunctionalInterface
     private interface EntitySupplier {
         Object get();
+    }
+
+    private void hardDeleteCommentTree(Long id) {
+        Comment comment = commentRepository.findAnyCommentById(id)
+                .orElseThrow(() -> new RuntimeException("Comment không tồn tại"));
+        for (Comment child : commentRepository.findAnyByParentId(id)) {
+            hardDeleteCommentTree(child.getId());
+        }
+        commentVoteRepository.deleteByCommentId(comment.getId());
+        commentRepository.deleteById(comment.getId());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

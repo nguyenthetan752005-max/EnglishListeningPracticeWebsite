@@ -1,6 +1,7 @@
 package com.english.learning.controller;
 
 import com.english.learning.entity.User;
+import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class ProfileController {
 
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
+    private final PasswordResetService passwordResetService;
 
     @GetMapping("/profile")
     public String viewProfile(HttpSession session, Model model) {
@@ -86,11 +88,24 @@ public class ProfileController {
         }
 
         try {
-            Map<String, String> uploadResult = cloudinaryService.uploadFile(file);
+            Optional<User> freshUserOpt = userService.findById(loggedInUser.getId());
+            User freshUser = freshUserOpt.orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+            if (freshUser.getAvatarPublicId() != null && !freshUser.getAvatarPublicId().isBlank()) {
+                cloudinaryService.deleteFile(freshUser.getAvatarPublicId());
+            }
+            Map<String, String> uploadResult = cloudinaryService.uploadFile(
+                    file,
+                    "image",
+                    "avatars/users",
+                    "user_avatar_" + loggedInUser.getId(),
+                    true
+            );
             String avatarUrl = uploadResult.get("url");
-            userService.updateAvatarUrl(loggedInUser.getId(), avatarUrl);
+            String avatarPublicId = uploadResult.get("publicId");
+            userService.updateAvatar(loggedInUser.getId(), avatarUrl, avatarPublicId);
             
             loggedInUser.setAvatarUrl(avatarUrl);
+            loggedInUser.setAvatarPublicId(avatarPublicId);
             session.setAttribute("loggedInUser", loggedInUser);
             
             response.put("success", true);
@@ -101,5 +116,32 @@ public class ProfileController {
             response.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    @PostMapping("/profile/request-password-change")
+    public String requestPasswordChange(HttpSession session, RedirectAttributes redirectAttributes) {
+        User loggedInUser = (User) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> userOpt = userService.findById(loggedInUser.getId());
+        if (userOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản hiện tại.");
+            return "redirect:/profile";
+        }
+
+        try {
+            User user = userOpt.get();
+            String token = passwordResetService.createTokenForUser(user);
+            passwordResetService.sendProfilePasswordChangeEmail(user.getEmail(), token);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã gửi email xác nhận đổi mật khẩu. Sau khi đổi thành công, bạn sẽ bị đăng xuất.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Không thể gửi email đổi mật khẩu. Vui lòng thử lại sau.");
+        }
+
+        return "redirect:/profile";
     }
 }

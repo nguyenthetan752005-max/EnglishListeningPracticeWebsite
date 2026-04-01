@@ -13,6 +13,7 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
     List<Section> findByCategory_IdOrderByOrderIndexAscIdAsc(Long categoryId);
     List<Section> findByCategory_IdAndStatusOrderByOrderIndexAscIdAsc(Long categoryId, ContentStatus status);
     long countByCategory_Id(Long categoryId);
+    long countByCategory_IdAndStatus(Long categoryId, ContentStatus status);
 
     @org.springframework.data.jpa.repository.Query("""
             select s from Section s
@@ -26,4 +27,13 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
     Optional<Section> findPublishedByIdAndCategoryId(@org.springframework.data.repository.query.Param("sectionId") Long sectionId,
                                                      @org.springframework.data.repository.query.Param("categoryId") Long categoryId,
                                                      @org.springframework.data.repository.query.Param("status") ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM sections WHERE is_deleted = true ORDER BY order_index ASC, id ASC", nativeQuery = true)
+    List<Section> findDeletedSections();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM sections WHERE id = :id", nativeQuery = true)
+    Optional<Section> findAnySectionById(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM sections WHERE category_id = :categoryId", nativeQuery = true)
+    long countAnyByCategoryId(@org.springframework.data.repository.query.Param("categoryId") Long categoryId);
 }

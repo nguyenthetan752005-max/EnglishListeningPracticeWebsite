@@ -19,4 +19,6 @@ public interface CategoryService {
     Category createCategory(com.english.learning.dto.AdminCategoryRequest request);
     Category updateCategory(Long id, com.english.learning.dto.AdminCategoryRequest request);
     void deleteCategory(Long id);
+    void restoreCategory(Long id);
+    void hardDeleteCategory(Long id) throws Exception;
 }

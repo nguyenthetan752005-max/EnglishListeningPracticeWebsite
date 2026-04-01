@@ -4,6 +4,7 @@ import com.english.learning.enums.SlideshowPosition;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -11,7 +12,11 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @Table(name = "slideshows")
+@SQLRestriction("is_deleted = false")
 public class Slideshow {
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +26,9 @@ public class Slideshow {
 
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
+
+    @Column(name = "cloud_image_id")
+    private String cloudImageId;
 
     @Column(name = "link_url")
     private String linkUrl;

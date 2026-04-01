@@ -19,5 +19,6 @@ public interface SentenceService {
     Sentence createSentence(com.english.learning.dto.AdminSentenceRequest request);
     Sentence updateSentence(Long id, com.english.learning.dto.AdminSentenceRequest request);
     void softDeleteSentence(Long id);
+    void restoreSentence(Long id);
     void hardDeleteSentence(Long id) throws Exception;
 }

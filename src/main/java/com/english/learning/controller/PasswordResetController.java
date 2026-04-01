@@ -3,6 +3,7 @@ package com.english.learning.controller;
 import com.english.learning.entity.User;
 import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,8 +52,13 @@ public class PasswordResetController {
     // === RESET PASSWORD (Đặt mật khẩu mới) ===
 
     @GetMapping("/reset-password")
-    public String showResetPasswordForm(@RequestParam("token") String token, Model model) {
+    public String showResetPasswordForm(@RequestParam("token") String token,
+                                        @RequestParam(value = "source", defaultValue = "forgot-password") String source,
+                                        Model model) {
         model.addAttribute("token", token);
+        model.addAttribute("source", source);
+        model.addAttribute("fromProfile", !"forgot-password".equals(source));
+        model.addAttribute("fromAdminProfile", "admin-profile".equals(source));
         return "auth/resetpassword";
     }
 
@@ -60,26 +66,55 @@ public class PasswordResetController {
     public String processResetPassword(@RequestParam("token") String token,
                                        @RequestParam("password") String password,
                                        @RequestParam("confirmPassword") String confirmPassword,
-                                       Model model) {
+                                       @RequestParam(value = "source", defaultValue = "forgot-password") String source,
+                                       Model model,
+                                       HttpSession session) {
+        boolean fromProfile = !"forgot-password".equals(source);
+        boolean fromAdminProfile = "admin-profile".equals(source);
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Mật khẩu xác nhận không khớp!");
             model.addAttribute("token", token);
+            model.addAttribute("source", source);
+            model.addAttribute("fromProfile", fromProfile);
+            model.addAttribute("fromAdminProfile", fromAdminProfile);
             return "auth/resetpassword";
         }
 
         if (password.length() < 6) {
             model.addAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự!");
             model.addAttribute("token", token);
+            model.addAttribute("source", source);
+            model.addAttribute("fromProfile", fromProfile);
+            model.addAttribute("fromAdminProfile", fromAdminProfile);
             return "auth/resetpassword";
         }
 
         try {
             passwordResetService.resetPassword(token, password);
-            model.addAttribute("success", "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.");
+            if (fromProfile) {
+                User authUser = fromAdminProfile
+                        ? (User) session.getAttribute("loggedInAdmin")
+                        : (User) session.getAttribute("loggedInUser");
+                if (authUser != null) {
+                    userService.updateActiveStatus(authUser.getId(), false);
+                }
+                session.invalidate();
+                model.addAttribute("success", fromAdminProfile
+                        ? "Đổi mật khẩu admin thành công. Phiên đăng nhập hiện tại đã được đăng xuất."
+                        : "Đổi mật khẩu thành công. Phiên đăng nhập hiện tại đã được đăng xuất.");
+                if (fromAdminProfile) {
+                    return "admin/login";
+                }
+            } else {
+                model.addAttribute("success", "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.");
+            }
             return "auth/login";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("token", token);
+            model.addAttribute("source", source);
+            model.addAttribute("fromProfile", fromProfile);
+            model.addAttribute("fromAdminProfile", fromAdminProfile);
             return "auth/resetpassword";
         }
     }

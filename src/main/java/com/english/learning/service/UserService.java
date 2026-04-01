@@ -12,6 +12,7 @@ public interface UserService {
     Optional<User> findById(Long id);
     void updateUsername(Long id, String newUsername) throws Exception;
     void updateAvatarUrl(Long id, String avatarUrl) throws Exception;
+    void updateAvatar(Long id, String avatarUrl, String avatarPublicId) throws Exception;
 
     Optional<User> authenticateAdmin(String username, String password);
 
@@ -20,7 +21,11 @@ public interface UserService {
     Optional<User> findByEmail(String email);
 
     void updatePassword(User user, String newPassword);
+    void adminUpdateBasicInfo(Long id, String username, String avatarUrl, boolean isActive, com.english.learning.enums.Role role) throws Exception;
+    void adminUpdatePassword(Long id, String newPassword) throws Exception;
     void softDeleteUser(Long id);
+    void hardDeleteUser(Long id) throws Exception;
+    void restoreUser(Long id);
     void updateActiveStatus(Long id, boolean isActive);
     void resetAllActiveStatuses();
 }

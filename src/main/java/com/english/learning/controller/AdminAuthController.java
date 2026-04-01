@@ -3,19 +3,26 @@ package com.english.learning.controller;
 import com.english.learning.dto.AdminDashboardDTO;
 import com.english.learning.entity.SpeakingResult;
 import com.english.learning.entity.User;
+import com.english.learning.enums.Role;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.service.AdminDashboardService;
 import com.english.learning.service.CategoryService;
+import com.english.learning.service.CloudinaryService;
+import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.Optional;
@@ -32,6 +39,8 @@ public class AdminAuthController {
     private final AdminDashboardService adminDashboardService;
     private final UserProgressRepository userProgressRepository;
     private final SpeakingResultRepository speakingResultRepository;
+    private final PasswordResetService passwordResetService;
+    private final CloudinaryService cloudinaryService;
 
     @GetMapping("/login")
     public String adminLogin(HttpSession session) {
@@ -70,7 +79,8 @@ public class AdminAuthController {
     }
 
     @GetMapping("/dashboard")
-    public String adminDashboard(HttpSession session, Model model) {
+    public String adminDashboard(@RequestParam(value = "tab", required = false) String initialTab,
+                                 HttpSession session, Model model) {
         User admin = (User) session.getAttribute("loggedInAdmin");
         if (admin == null) {
             return "redirect:/admin/login";
@@ -117,10 +127,16 @@ public class AdminAuthController {
 
         // Other management data
         model.addAttribute("deletedUsers", dashboard.getDeletedUsers());
+        model.addAttribute("deletedCategories", dashboard.getDeletedCategories());
+        model.addAttribute("deletedSections", dashboard.getDeletedSections());
+        model.addAttribute("deletedLessons", dashboard.getDeletedLessons());
         model.addAttribute("deletedSentences", dashboard.getDeletedSentences());
+        model.addAttribute("deletedComments", dashboard.getDeletedComments());
+        model.addAttribute("deletedSlideshows", dashboard.getDeletedSlideshows());
         model.addAttribute("recentComments", dashboard.getRecentComments());
         model.addAttribute("slideshows", dashboard.getSlideshows());
         model.addAttribute("admin", admin);
+        model.addAttribute("initialTab", initialTab);
         boolean forceAdminOverviewTab = Boolean.TRUE.equals(session.getAttribute("forceAdminOverviewTab"));
         model.addAttribute("forceAdminOverviewTab", forceAdminOverviewTab);
         if (forceAdminOverviewTab) {
@@ -131,7 +147,7 @@ public class AdminAuthController {
     }
 
     @GetMapping("/users/{id}/profile")
-    public String adminUserProfile(@org.springframework.web.bind.annotation.PathVariable Long id,
+    public String adminUserProfile(@PathVariable Long id,
                                    HttpSession session,
                                    Model model) {
         User admin = (User) session.getAttribute("loggedInAdmin");
@@ -171,6 +187,213 @@ public class AdminAuthController {
         model.addAttribute("progressSkipped", skipped);
         model.addAttribute("topScore", topScore);
         model.addAttribute("avgScore", String.format(java.util.Locale.US, "%.1f", averageScore));
+        model.addAttribute("roles", Role.values());
+        model.addAttribute("isSelfAdmin", false);
+        model.addAttribute("canEditUser", true);
+        model.addAttribute("canEditSelfAdmin", false);
+        model.addAttribute("returnTab", "users");
         return "admin/user-profile";
+    }
+
+    @GetMapping("/admins/{id}/profile")
+    public String adminAccountProfile(@PathVariable Long id,
+                                      HttpSession session,
+                                      Model model) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+        if (admin.getId().equals(id)) {
+            return "redirect:/admin/profile";
+        }
+
+        Optional<User> targetAdmin = userService.findById(id);
+        if (targetAdmin.isEmpty() || targetAdmin.get().getRole() != Role.ADMIN) {
+            return "redirect:/admin/dashboard";
+        }
+
+        model.addAttribute("admin", admin);
+        model.addAttribute("userDetail", targetAdmin.get());
+        model.addAttribute("recentProgress", java.util.List.of());
+        model.addAttribute("progressCompleted", 0);
+        model.addAttribute("progressInProgress", 0);
+        model.addAttribute("progressSkipped", 0);
+        model.addAttribute("topScore", 0);
+        model.addAttribute("avgScore", "0.0");
+        model.addAttribute("roles", Role.values());
+        model.addAttribute("isSelfAdmin", false);
+        model.addAttribute("canEditUser", false);
+        model.addAttribute("canEditSelfAdmin", false);
+        model.addAttribute("returnTab", "admins");
+        return "admin/user-profile";
+    }
+
+    @GetMapping("/profile")
+    public String adminSelfProfile(HttpSession session, Model model) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+
+        Optional<User> freshAdmin = userService.findById(admin.getId());
+        if (freshAdmin.isEmpty()) {
+            return "redirect:/admin/login";
+        }
+
+        admin = freshAdmin.get();
+        session.setAttribute("loggedInAdmin", admin);
+        model.addAttribute("admin", admin);
+        model.addAttribute("userDetail", admin);
+        model.addAttribute("recentProgress", java.util.List.of());
+        model.addAttribute("progressCompleted", 0);
+        model.addAttribute("progressInProgress", 0);
+        model.addAttribute("progressSkipped", 0);
+        model.addAttribute("topScore", 0);
+        model.addAttribute("avgScore", "0.0");
+        model.addAttribute("roles", Role.values());
+        model.addAttribute("isSelfAdmin", true);
+        model.addAttribute("canEditUser", false);
+        model.addAttribute("canEditSelfAdmin", true);
+        model.addAttribute("returnTab", "admins");
+        return "admin/user-profile";
+    }
+
+    @PostMapping("/profile/update")
+    public String updateSelfAdminProfile(@RequestParam("username") String username,
+                                         @RequestParam(value = "avatarUrl", required = false) String avatarUrl,
+                                         HttpSession session,
+                                         org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+        try {
+            User freshAdmin = userService.findById(admin.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản admin."));
+            userService.adminUpdateBasicInfo(freshAdmin.getId(), username, avatarUrl, Boolean.TRUE.equals(freshAdmin.getIsActive()), freshAdmin.getRole());
+            User updatedAdmin = userService.findById(freshAdmin.getId()).orElse(freshAdmin);
+            session.setAttribute("loggedInAdmin", updatedAdmin);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin admin.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/profile";
+    }
+
+    @PostMapping("/profile/update-avatar")
+    @ResponseBody
+    public ResponseEntity<java.util.Map<String, Object>> updateAdminAvatar(@RequestParam("avatar") MultipartFile file,
+                                                                           HttpSession session) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            response.put("success", false);
+            response.put("message", "Chưa đăng nhập admin");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            Optional<User> freshAdminOpt = userService.findById(admin.getId());
+            User freshAdmin = freshAdminOpt.orElseThrow(() -> new RuntimeException("Không tìm thấy admin"));
+            if (freshAdmin.getAvatarPublicId() != null && !freshAdmin.getAvatarPublicId().isBlank()) {
+                cloudinaryService.deleteFile(freshAdmin.getAvatarPublicId());
+            }
+            java.util.Map<String, String> uploadResult = cloudinaryService.uploadFile(
+                    file,
+                    "image",
+                    "avatars/admins",
+                    "admin_avatar_" + admin.getId(),
+                    true
+            );
+            String avatarUrl = uploadResult.get("url");
+            String avatarPublicId = uploadResult.get("publicId");
+            userService.updateAvatar(admin.getId(), avatarUrl, avatarPublicId);
+
+            admin.setAvatarUrl(avatarUrl);
+            admin.setAvatarPublicId(avatarPublicId);
+            session.setAttribute("loggedInAdmin", admin);
+
+            response.put("success", true);
+            response.put("avatarUrl", avatarUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/users/{id}/profile/update")
+    public String updateUserProfileByAdmin(@PathVariable Long id,
+                                           @RequestParam("username") String username,
+                                           @RequestParam(value = "avatarUrl", required = false) String avatarUrl,
+                                           @RequestParam("isActive") boolean isActive,
+                                           @RequestParam("role") Role role,
+                                           HttpSession session,
+                                           org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+
+        try {
+            userService.adminUpdateBasicInfo(id, username, avatarUrl, isActive, role);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin người dùng.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/admin/users/" + id + "/profile";
+    }
+
+    @PostMapping("/users/{id}/profile/password")
+    public String updateUserPasswordByAdmin(@PathVariable Long id,
+                                            @RequestParam("newPassword") String newPassword,
+                                            @RequestParam("confirmPassword") String confirmPassword,
+                                            HttpSession session,
+                                            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Mật khẩu xác nhận không khớp.");
+            return "redirect:/admin/users/" + id + "/profile";
+        }
+
+        try {
+            userService.adminUpdatePassword(id, newPassword);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật mật khẩu người dùng.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/admin/users/" + id + "/profile";
+    }
+
+    @PostMapping("/profile/request-password-change")
+    public String requestAdminPasswordChange(HttpSession session,
+                                             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+        Optional<User> freshAdmin = userService.findById(admin.getId());
+        if (freshAdmin.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản admin hiện tại.");
+            return "redirect:/admin/profile";
+        }
+        try {
+            User targetAdmin = freshAdmin.get();
+            String token = passwordResetService.createTokenForUser(targetAdmin);
+            passwordResetService.sendAdminPasswordChangeEmail(targetAdmin.getEmail(), token);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã gửi email xác nhận đổi mật khẩu admin. Sau khi đổi thành công, bạn sẽ bị đăng xuất.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Không thể gửi email đổi mật khẩu admin. Vui lòng thử lại sau.");
+        }
+        return "redirect:/admin/profile";
     }
 }

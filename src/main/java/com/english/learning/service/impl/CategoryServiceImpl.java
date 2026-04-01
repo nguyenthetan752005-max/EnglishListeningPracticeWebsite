@@ -15,7 +15,9 @@ import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.exception.ResourceInUseException;
 import com.english.learning.exception.ResourceNotFoundException;
 import com.english.learning.repository.CategoryRepository;
+import com.english.learning.repository.LessonRepository;
 import com.english.learning.repository.SectionRepository;
+import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.CategoryService;
 import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.LessonService;
@@ -37,6 +39,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final SectionRepository sectionRepository;
+    private final LessonRepository lessonRepository;
+    private final SentenceRepository sentenceRepository;
     private final SectionService sectionService;
     private final LessonService lessonService;
     private final UserProgressService userProgressService;
@@ -145,6 +149,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public Category createCategory(AdminCategoryRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Category category = new Category();
         applyCategoryRequest(category, request);
         return categoryRepository.save(category);
@@ -153,8 +158,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public Category updateCategory(Long id, AdminCategoryRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại"));
+        validateCategoryStatusTransition(category.getId(), request.getStatus());
         assertCategoryChanged(category, request);
         applyCategoryRequest(category, request);
         return categoryRepository.save(category);
@@ -171,7 +178,32 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         category.setIsDeleted(true);
+        category.setStatus(ContentStatus.ARCHIVED);
         categoryRepository.save(category);
+    }
+
+    @Override
+    @Transactional
+    public void restoreCategory(Long id) {
+        Category category = categoryRepository.findAnyCategoryById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại"));
+        category.setIsDeleted(false);
+        category.setStatus(ContentStatus.DRAFT);
+        categoryRepository.save(category);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void hardDeleteCategory(Long id) throws Exception {
+        Category category = categoryRepository.findAnyCategoryById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại"));
+        if (sectionRepository.countAnyByCategoryId(id) > 0) {
+            throw new ResourceInUseException("Không thể xóa vĩnh viễn Category khi vẫn còn Section bên dưới. Hãy xóa cứng dữ liệu tầng dưới trước.");
+        }
+        if (category.getCloudImageId() != null && !category.getCloudImageId().isBlank()) {
+            cloudinaryService.deleteFile(category.getCloudImageId());
+        }
+        categoryRepository.deleteById(id);
     }
 
     private void applyCategoryRequest(Category category, AdminCategoryRequest request) {
@@ -188,6 +220,24 @@ public class CategoryServiceImpl implements CategoryService {
         category.setDescription(normalizeBlank(request.getDescription()));
         category.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         category.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+    }
+
+    private void validateStatusForAdminMutation(ContentStatus status) {
+        if (status == ContentStatus.ARCHIVED) {
+            throw new IllegalArgumentException("ARCHIVED chỉ được dùng nội bộ cho thùng rác, không được chọn khi thêm hoặc sửa.");
+        }
+    }
+
+    private void validateCategoryStatusTransition(Long categoryId, ContentStatus nextStatus) {
+        if (nextStatus != ContentStatus.DRAFT) {
+            return;
+        }
+        boolean hasPublishedChildren = sectionRepository.countByCategory_IdAndStatus(categoryId, ContentStatus.PUBLISHED) > 0
+                || lessonRepository.countBySection_Category_IdAndStatus(categoryId, ContentStatus.PUBLISHED) > 0
+                || sentenceRepository.countByLesson_Section_Category_IdAndStatus(categoryId, ContentStatus.PUBLISHED) > 0;
+        if (hasPublishedChildren) {
+            throw new ResourceInUseException("Không thể chuyển Category về DRAFT khi bên dưới vẫn còn dữ liệu PUBLISHED.");
+        }
     }
 
     private void assertCategoryChanged(Category category, AdminCategoryRequest request) {

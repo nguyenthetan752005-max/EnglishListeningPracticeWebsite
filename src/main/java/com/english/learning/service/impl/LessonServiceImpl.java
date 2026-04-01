@@ -62,6 +62,7 @@ public class LessonServiceImpl implements LessonService {
     @Override
     @Transactional
     public Lesson createLesson(AdminLessonRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Lesson lesson = new Lesson();
         applyLessonRequest(lesson, request);
         Lesson savedLesson = lessonRepository.save(lesson);
@@ -72,11 +73,13 @@ public class LessonServiceImpl implements LessonService {
     @Override
     @Transactional
     public Lesson updateLesson(Long id, AdminLessonRequest request) {
+        validateStatusForAdminMutation(request.getStatus());
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson không tồn tại"));
         Long oldCategoryId = lesson.getSection() != null && lesson.getSection().getCategory() != null
                 ? lesson.getSection().getCategory().getId()
                 : null;
+        validateLessonStatusTransition(lesson.getId(), request.getStatus());
         assertLessonChanged(lesson, request);
         applyLessonRequest(lesson, request);
         Lesson savedLesson = lessonRepository.save(lesson);
@@ -99,8 +102,39 @@ public class LessonServiceImpl implements LessonService {
             throw new ResourceInUseException("Không thể xóa Lesson. Bạn phải xóa hết Sentence bên dưới trước.");
         }
         lesson.setIsDeleted(true);
+        lesson.setStatus(ContentStatus.ARCHIVED);
         lessonRepository.save(lesson);
         syncCategoryLessonCount(lesson.getSection());
+    }
+
+    @Override
+    @Transactional
+    public void restoreLesson(Long id) {
+        Lesson lesson = lessonRepository.findAnyLessonById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lesson không tồn tại"));
+        Long sectionId = lesson.getSection() != null ? lesson.getSection().getId() : null;
+        Section section = sectionId != null ? sectionRepository.findAnySectionById(sectionId).orElse(null) : null;
+        if (section == null || Boolean.TRUE.equals(section.getIsDeleted())) {
+            throw new ResourceNotFoundException("Không thể khôi phục Lesson khi Section cha đang bị xóa.");
+        }
+        lesson.setSection(section);
+        lesson.setIsDeleted(false);
+        lesson.setStatus(ContentStatus.DRAFT);
+        lessonRepository.save(lesson);
+        syncCategoryLessonCount(lesson.getSection());
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteLesson(Long id) {
+        Lesson lesson = lessonRepository.findAnyLessonById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lesson không tồn tại"));
+        if (sentenceRepository.countAnyByLessonId(id) > 0) {
+            throw new ResourceInUseException("Không thể xóa vĩnh viễn Lesson khi vẫn còn Sentence bên dưới. Hãy xóa cứng dữ liệu tầng dưới trước.");
+        }
+        Section section = lesson.getSection();
+        lessonRepository.deleteById(id);
+        syncCategoryLessonCount(section);
     }
 
     @Override
@@ -162,6 +196,21 @@ public class LessonServiceImpl implements LessonService {
         }
     }
 
+    private void validateStatusForAdminMutation(ContentStatus status) {
+        if (status == ContentStatus.ARCHIVED) {
+            throw new IllegalArgumentException("ARCHIVED chỉ được dùng nội bộ cho thùng rác, không được chọn khi thêm hoặc sửa.");
+        }
+    }
+
+    private void validateLessonStatusTransition(Long lessonId, ContentStatus nextStatus) {
+        if (nextStatus != ContentStatus.DRAFT) {
+            return;
+        }
+        if (sentenceRepository.countByLesson_IdAndStatus(lessonId, ContentStatus.PUBLISHED) > 0) {
+            throw new ResourceInUseException("Không thể chuyển Lesson về DRAFT khi bên dưới vẫn còn Sentence ở trạng thái PUBLISHED.");
+        }
+    }
+
     private void assertLessonChanged(Lesson lesson, AdminLessonRequest request) {
         Section targetSection = sectionRepository.findById(request.getSectionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
@@ -181,7 +230,7 @@ public class LessonServiceImpl implements LessonService {
         String normalized = normalizeBlank(rawValue);
         LessonType lessonType = section.getCategory() != null ? section.getCategory().getType() : LessonType.AUDIO;
         if (lessonType != LessonType.VIDEO) {
-            return normalized;
+            return null;
         }
         if (normalized == null) {
             throw new IllegalArgumentException("Link YouTube không được để trống với bài học video.");

@@ -92,6 +92,7 @@
             margin-top: 40px;
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
         }
 
         .btn-action {
@@ -119,6 +120,17 @@
 
         .btn-logout:hover {
             background-color: #d32f2f;
+        }
+
+        .btn-password {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-password:hover {
+            background-color: #f57c00;
         }
 
         /* Dark mode overrides */
@@ -234,6 +246,11 @@
         </div>
 
         <div class="profile-actions">
+            <form action="/profile/request-password-change" method="POST" style="margin: 0;">
+                <button type="submit" class="btn-action btn-password">
+                    Gửi link đổi mật khẩu qua email
+                </button>
+            </form>
             <a href="/logout" class="btn-action btn-logout">Đăng xuất</a>
         </div>
     </main>

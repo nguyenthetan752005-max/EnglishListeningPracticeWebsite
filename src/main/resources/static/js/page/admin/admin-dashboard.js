@@ -169,25 +169,37 @@ function renderTextareaField(name, label, value = '', required = false, span2 = 
     `;
 }
 
-function renderSelectField(name, label, value, options, span2 = false) {
+function renderSelectField(name, label, value, options, span2 = false, extraAttributes = '') {
     const renderedOptions = options.map(option => `
         <option value="${escapeAttr(option.value)}" ${String(option.value) === String(value ?? '') ? 'selected' : ''}>${escapeHtml(option.label)}</option>
     `).join('');
     return `
         <div class="admin-form-group ${span2 ? 'admin-field-span-2' : ''}">
             <label for="field-${name}">${label}</label>
-            <select id="field-${name}" name="${name}" class="admin-form-control">${renderedOptions}</select>
+            <select id="field-${name}" name="${name}" class="admin-form-control" ${extraAttributes}>${renderedOptions}</select>
         </div>
     `;
 }
 
 function renderUploadField(inputId, label, accept, uploadArgs, helpText = '', span2 = true) {
+    const overwritePublicIdField = uploadArgs.overwritePublicIdField
+        ? `, '${uploadArgs.overwritePublicIdField}'`
+        : ', null';
     return `
         <div class="admin-form-group ${span2 ? 'admin-field-span-2' : ''}">
             <label for="${inputId}">${label}</label>
             <input id="${inputId}" type="file" class="admin-form-control" accept="${accept}"
-                onchange="uploadAdminAsset('${inputId}', '${uploadArgs.urlField}', '${uploadArgs.publicIdField}', '${uploadArgs.resourceType}', '${uploadArgs.folder}')">
+                onchange="uploadAdminAsset('${inputId}', '${uploadArgs.urlField}', '${uploadArgs.publicIdField}', '${uploadArgs.resourceType}', '${uploadArgs.folder}'${overwritePublicIdField})">
             ${helpText ? `<span class="admin-form-help">${escapeHtml(helpText)}</span>` : ''}
+        </div>
+    `;
+}
+
+function renderInfoField(label, text, span2 = true) {
+    return `
+        <div class="admin-form-group ${span2 ? 'admin-field-span-2' : ''}">
+            <label>${label}</label>
+            <div class="admin-form-control" style="display:flex;align-items:center;min-height:42px;background:#f8fafc;color:#0f172a;">${escapeHtml(text)}</div>
         </div>
     `;
 }
@@ -240,7 +252,7 @@ async function sendJson(url, method, payload) {
     return json;
 }
 
-async function uploadAdminAsset(fileInputId, urlFieldName, publicIdFieldName, resourceType, folder) {
+async function uploadAdminAsset(fileInputId, urlFieldName, publicIdFieldName, resourceType, folder, overwritePublicIdFieldName = null) {
     const fileInput = document.getElementById(fileInputId);
     const file = fileInput?.files?.[0];
     if (!file) return;
@@ -249,6 +261,12 @@ async function uploadAdminAsset(fileInputId, urlFieldName, publicIdFieldName, re
     formData.append('file', file);
     formData.append('resourceType', resourceType || 'auto');
     if (folder) formData.append('folder', folder);
+    const overwriteField = overwritePublicIdFieldName ? document.getElementById('field-' + overwritePublicIdFieldName) : null;
+    const overwritePublicId = overwriteField?.value?.trim();
+    if (overwritePublicId) {
+        formData.append('publicId', overwritePublicId);
+        formData.append('overwrite', 'true');
+    }
 
     try {
         setAdminUploadState(true);
@@ -324,6 +342,113 @@ async function restoreUser(id) {
     } catch (e) { alert('Server error'); }
 }
 
+async function hardDeleteUser(id) {
+    const warning = [
+        'WARNING: This will permanently delete the account.',
+        'All related learning progress, speaking results, comments, comment votes, password reset tokens, study statistics, and avatar/audio files on Cloudinary will also be deleted.',
+        'This action cannot be undone.',
+        '',
+        'Do you want to continue?'
+    ].join('\n');
+    if (!confirm(warning)) return;
+    try {
+        const res = await fetch('/api/admin/trash/users/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function restoreCategory(id) {
+    if (!confirm('Khôi phục Category này? Trạng thái sẽ chuyển về DRAFT.')) return;
+    try {
+        const res = await fetch('/api/admin/categories/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function restoreSection(id) {
+    if (!confirm('Khôi phục Section này? Trạng thái sẽ chuyển về DRAFT.')) return;
+    try {
+        const res = await fetch('/api/admin/sections/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function restoreLesson(id) {
+    if (!confirm('Khôi phục Lesson này? Trạng thái sẽ chuyển về DRAFT.')) return;
+    try {
+        const res = await fetch('/api/admin/lessons/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function restoreSentence(id) {
+    if (!confirm('Khôi phục Sentence này? Trạng thái sẽ chuyển về DRAFT.')) return;
+    try {
+        const res = await fetch('/api/admin/sentences/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function restoreComment(id) {
+    if (!confirm('Khôi phục comment này?')) return;
+    try {
+        const res = await fetch('/api/admin/comments/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function hardDeleteCategory(id) {
+    if (!confirm('Xóa vĩnh viễn Category này? Nếu còn dữ liệu tầng dưới trong trash, thao tác sẽ bị chặn.')) return;
+    try {
+        const res = await fetch('/api/admin/trash/categories/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function hardDeleteSection(id) {
+    if (!confirm('Xóa vĩnh viễn Section này? Nếu còn dữ liệu tầng dưới trong trash, thao tác sẽ bị chặn.')) return;
+    try {
+        const res = await fetch('/api/admin/trash/sections/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function hardDeleteLesson(id) {
+    if (!confirm('Xóa vĩnh viễn Lesson này? Nếu còn Sentence trong trash, thao tác sẽ bị chặn.')) return;
+    try {
+        const res = await fetch('/api/admin/trash/lessons/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
+async function hardDeleteComment(id) {
+    if (!confirm('Xóa vĩnh viễn comment này? Các reply và vote liên quan cũng sẽ bị xóa.')) return;
+    try {
+        const res = await fetch('/api/admin/trash/comments/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message);
+    } catch (e) { alert('Server error'); }
+}
+
 async function hardDeleteSentence(id) {
     if (!confirm('WARNING: This will permanently delete the audio on Cloudinary and the DB record.\nContinue?')) return;
     try {
@@ -381,6 +506,90 @@ async function deleteSlideshow(id) {
     }
 }
 
+async function restoreSlideshow(id) {
+    if (!confirm('Khôi phục slideshow này? Sau khi restore nó sẽ ở trạng thái inactive.')) return;
+    try {
+        const res = await fetch('/api/admin/slideshows/' + id + '/restore', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message || 'Server error');
+    } catch (e) {
+        alert('Server error');
+    }
+}
+
+async function hardDeleteSlideshow(id) {
+    if (!confirm('Xóa vĩnh viễn slideshow này? Ảnh trên Cloudinary cũng sẽ bị xóa.')) return;
+    try {
+        const res = await fetch('/api/admin/trash/slideshows/' + id, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) location.reload();
+        else alert(json.message || 'Server error');
+    } catch (e) {
+        alert('Server error');
+    }
+}
+
+function filterSlideshows() {
+    const table = document.getElementById('slideshowsTable');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr:not(.empty-row)');
+    const searchQ = (document.getElementById('searchSlideshows')?.value || '').toLowerCase().trim();
+    const status = (document.getElementById('filterSlideshowStatus')?.value || '').toLowerCase().trim();
+    const position = (document.getElementById('filterSlideshowPosition')?.value || '').toUpperCase().trim();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowStatus = (row.dataset.status || '').toLowerCase();
+        const rowPosition = (row.dataset.position || '').toUpperCase();
+        const text = row.textContent.toLowerCase();
+        const visible = (!searchQ || text.includes(searchQ))
+            && (!status || rowStatus === status)
+            && (!position || rowPosition === position);
+        row.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+    });
+
+    saveDashboardState({
+        searchSlideshows: document.getElementById('searchSlideshows')?.value || '',
+        filterSlideshowStatus: document.getElementById('filterSlideshowStatus')?.value || '',
+        filterSlideshowPosition: document.getElementById('filterSlideshowPosition')?.value || ''
+    });
+    updateResultCount('slideshowsTable', visibleCount);
+    paginateTable('slideshowsTable');
+}
+
+function filterComments() {
+    const table = document.getElementById('commentsTable');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr:not(.empty-row)');
+    const query = (document.getElementById('searchComments')?.value || '').toLowerCase().trim();
+    const hiddenFilter = (document.getElementById('filterCommentHidden')?.value || '').toLowerCase().trim();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const username = (row.dataset.username || '').toLowerCase();
+        const sentence = (row.dataset.sentence || '').toLowerCase();
+        const content = (row.dataset.commentContent || '').toLowerCase();
+        const hidden = (row.dataset.hidden || '').toLowerCase();
+        const textMatch = !query
+            || username.includes(query)
+            || sentence.includes(query)
+            || content.includes(query);
+        const hiddenMatch = !hiddenFilter || hidden === hiddenFilter;
+        const visible = textMatch && hiddenMatch;
+        row.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+    });
+
+    saveDashboardState({
+        searchComments: document.getElementById('searchComments')?.value || '',
+        filterCommentHidden: document.getElementById('filterCommentHidden')?.value || ''
+    });
+    updateResultCount('commentsTable', visibleCount);
+    paginateTable('commentsTable');
+}
+
 function getCategoryRow(id) {
     return document.querySelector(`#categoriesTable tbody tr[data-id="${id}"]`);
 }
@@ -395,16 +604,108 @@ function openAdminEntityModal(config) {
     adminEntityModalState.afterSubmit = config.afterSubmit;
     adminEntityModalState.originalPayload = config.initialPayload ? normalizePayloadForCompare(config.entityType, config.initialPayload) : null;
     adminEntityModalState.submitLabel = config.submitLabel || 'Save';
+    adminEntityModalState.formRenderer = config.formRenderer || null;
+    adminEntityModalState.formData = config.initialFormData || config.initialPayload || {};
 
     title.textContent = config.title;
     subtitle.textContent = config.subtitle;
-    fields.innerHTML = config.fieldsHtml;
+    fields.innerHTML = config.formRenderer ? config.formRenderer(adminEntityModalState.formData) : config.fieldsHtml;
     error.hidden = true;
     error.textContent = '';
     submitBtn.textContent = adminEntityModalState.submitLabel;
     submitBtn.disabled = false;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    initializeAdminEntityFormInteractions();
+}
+
+function initializeAdminEntityFormInteractions() {
+    if (adminEntityModalState.entityType === 'lesson') {
+        const sectionSelect = document.getElementById('field-sectionId');
+        if (sectionSelect) {
+            sectionSelect.addEventListener('change', () => rerenderAdminEntityFormFields('lesson'));
+        }
+    }
+    if (adminEntityModalState.entityType === 'sentence') {
+        const lessonSelect = document.getElementById('field-lessonId');
+        if (lessonSelect) {
+            lessonSelect.addEventListener('change', () => rerenderAdminEntityFormFields('sentence'));
+        }
+    }
+}
+
+function rerenderAdminEntityFormFields(entityType) {
+    if (!adminEntityModalState.formRenderer) return;
+    const data = collectAdminEntityPayload(entityType);
+    adminEntityModalState.formData = data;
+    const { fields } = getModalElements();
+    fields.innerHTML = adminEntityModalState.formRenderer(data);
+    initializeAdminEntityFormInteractions();
+}
+
+function getSectionByIdFromCache(sectionId) {
+    return contentCache.sectionsById.get(String(sectionId)) || null;
+}
+
+function getLessonByIdFromCache(lessonId) {
+    return contentCache.lessonsById.get(String(lessonId)) || null;
+}
+
+function getCategoryByIdFromCache(categoryId) {
+    return contentCache.categoriesById.get(String(categoryId)) || null;
+}
+
+function normalizeSectionForCache(section, fallbackCategoryId = null) {
+    if (!section) return section;
+    const categoryId = section?.category?.id ?? fallbackCategoryId;
+    const cachedCategory = categoryId != null ? getCategoryByIdFromCache(categoryId) : null;
+    const mergedCategory = {
+        ...(cachedCategory || {}),
+        ...(section.category || {}),
+        id: categoryId ?? section?.category?.id ?? cachedCategory?.id
+    };
+    return {
+        ...section,
+        category: mergedCategory.id != null ? mergedCategory : null
+    };
+}
+
+function normalizeLessonForCache(lesson, fallbackSectionId = null) {
+    if (!lesson) return lesson;
+    const sectionId = lesson?.section?.id ?? fallbackSectionId;
+    const cachedSection = sectionId != null ? getSectionByIdFromCache(sectionId) : null;
+    const normalizedSection = normalizeSectionForCache({
+        ...(cachedSection || {}),
+        ...(lesson.section || {})
+    }, lesson?.section?.category?.id ?? cachedSection?.category?.id);
+    return {
+        ...lesson,
+        section: normalizedSection || (sectionId != null ? { id: sectionId } : null)
+    };
+}
+
+function normalizeSentenceForCache(sentence, fallbackLessonId = null) {
+    if (!sentence) return sentence;
+    const lessonId = sentence?.lesson?.id ?? fallbackLessonId;
+    const cachedLesson = lessonId != null ? getLessonByIdFromCache(lessonId) : null;
+    const normalizedLesson = normalizeLessonForCache({
+        ...(cachedLesson || {}),
+        ...(sentence.lesson || {})
+    }, sentence?.lesson?.section?.id ?? cachedLesson?.section?.id);
+    return {
+        ...sentence,
+        lesson: normalizedLesson || (lessonId != null ? { id: lessonId } : null)
+    };
+}
+
+function getCategoryTypeFromSectionId(sectionId) {
+    const section = getSectionByIdFromCache(sectionId);
+    return String(section?.category?.type || 'AUDIO').toUpperCase();
+}
+
+function getCategoryTypeFromLessonId(lessonId) {
+    const lesson = getLessonByIdFromCache(lessonId);
+    return getLessonType(lesson);
 }
 
 function buildCategoryFormFields(data = {}) {
@@ -421,8 +722,7 @@ function buildCategoryFormFields(data = {}) {
         ]),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
-            { value: 'PUBLISHED', label: 'PUBLISHED' },
-            { value: 'ARCHIVED', label: 'ARCHIVED' }
+            { value: 'PUBLISHED', label: 'PUBLISHED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number'),
         renderHiddenField('cloudImageId', data.cloudImageId || ''),
@@ -443,8 +743,7 @@ function buildSectionFormFields(data = {}) {
         renderTextField('name', 'Section name', data.name || '', true),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
-            { value: 'PUBLISHED', label: 'PUBLISHED' },
-            { value: 'ARCHIVED', label: 'ARCHIVED' }
+            { value: 'PUBLISHED', label: 'PUBLISHED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number'),
         renderTextareaField('description', 'Description', data.description || '')
@@ -452,40 +751,75 @@ function buildSectionFormFields(data = {}) {
 }
 
 function buildLessonFormFields(data = {}) {
+    const lessonType = getCategoryTypeFromSectionId(data.sectionId || getSelectValue('lessonsSectionFilter'));
     return [
-        renderSelectField('sectionId', 'Section', data.sectionId || getSelectValue('lessonsSectionFilter'), getSelectOptionsFromElement('lessonsSectionFilter')),
+        renderSelectField('sectionId', 'Section', data.sectionId || getSelectValue('lessonsSectionFilter'), getSelectOptionsFromElement('lessonsSectionFilter'), false, `data-entity-type="lesson"`),
         renderTextField('title', 'Lesson title', data.title || '', true),
         renderTextField('level', 'Level', data.level || ''),
-        renderTextField('youtubeVideoId', 'YouTube link or ID', data.youtubeVideoId || '', false, 'text', true),
+        renderInfoField('Detected Type', lessonType === 'VIDEO' ? 'VIDEO: dùng link/ID YouTube ở lesson.' : 'AUDIO: lesson không dùng link YouTube.'),
+        ...(lessonType === 'VIDEO'
+            ? [renderTextField('youtubeVideoId', 'YouTube link or ID', data.youtubeVideoId || '', true, 'text', true)]
+            : []),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
-            { value: 'PUBLISHED', label: 'PUBLISHED' },
-            { value: 'ARCHIVED', label: 'ARCHIVED' }
+            { value: 'PUBLISHED', label: 'PUBLISHED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number')
     ].join('');
 }
 
 function buildSentenceFormFields(data = {}) {
+    const lessonType = getCategoryTypeFromLessonId(data.lessonId || getSelectValue('sentencesLessonFilter'));
     return [
-        renderSelectField('lessonId', 'Lesson', data.lessonId || getSelectValue('sentencesLessonFilter'), getSelectOptionsFromElement('sentencesLessonFilter'), true),
+        renderSelectField('lessonId', 'Lesson', data.lessonId || getSelectValue('sentencesLessonFilter'), getSelectOptionsFromElement('sentencesLessonFilter'), true, `data-entity-type="sentence"`),
         renderTextareaField('content', 'Sentence content', data.content || '', true),
-        renderHiddenField('cloudAudioId', data.cloudAudioId || ''),
-        renderTextField('audioUrl', 'Audio URL', data.audioUrl || '', false, 'text', true),
-        renderUploadField('sentenceAudioUpload', 'Upload audio', 'audio/*', {
-            urlField: 'audioUrl',
-            publicIdField: 'cloudAudioId',
-            resourceType: 'auto',
-            folder: 'sentences'
-        }, 'Sau khi upload, link audio sẽ tự điền vào ô Audio URL.'),
-        renderTextField('startTime', 'Start time (seconds)', data.startTime ?? '', false, 'number', false, '0.01'),
-        renderTextField('endTime', 'End time (seconds)', data.endTime ?? '', false, 'number', false, '0.01'),
+        renderInfoField('Detected Type', lessonType === 'VIDEO'
+            ? 'VIDEO: sentence dùng mốc thời gian cho YouTube của lesson.'
+            : 'AUDIO: sentence dùng audio URL hoặc file audio.'),
+        ...(lessonType === 'AUDIO'
+            ? [
+                renderHiddenField('cloudAudioId', data.cloudAudioId || ''),
+                renderTextField('audioUrl', 'Audio URL', data.audioUrl || '', true, 'text', true),
+                renderUploadField('sentenceAudioUpload', 'Upload audio', 'audio/*', {
+                    urlField: 'audioUrl',
+                    publicIdField: 'cloudAudioId',
+                    resourceType: 'auto',
+                    folder: 'sentences'
+                }, 'Sau khi upload, link audio sẽ tự điền vào ô Audio URL.')
+            ]
+            : [
+                renderTextField('startTime', 'Start time (seconds)', data.startTime ?? '', true, 'number', false, '0.01'),
+                renderTextField('endTime', 'End time (seconds)', data.endTime ?? '', true, 'number', false, '0.01')
+            ]),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
-            { value: 'PUBLISHED', label: 'PUBLISHED' },
-            { value: 'ARCHIVED', label: 'ARCHIVED' }
+            { value: 'PUBLISHED', label: 'PUBLISHED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number')
+    ].join('');
+}
+
+function buildSlideshowFormFields(data = {}) {
+    return [
+        renderTextField('title', 'Slideshow title', data.title || '', true),
+        renderSelectField('position', 'Position', data.position || 'HOME', [
+            { value: 'HOME', label: 'HOME' }
+        ]),
+        renderTextField('displayOrder', 'Display order', data.displayOrder ?? 0, true, 'number'),
+        renderSelectField('isActive', 'Visibility', String(data.isActive ?? true), [
+            { value: 'true', label: 'ACTIVE' },
+            { value: 'false', label: 'INACTIVE' }
+        ]),
+        renderHiddenField('cloudImageId', data.cloudImageId || ''),
+        renderTextField('imageUrl', 'Image URL', data.imageUrl || '', true, 'text', true),
+        renderUploadField('slideshowImageUpload', 'Upload image', 'image/*', {
+            urlField: 'imageUrl',
+            publicIdField: 'cloudImageId',
+            resourceType: 'image',
+            folder: 'slideshows',
+            overwritePublicIdField: 'cloudImageId'
+        }, 'Ảnh slideshow sẽ được upload lên Cloudinary. Nếu đang sửa và đã có ảnh cũ, upload mới sẽ chép đè ảnh cũ.'),
+        renderTextField('linkUrl', 'Target link', data.linkUrl || '', false, 'text', true)
     ].join('');
 }
 
@@ -528,6 +862,18 @@ function collectAdminEntityPayload(entityType) {
         };
     }
 
+    if (entityType === 'slideshow') {
+        return {
+            title: String(raw.title || '').trim(),
+            imageUrl: normalizeOptionalString(raw.imageUrl),
+            cloudImageId: normalizeOptionalString(raw.cloudImageId),
+            linkUrl: normalizeOptionalString(raw.linkUrl),
+            displayOrder: Number(raw.displayOrder || 0),
+            isActive: String(raw.isActive) === 'true',
+            position: raw.position || 'HOME'
+        };
+    }
+
     return {
         lessonId: Number(raw.lessonId),
         content: String(raw.content || '').trim(),
@@ -546,21 +892,31 @@ function validateAdminEntityPayload(entityType, payload) {
     if (entityType === 'section' && !payload.name) return 'Tên section không được để trống.';
     if (entityType === 'lesson' && !payload.sectionId) return 'Section không được để trống.';
     if (entityType === 'lesson' && !payload.title) return 'Tiêu đề bài học không được để trống.';
+    if (entityType === 'slideshow' && !payload.title) return 'Tiêu đề slideshow không được để trống.';
+    if (entityType === 'slideshow' && !normalizeOptionalString(payload.imageUrl)) return 'Ảnh slideshow không được để trống.';
     if (entityType === 'sentence' && !payload.lessonId) return 'Lesson không được để trống.';
     if (entityType === 'sentence' && !payload.content) return 'Nội dung sentence không được để trống.';
     if (Number.isNaN(payload.orderIndex)) return 'Order index không hợp lệ.';
+    if (payload.status === 'ARCHIVED') return 'ARCHIVED không được phép chọn trong form quản trị.';
     if (entityType === 'sentence') {
+        const lessonType = getCategoryTypeFromLessonId(payload.lessonId);
+        if (lessonType === 'AUDIO' && !normalizeOptionalString(payload.audioUrl)) return 'Audio URL không được để trống với sentence audio.';
+        if (lessonType === 'VIDEO' && (payload.startTime == null || payload.endTime == null)) return 'Start time và end time không được để trống với sentence video.';
         if (payload.startTime != null && Number.isNaN(payload.startTime)) return 'Start time không hợp lệ.';
         if (payload.endTime != null && Number.isNaN(payload.endTime)) return 'End time không hợp lệ.';
+        if (lessonType === 'VIDEO' && payload.endTime != null && payload.startTime != null && payload.endTime <= payload.startTime) {
+            return 'End time phải lớn hơn start time.';
+        }
     }
     if (entityType === 'lesson') {
-        const section = contentCache.sectionsById.get(String(payload.sectionId));
-        const lessonType = String(section?.category?.type || 'AUDIO').toUpperCase();
+        const lessonType = getCategoryTypeFromSectionId(payload.sectionId);
         const youtubeValue = normalizeOptionalString(payload.youtubeVideoId);
         if (lessonType === 'VIDEO') {
             if (!youtubeValue) return 'Link YouTube không được để trống với bài học video.';
             if (!extractYoutubeVideoId(youtubeValue)) return 'Link YouTube không hợp lệ.';
             payload.youtubeVideoId = extractYoutubeVideoId(youtubeValue);
+        } else {
+            payload.youtubeVideoId = null;
         }
     }
     return null;
@@ -606,6 +962,17 @@ function normalizePayloadForCompare(entityType, payload) {
             level: normalizeOptionalString(payload.level),
             status: payload.status || 'DRAFT',
             orderIndex: Number(payload.orderIndex || 0)
+        };
+    }
+    if (entityType === 'slideshow') {
+        return {
+            title: String(payload.title || '').trim(),
+            imageUrl: normalizeOptionalString(payload.imageUrl),
+            cloudImageId: normalizeOptionalString(payload.cloudImageId),
+            linkUrl: normalizeOptionalString(payload.linkUrl),
+            displayOrder: Number(payload.displayOrder || 0),
+            isActive: Boolean(payload.isActive),
+            position: payload.position || 'HOME'
         };
     }
     return {
@@ -828,7 +1195,8 @@ async function createLesson() {
         title: 'Create Lesson',
         subtitle: 'Fill the lesson properties. Auto-calculated fields are omitted.',
         submitLabel: 'Create',
-        fieldsHtml: buildLessonFormFields({ sectionId }),
+        formRenderer: buildLessonFormFields,
+        initialFormData: { sectionId },
         initialPayload: {
             sectionId,
             title: '',
@@ -848,6 +1216,14 @@ async function createLesson() {
 async function editLesson(id) {
     const lesson = contentCache.lessonsById.get(String(id));
     if (!lesson) return;
+    const lessonFormData = {
+        sectionId: lesson?.section?.id,
+        title: lesson.title || '',
+        level: lesson.level || '',
+        youtubeVideoId: lesson.youtubeVideoId || '',
+        status: lesson.status || 'DRAFT',
+        orderIndex: lesson.orderIndex ?? 0
+    };
     openAdminEntityModal({
         entityType: 'lesson',
         mode: 'edit',
@@ -857,22 +1233,9 @@ async function editLesson(id) {
         title: 'Edit Lesson',
         subtitle: 'Update the lesson properties shown below.',
         submitLabel: 'Save changes',
-        fieldsHtml: buildLessonFormFields({
-            sectionId: lesson?.section?.id,
-            title: lesson.title || '',
-            level: lesson.level || '',
-            youtubeVideoId: lesson.youtubeVideoId || '',
-            status: lesson.status || 'DRAFT',
-            orderIndex: lesson.orderIndex ?? 0
-        }),
-        initialPayload: {
-            sectionId: lesson?.section?.id,
-            title: lesson.title || '',
-            level: lesson.level || '',
-            youtubeVideoId: lesson.youtubeVideoId || '',
-            status: lesson.status || 'DRAFT',
-            orderIndex: lesson.orderIndex ?? 0
-        },
+        formRenderer: buildLessonFormFields,
+        initialFormData: lessonFormData,
+        initialPayload: lessonFormData,
         afterSubmit: async (payload) => {
             invalidateSectionCaches(payload.sectionId);
             await onLessonsCategoryChange();
@@ -912,7 +1275,8 @@ async function createSentence() {
         title: 'Create Sentence',
         subtitle: 'Enter the sentence content and media timing.',
         submitLabel: 'Create',
-        fieldsHtml: buildSentenceFormFields({ lessonId }),
+        formRenderer: buildSentenceFormFields,
+        initialFormData: { lessonId },
         initialPayload: {
             lessonId,
             content: '',
@@ -932,8 +1296,23 @@ async function createSentence() {
 }
 
 async function editSentence(id) {
-    const sentence = contentCache.sentencesById.get(String(id));
+    let sentence = contentCache.sentencesById.get(String(id));
     if (!sentence) return;
+    sentence = normalizeSentenceForCache(sentence, sentence?.lesson?.id);
+    contentCache.sentencesById.set(String(id), sentence);
+    if (sentence?.lesson?.id) {
+        contentCache.lessonsById.set(String(sentence.lesson.id), normalizeLessonForCache(sentence.lesson, sentence?.lesson?.section?.id));
+    }
+    const sentenceFormData = {
+        lessonId: sentence?.lesson?.id,
+        content: sentence.content || '',
+        audioUrl: sentence.audioUrl || '',
+        cloudAudioId: sentence.cloudAudioId || '',
+        startTime: sentence.startTime ?? '',
+        endTime: sentence.endTime ?? '',
+        status: sentence.status || 'DRAFT',
+        orderIndex: sentence.orderIndex ?? 0
+    };
     openAdminEntityModal({
         entityType: 'sentence',
         mode: 'edit',
@@ -943,26 +1322,9 @@ async function editSentence(id) {
         title: 'Edit Sentence',
         subtitle: 'Update only the editable fields of this sentence.',
         submitLabel: 'Save changes',
-        fieldsHtml: buildSentenceFormFields({
-            lessonId: sentence?.lesson?.id,
-            content: sentence.content || '',
-            audioUrl: sentence.audioUrl || '',
-            cloudAudioId: sentence.cloudAudioId || '',
-            startTime: sentence.startTime ?? '',
-            endTime: sentence.endTime ?? '',
-            status: sentence.status || 'DRAFT',
-            orderIndex: sentence.orderIndex ?? 0
-        }),
-        initialPayload: {
-            lessonId: sentence?.lesson?.id,
-            content: sentence.content || '',
-            audioUrl: sentence.audioUrl || '',
-            cloudAudioId: sentence.cloudAudioId || '',
-            startTime: sentence.startTime ?? '',
-            endTime: sentence.endTime ?? '',
-            status: sentence.status || 'DRAFT',
-            orderIndex: sentence.orderIndex ?? 0
-        },
+        formRenderer: buildSentenceFormFields,
+        initialFormData: sentenceFormData,
+        initialPayload: sentenceFormData,
         afterSubmit: async (payload) => {
             invalidateLessonCaches(payload.lessonId);
             await renderSentencesTable();
@@ -1130,34 +1492,36 @@ async function fetchSectionsByCategory(categoryId) {
     if (contentCache.sectionsByCategory.has(key)) return contentCache.sectionsByCategory.get(key);
     const res = await fetch('/api/admin/content/categories/' + categoryId + '/sections');
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const sections = await res.json();
-    (sections || []).forEach(section => contentCache.sectionsById.set(String(section.id), section));
-    contentCache.sectionsByCategory.set(key, sections || []);
-    return sections || [];
+    const sections = ((await res.json()) || []).map(section => normalizeSectionForCache(section, categoryId));
+    sections.forEach(section => contentCache.sectionsById.set(String(section.id), section));
+    contentCache.sectionsByCategory.set(key, sections);
+    return sections;
 }
 
 async function fetchLessonsBySection(sectionId) {
     if (!sectionId) return [];
     const key = String(sectionId);
     if (contentCache.lessonsBySection.has(key)) return contentCache.lessonsBySection.get(key);
+    await fetchSectionsByCategory(getSectionByIdFromCache(sectionId)?.category?.id || getSelectValue('lessonsCategoryFilter') || getSelectValue('sentencesCategoryFilter'));
     const res = await fetch('/api/admin/content/sections/' + sectionId + '/lessons');
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const lessons = await res.json();
-    (lessons || []).forEach(l => contentCache.lessonsById.set(String(l.id), l));
-    contentCache.lessonsBySection.set(key, lessons || []);
-    return lessons || [];
+    const lessons = ((await res.json()) || []).map(lesson => normalizeLessonForCache(lesson, sectionId));
+    lessons.forEach(lesson => contentCache.lessonsById.set(String(lesson.id), lesson));
+    contentCache.lessonsBySection.set(key, lessons);
+    return lessons;
 }
 
 async function fetchSentencesByLesson(lessonId) {
     if (!lessonId) return [];
     const key = String(lessonId);
     if (contentCache.sentencesByLesson.has(key)) return contentCache.sentencesByLesson.get(key);
+    await fetchLessonsBySection(getLessonByIdFromCache(lessonId)?.section?.id || getSelectValue('sentencesSectionFilter'));
     const res = await fetch('/api/admin/content/lessons/' + lessonId + '/sentences');
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const sentences = await res.json();
-    (sentences || []).forEach(sentence => contentCache.sentencesById.set(String(sentence.id), sentence));
-    contentCache.sentencesByLesson.set(key, sentences || []);
-    return sentences || [];
+    const sentences = ((await res.json()) || []).map(sentence => normalizeSentenceForCache(sentence, lessonId));
+    sentences.forEach(sentence => contentCache.sentencesById.set(String(sentence.id), sentence));
+    contentCache.sentencesByLesson.set(key, sentences);
+    return sentences;
 }
 
 function filterCategoriesByType(typeVal) {
@@ -1166,16 +1530,19 @@ function filterCategoriesByType(typeVal) {
     const searchQ = (document.getElementById('searchCategories')?.value || '').toLowerCase().trim();
     const practiceVal = (document.getElementById('filterCategoryPractice')?.value || '').toUpperCase();
     const levelVal = (document.getElementById('filterCategoryLevel')?.value || '').toUpperCase();
+    const statusVal = (document.getElementById('filterCategoryStatus')?.value || '').toUpperCase();
     let visibleCount = 0;
     table.querySelectorAll('tbody tr:not(.empty-row)').forEach(row => {
         const rowType = (row.getAttribute('data-category-type') || '').toUpperCase();
         const rowPractice = (row.getAttribute('data-category-practice') || '').toUpperCase();
         const rowLevels = (row.getAttribute('data-category-levels') || '').toUpperCase().split(',').filter(Boolean);
+        const rowStatus = (row.getAttribute('data-status') || '').toUpperCase();
         const typeMatch = rowType === String(typeVal || '').toUpperCase();
         const practiceMatch = rowPractice === practiceVal;
         const levelMatch = !levelVal || rowLevels.includes(levelVal);
+        const statusMatch = !statusVal || rowStatus === statusVal;
         const textMatch = !searchQ || row.textContent.toLowerCase().includes(searchQ);
-        const visible = typeMatch && practiceMatch && levelMatch && textMatch;
+        const visible = typeMatch && practiceMatch && levelMatch && statusMatch && textMatch;
         row.style.display = visible ? '' : 'none';
         if (visible) visibleCount++;
     });
@@ -1184,34 +1551,47 @@ function filterCategoriesByType(typeVal) {
         searchCategories: document.getElementById('searchCategories')?.value || '',
         filterCategoryType: typeVal || '',
         filterCategoryPractice: document.getElementById('filterCategoryPractice')?.value || '',
-        filterCategoryLevel: document.getElementById('filterCategoryLevel')?.value || ''
+        filterCategoryLevel: document.getElementById('filterCategoryLevel')?.value || '',
+        filterCategoryStatus: document.getElementById('filterCategoryStatus')?.value || ''
     });
     paginateTable('categoriesTable');
 }
 
 async function onSectionsCategoryChange() {
     const categoryId = getSelectValue('sectionsCategoryFilter');
-    saveDashboardState({ sectionsCategoryFilter: categoryId });
+    saveDashboardState({
+        sectionsCategoryFilter: categoryId,
+        filterSectionStatus: getSelectValue('filterSectionStatus'),
+        searchSections: document.getElementById('searchSections')?.value || ''
+    });
     if (!categoryId) {
-        setEmptyRow('sectionsTable', 'Select a Category to load Sections', 3);
+        setEmptyRow('sectionsTable', 'Select a Category to load Sections', 4);
         updateResultCount('sectionsTable', 0);
         return;
     }
 
-    setEmptyRow('sectionsTable', 'Loading sections...', 3);
+    setEmptyRow('sectionsTable', 'Loading sections...', 4);
     try {
         const sections = await fetchSectionsByCategory(categoryId);
-        if (!sections.length) {
-            setEmptyRow('sectionsTable', 'No sections found', 3);
+        const statusFilter = (getSelectValue('filterSectionStatus') || '').toUpperCase();
+        const searchQ = (document.getElementById('searchSections')?.value || '').toLowerCase().trim();
+        const filteredSections = sections.filter(s => {
+            const statusMatch = !statusFilter || String(s.status || '').toUpperCase() === statusFilter;
+            const textMatch = !searchQ || JSON.stringify(s).toLowerCase().includes(searchQ);
+            return statusMatch && textMatch;
+        });
+        if (!filteredSections.length) {
+            setEmptyRow('sectionsTable', 'No sections found', 4);
             updateResultCount('sectionsTable', 0);
             return;
         }
         const tbody = document.querySelector('#sectionsTable tbody');
         if (!tbody) return;
-        tbody.innerHTML = sections.map(s => `
+        tbody.innerHTML = filteredSections.map(s => `
             <tr data-id="${s.id}">
                 <td><strong>${escapeHtml(s.name)}</strong></td>
                 <td>${s.category?.name ? escapeHtml(s.category.name) : 'N/A'}</td>
+                <td><span class="admin-badge ${String(s.status || '').toUpperCase() === 'PUBLISHED' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(String(s.status || 'N/A'))}</span></td>
                 <td>
                     <div class="admin-action-group">
                         <button class="admin-btn admin-btn-outline admin-btn-small" onclick="editSection(${s.id})"><i class="fas fa-pen"></i></button>
@@ -1220,10 +1600,10 @@ async function onSectionsCategoryChange() {
                 </td>
             </tr>
         `).join('');
-        filterRenderedTable('sectionsTable', document.getElementById('searchSections')?.value || '');
+        updateResultCount('sectionsTable', filteredSections.length);
         paginateTable('sectionsTable');
     } catch (e) {
-        setEmptyRow('sectionsTable', 'Failed to load sections', 3);
+        setEmptyRow('sectionsTable', 'Failed to load sections', 4);
     }
 }
 
@@ -1232,7 +1612,7 @@ async function onLessonsCategoryChange() {
     saveDashboardState({ lessonsCategoryFilter: categoryId, lessonsSectionFilter: '' });
     if (!categoryId) {
         setSelectOptions('lessonsSectionFilter', [], '', false);
-        setEmptyRow('lessonsTable', 'Select a Category to load Lessons', 5);
+        setEmptyRow('lessonsTable', 'Select a Category to load Lessons', 6);
         updateResultCount('lessonsTable', 0);
         return;
     }
@@ -1242,7 +1622,7 @@ async function onLessonsCategoryChange() {
         setSelectOptions('lessonsSectionFilter', sections, '', false);
         await renderLessonsTable();
     } catch (e) {
-        setEmptyRow('lessonsTable', 'Failed to load lessons', 5);
+        setEmptyRow('lessonsTable', 'Failed to load lessons', 6);
         updateResultCount('lessonsTable', 0);
     }
 }
@@ -1264,23 +1644,26 @@ async function renderLessonsTable() {
 
     const sectionFilter = getSelectValue('lessonsSectionFilter');
     const levelFilter = (getSelectValue('filterLessonLevel') || '').toUpperCase();
+    const statusFilter = (getSelectValue('filterLessonStatus') || '').toUpperCase();
     const searchQ = (document.getElementById('searchLessons')?.value || '').toLowerCase().trim();
     saveDashboardState({
         lessonsSectionFilter: sectionFilter,
         searchLessons: document.getElementById('searchLessons')?.value || '',
-        filterLessonLevel: document.getElementById('filterLessonLevel')?.value || ''
+        filterLessonLevel: document.getElementById('filterLessonLevel')?.value || '',
+        filterLessonStatus: document.getElementById('filterLessonStatus')?.value || ''
     });
-    setEmptyRow('lessonsTable', 'Loading lessons...', 5);
+    setEmptyRow('lessonsTable', 'Loading lessons...', 6);
     try {
         const lessons = await gatherLessonsForCurrentFilter();
         syncLessonLevelOptions(lessons);
         const filtered = lessons.filter(l => {
             const textMatch = !searchQ || JSON.stringify(l).toLowerCase().includes(searchQ);
             const levelMatch = !levelFilter || String(l.level || '').trim().toUpperCase() === levelFilter;
-            return textMatch && levelMatch;
+            const statusMatch = !statusFilter || String(l.status || '').toUpperCase() === statusFilter;
+            return textMatch && levelMatch && statusMatch;
         });
         if (!filtered.length) {
-            setEmptyRow('lessonsTable', 'No lessons found', 5);
+            setEmptyRow('lessonsTable', 'No lessons found', 6);
             updateResultCount('lessonsTable', 0);
             return;
         }
@@ -1292,6 +1675,7 @@ async function renderLessonsTable() {
                 <td><span class="admin-badge admin-level-badge">${escapeHtml(l.level ?? '')}</span></td>
                 <td><span class="admin-badge ${getLessonType(l) === 'VIDEO' ? 'badge-admin' : 'badge-user'}">${escapeHtml(getLessonType(l))}</span></td>
                 <td>${l.section?.name ? escapeHtml(l.section.name) : 'N/A'}</td>
+                <td><span class="admin-badge ${String(l.status || '').toUpperCase() === 'PUBLISHED' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(String(l.status || 'N/A'))}</span></td>
                 <td>
                     <div class="admin-action-group">
                         <button class="admin-btn admin-btn-outline admin-btn-small" onclick="editLesson(${l.id})"><i class="fas fa-pen"></i></button>
@@ -1303,7 +1687,7 @@ async function renderLessonsTable() {
         updateResultCount('lessonsTable', filtered.length);
         paginateTable('lessonsTable');
     } catch (e) {
-        setEmptyRow('lessonsTable', 'Failed to load lessons', 5);
+        setEmptyRow('lessonsTable', 'Failed to load lessons', 6);
         updateResultCount('lessonsTable', 0);
     }
 }
@@ -1326,7 +1710,7 @@ async function onSentencesCategoryChange() {
     if (!categoryId) {
         setSelectOptions('sentencesSectionFilter', [], '', false);
         setSelectOptions('sentencesLessonFilter', [], '', false);
-        setEmptyRow('sentencesTable', 'Select a Category to load Sentences', 7);
+        setEmptyRow('sentencesTable', 'Select a Category to load Sentences', 8);
         updateResultCount('sentencesTable', 0);
         return;
     }
@@ -1337,7 +1721,7 @@ async function onSentencesCategoryChange() {
         await refreshLessonsOptionsForSentences();
         await renderSentencesTable();
     } catch (e) {
-        setEmptyRow('sentencesTable', 'Failed to load sentences', 7);
+        setEmptyRow('sentencesTable', 'Failed to load sentences', 8);
         updateResultCount('sentencesTable', 0);
     }
 }
@@ -1389,6 +1773,7 @@ async function renderSentencesTable() {
 
     const sectionId = getSelectValue('sentencesSectionFilter');
     const lessonId = getSelectValue('sentencesLessonFilter');
+    const statusFilter = (getSelectValue('filterSentenceStatus') || '').toUpperCase();
     const searchRaw = document.getElementById('searchSentences')?.value || '';
     const searchQ = searchRaw.toLowerCase().trim();
 
@@ -1397,11 +1782,12 @@ async function renderSentencesTable() {
         sentencesSectionFilter: sectionId,
         sentencesLessonFilter: lessonId,
         searchSentences: searchRaw,
-        sentencesPageSize: String(sentencesPagination.pageSize)
+        sentencesPageSize: String(sentencesPagination.pageSize),
+        filterSentenceStatus: document.getElementById('filterSentenceStatus')?.value || ''
     });
 
     if (!sectionId) {
-        setEmptyRow('sentencesTable', 'Choose a Section to load Sentences', 7);
+        setEmptyRow('sentencesTable', 'Choose a Section to load Sentences', 8);
         sentencesPagination.allRows = [];
         sentencesPagination.totalPages = 1;
         updateResultCount('sentencesTable', 0);
@@ -1409,7 +1795,7 @@ async function renderSentencesTable() {
         return;
     }
 
-    setEmptyRow('sentencesTable', 'Loading sentences...', 7);
+    setEmptyRow('sentencesTable', 'Loading sentences...', 8);
     try {
         const sections = await fetchSectionsByCategory(categoryId);
         const selectedSections = sectionId ? sections.filter(s => String(s.id) === String(sectionId)) : sections;
@@ -1423,6 +1809,8 @@ async function renderSentencesTable() {
         }));
 
         const rows = sentenceGroups.flat().filter(item => {
+            const statusMatch = !statusFilter || String(item.sentence?.status || '').toUpperCase() === statusFilter;
+            if (!statusMatch) return false;
             if (!searchQ) return true;
             return (item.sentence?.content || '').toLowerCase().includes(searchQ)
                 || (item.lesson?.title || '').toLowerCase().includes(searchQ)
@@ -1430,7 +1818,7 @@ async function renderSentencesTable() {
         });
 
         if (!rows.length) {
-            setEmptyRow('sentencesTable', 'No sentences found', 7);
+            setEmptyRow('sentencesTable', 'No sentences found', 8);
             sentencesPagination.allRows = [];
             sentencesPagination.totalPages = 1;
             updateResultCount('sentencesTable', 0);
@@ -1443,7 +1831,7 @@ async function renderSentencesTable() {
         renderSentencesPage();
         updateResultCount('sentencesTable', rows.length);
     } catch (e) {
-        setEmptyRow('sentencesTable', 'Failed to load sentences', 7);
+        setEmptyRow('sentencesTable', 'Failed to load sentences', 8);
         sentencesPagination.allRows = [];
         sentencesPagination.totalPages = 1;
         updateResultCount('sentencesTable', 0);
@@ -1457,7 +1845,7 @@ function renderSentencesPage() {
 
     const total = sentencesPagination.allRows.length;
     if (!total) {
-        setEmptyRow('sentencesTable', 'No sentences found', 7);
+        setEmptyRow('sentencesTable', 'No sentences found', 8);
         updateSentencesPaginationUi();
         return;
     }
@@ -1486,6 +1874,7 @@ function renderSentencesPage() {
                 <td>${escapeHtml(abbreviateText(item.sentence?.content ?? '', 90))}</td>
                 <td>${escapeHtml(item.lesson?.title ?? 'N/A')}</td>
                 <td><span class="admin-badge ${mediaType === 'VIDEO' ? 'badge-admin' : 'badge-user'}">${mediaType}</span></td>
+                <td><span class="admin-badge ${String(item.sentence?.status || '').toUpperCase() === 'PUBLISHED' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(String(item.sentence?.status || 'N/A'))}</span></td>
                 <td>${escapeHtml(abbreviateText(mediaSource, 60))}</td>
                 <td>${checkCell}</td>
                 <td>
@@ -1525,8 +1914,67 @@ function onSentencesPageSizeChange() {
     void renderSentencesTable();
 }
 
+async function createSlideshow() {
+    const initialPayload = {
+        title: '',
+        imageUrl: null,
+        cloudImageId: null,
+        linkUrl: null,
+        displayOrder: 0,
+        isActive: true,
+        position: 'HOME'
+    };
+    openAdminEntityModal({
+        entityType: 'slideshow',
+        mode: 'create',
+        submitUrl: '/api/admin/slideshows',
+        submitMethod: 'POST',
+        title: 'Create Slideshow',
+        subtitle: 'Tạo slide mới cho trang chủ.',
+        submitLabel: 'Create',
+        fieldsHtml: buildSlideshowFormFields(initialPayload),
+        initialPayload,
+        afterSubmit: async () => location.reload()
+    });
+}
+
+async function editSlideshow(id) {
+    const row = document.querySelector(`#slideshowsTable tbody tr[data-id="${id}"]`);
+    if (!row) return;
+    const formData = {
+        title: row.dataset.title || '',
+        imageUrl: row.dataset.imageUrl || '',
+        cloudImageId: row.dataset.cloudImageId || '',
+        linkUrl: row.dataset.linkUrl || '',
+        displayOrder: row.dataset.displayOrder || 0,
+        isActive: row.dataset.status === 'active',
+        position: row.dataset.position || 'HOME'
+    };
+    openAdminEntityModal({
+        entityType: 'slideshow',
+        mode: 'edit',
+        entityId: id,
+        submitUrl: '/api/admin/slideshows/' + id,
+        submitMethod: 'PUT',
+        title: 'Edit Slideshow',
+        subtitle: 'Cập nhật nội dung slideshow.',
+        submitLabel: 'Save changes',
+        fieldsHtml: buildSlideshowFormFields(formData),
+        initialPayload: formData,
+        afterSubmit: async () => location.reload()
+    });
+}
+
 function openUserProfile(userId) {
     window.location.href = '/admin/users/' + userId + '/profile';
+}
+
+function openAdminSelfProfile() {
+    window.location.href = '/admin/profile';
+}
+
+function openAdminAccountProfile(adminId) {
+    window.location.href = '/admin/admins/' + adminId + '/profile';
 }
 
 function sortUsersByTopScore(mode) {
@@ -1589,22 +2037,26 @@ function goTablePage(tableId, delta) {
 
 async function restoreDashboardState() {
     const state = readDashboardState();
+    const initialTab = getInitialDashboardTab();
 
     setElementValue('searchCategories', state.searchCategories || '');
     setElementValue('filterCategoryPractice', state.filterCategoryPractice || 'LISTENING');
     setElementValue('filterCategoryType', state.filterCategoryType || 'AUDIO');
     setElementValue('filterCategoryLevel', state.filterCategoryLevel || '');
+    setElementValue('filterCategoryStatus', state.filterCategoryStatus || '');
     filterCategoriesByType(getSelectValue('filterCategoryType'));
 
     setElementValue('sectionsCategoryFilter', state.sectionsCategoryFilter || document.getElementById('sectionsCategoryFilter')?.options?.[0]?.value || '');
+    setElementValue('filterSectionStatus', state.filterSectionStatus || '');
     await onSectionsCategoryChange();
     setElementValue('searchSections', state.searchSections || '');
-    filterRenderedTable('sectionsTable', state.searchSections || '');
+    await onSectionsCategoryChange();
 
     setElementValue('lessonsCategoryFilter', state.lessonsCategoryFilter || document.getElementById('lessonsCategoryFilter')?.options?.[0]?.value || '');
     await onLessonsCategoryChange();
     setElementValue('lessonsSectionFilter', state.lessonsSectionFilter || getSelectValue('lessonsSectionFilter'));
     setElementValue('filterLessonLevel', state.filterLessonLevel || '');
+    setElementValue('filterLessonStatus', state.filterLessonStatus || '');
     setElementValue('searchLessons', state.searchLessons || '');
     await renderLessonsTable();
 
@@ -1615,6 +2067,7 @@ async function restoreDashboardState() {
     setElementValue('sentencesSectionFilter', state.sentencesSectionFilter || getSelectValue('sentencesSectionFilter'));
     await onSentencesSectionChange();
     setElementValue('sentencesLessonFilter', state.sentencesLessonFilter || getSelectValue('sentencesLessonFilter'));
+    setElementValue('filterSentenceStatus', state.filterSentenceStatus || '');
     setElementValue('searchSentences', state.searchSentences || '');
     await renderSentencesTable();
     const savedPage = Number(state.sentencesPage || '1');
@@ -1625,13 +2078,26 @@ async function restoreDashboardState() {
     filterTableByStatus('usersTable', getSelectValue('filterUserStatus'));
     setElementValue('filterUserTopScore', state.filterUserTopScore || 'high');
     sortUsersByTopScore(getSelectValue('filterUserTopScore'));
+    setElementValue('searchComments', state.searchComments || '');
+    setElementValue('filterCommentHidden', state.filterCommentHidden || '');
+    filterComments();
+    setElementValue('searchSlideshows', state.searchSlideshows || '');
+    setElementValue('filterSlideshowStatus', state.filterSlideshowStatus || '');
+    setElementValue('filterSlideshowPosition', state.filterSlideshowPosition || '');
+    filterSlideshows();
 
-    const activeTab = shouldForceOverviewTab() ? 'overview' : (state.activeTab || 'overview');
-    if (shouldForceOverviewTab()) {
-        saveDashboardState({ activeTab: 'overview' });
-    }
+    const activeTab = initialTab || state.activeTab || 'overview';
+    saveDashboardState({ activeTab });
     const sidebarItem = document.querySelector(`.admin-sidebar-item[onclick="switchTab('${activeTab}', this)"]`);
     if (sidebarItem) switchTab(activeTab, sidebarItem);
+}
+
+function getInitialDashboardTab() {
+    if (shouldForceOverviewTab()) {
+        return 'overview';
+    }
+    const initialTab = document.body?.dataset?.initialTab || '';
+    return initialTab.trim();
 }
 
 /* ===========================
@@ -1654,13 +2120,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     // Initialize result counters for each table
-    ['usersTable', 'adminsTable', 'categoriesTable'].forEach(tableId => {
+    ['usersTable', 'adminsTable', 'categoriesTable', 'commentsTable', 'slideshowsTable'].forEach(tableId => {
         const table = document.getElementById(tableId);
         if (table) {
             const rows = table.querySelectorAll('tbody tr:not(.empty-row)');
             updateResultCount(tableId, rows.length);
         }
     });
-    ['usersTable', 'adminsTable', 'categoriesTable', 'sectionsTable', 'lessonsTable', 'trashUsersTable', 'trashSentencesTable'].forEach(tableId => paginateTable(tableId));
+    ['usersTable', 'adminsTable', 'categoriesTable', 'commentsTable', 'sectionsTable', 'lessonsTable', 'slideshowsTable', 'trashUsersTable', 'trashCategoriesTable', 'trashSectionsTable', 'trashLessonsTable', 'trashSentencesTable', 'trashCommentsTable', 'trashSlideshowsTable'].forEach(tableId => paginateTable(tableId));
     await restoreDashboardState();
 });

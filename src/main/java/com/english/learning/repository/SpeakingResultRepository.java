@@ -3,6 +3,9 @@ package com.english.learning.repository;
 import com.english.learning.entity.SpeakingResult;
 import com.english.learning.enums.SpeakingResultType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +26,8 @@ public interface SpeakingResultRepository extends JpaRepository<SpeakingResult, 
 
     // Lấy SpeakingResult cũ để xoá audio (Cronjob)
     List<SpeakingResult> findByUpdatedAtBefore(java.time.LocalDateTime dateTime);
+
+    @Modifying
+    @Query(value = "DELETE FROM speaking_results WHERE user_id = :userId", nativeQuery = true)
+    void deleteByUserId(@Param("userId") Long userId);
 }

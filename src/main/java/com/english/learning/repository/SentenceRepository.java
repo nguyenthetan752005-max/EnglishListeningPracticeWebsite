@@ -12,11 +12,17 @@ public interface SentenceRepository extends JpaRepository<Sentence, Long> {
     List<Sentence> findByLesson_IdOrderByOrderIndexAsc(Long lessonId);
     List<Sentence> findByLesson_IdAndStatusOrderByOrderIndexAsc(Long lessonId, ContentStatus status);
     long countByLesson_Id(Long lessonId);
+    long countByLesson_IdAndStatus(Long lessonId, ContentStatus status);
     long countByLesson_Section_Id(Long sectionId);
+    long countByLesson_Section_IdAndStatus(Long sectionId, ContentStatus status);
     long countByLesson_Section_Category_Id(Long categoryId);
+    long countByLesson_Section_Category_IdAndStatus(Long categoryId, ContentStatus status);
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM sentences WHERE is_deleted = true", nativeQuery = true)
     List<Sentence> findDeletedSentences();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM sentences WHERE id = :id", nativeQuery = true)
+    Optional<Sentence> findAnySentenceById(@org.springframework.data.repository.query.Param("id") Long id);
 
     @org.springframework.data.jpa.repository.Query("""
             select s from Sentence s
@@ -32,4 +38,7 @@ public interface SentenceRepository extends JpaRepository<Sentence, Long> {
             """)
     Optional<Sentence> findPublishedById(@org.springframework.data.repository.query.Param("sentenceId") Long sentenceId,
                                          @org.springframework.data.repository.query.Param("status") ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM sentences WHERE lesson_id = :lessonId", nativeQuery = true)
+    long countAnyByLessonId(@org.springframework.data.repository.query.Param("lessonId") Long lessonId);
 }

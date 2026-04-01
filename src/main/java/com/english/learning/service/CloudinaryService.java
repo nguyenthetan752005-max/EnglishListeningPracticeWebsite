@@ -35,6 +35,24 @@ public class CloudinaryService {
         return result;
     }
 
+    @SuppressWarnings("rawtypes")
+    public Map<String, String> uploadFile(MultipartFile file, String resourceType, String folder, String publicId, boolean overwrite) throws IOException {
+        Map<String, Object> options = new HashMap<>();
+        options.put("resource_type", resourceType == null || resourceType.isBlank() ? "auto" : resourceType);
+        if (folder != null && !folder.isBlank() && (publicId == null || publicId.isBlank() || !publicId.contains("/"))) {
+            options.put("folder", folder);
+        }
+        if (publicId != null && !publicId.isBlank()) {
+            options.put("public_id", publicId);
+        }
+        options.put("overwrite", overwrite);
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+        Map<String, String> result = new HashMap<>();
+        result.put("url", uploadResult.get("secure_url").toString());
+        result.put("publicId", uploadResult.get("public_id").toString());
+        return result;
+    }
+
     /**
      * Upload audio lên Cloudinary với public_id cố định.
      */

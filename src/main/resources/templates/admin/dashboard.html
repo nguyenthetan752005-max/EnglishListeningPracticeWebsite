@@ -3,7 +3,8 @@
 
 <head th:replace="~{fragments/head :: head('Admin Dashboard - Management')}"></head>
 
-<body th:attr="data-force-overview=${forceAdminOverviewTab}">
+<body th:with="resolvedInitialTab=${forceAdminOverviewTab ? 'overview' : (#strings.isEmpty(initialTab) ? 'overview' : initialTab)}"
+      th:attr="data-force-overview=${forceAdminOverviewTab},data-initial-tab=${resolvedInitialTab}">
     <!-- Navbar -->
     <div th:replace="~{fragments/navbar-admin :: adminNavbar}"></div>
 
@@ -18,54 +19,54 @@
                 <p>Hello, <strong th:text="${admin != null ? admin.username : 'Admin'}">Admin</strong></p>
             </div>
             <ul class="admin-sidebar-menu">
-                <li class="admin-sidebar-item active" onclick="switchTab('overview', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'overview'} ? ' active'" onclick="switchTab('overview', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-chart-pie"></i></div>
                     Overview
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('users', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'users'} ? ' active'" onclick="switchTab('users', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-users"></i></div>
                     User Management
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('admins', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'admins'} ? ' active'" onclick="switchTab('admins', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-user-shield"></i></div>
                     Admin Management
                 </li>
                 <div class="admin-sidebar-divider"></div>
-                <li class="admin-sidebar-item" onclick="switchTab('categories', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'categories'} ? ' active'" onclick="switchTab('categories', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-sitemap"></i></div>
                     Categories
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('sections', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'sections'} ? ' active'" onclick="switchTab('sections', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-stream"></i></div>
                     Sections
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('lessons', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'lessons'} ? ' active'" onclick="switchTab('lessons', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-book-open"></i></div>
                     Lessons
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('sentences', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'sentences'} ? ' active'" onclick="switchTab('sentences', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-align-left"></i></div>
                     Sentences
                 </li>
                 <div class="admin-sidebar-divider"></div>
-                <li class="admin-sidebar-item" onclick="switchTab('comments', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'comments'} ? ' active'" onclick="switchTab('comments', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-comments"></i></div>
                     Comments
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('slideshows', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'slideshows'} ? ' active'" onclick="switchTab('slideshows', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-images"></i></div>
                     Slideshows
                 </li>
                 <div class="admin-sidebar-divider"></div>
-                <li class="admin-sidebar-item" onclick="switchTab('trash', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'trash'} ? ' active'" onclick="switchTab('trash', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-trash-alt"></i></div>
                     Recycle Bin
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('settings', this)">
+                <li class="admin-sidebar-item" th:classappend="${resolvedInitialTab == 'settings'} ? ' active'" onclick="switchTab('settings', this)">
                     <div class="admin-sidebar-icon"><i class="fas fa-cog"></i></div>
                     Settings
                 </li>
-                <li class="admin-sidebar-item" onclick="switchTab('profile', this)">
+                <li class="admin-sidebar-item" onclick="openAdminSelfProfile()">
                     <div class="admin-sidebar-icon"><i class="fas fa-id-badge"></i></div>
                     Admin Profile
                 </li>
@@ -81,7 +82,7 @@
         <main class="admin-main">
 
             <!-- ===== OVERVIEW ===== -->
-            <div id="tab-overview" class="admin-tab-pane active">
+            <div id="tab-overview" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'overview'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Overview</h1>
@@ -158,7 +159,7 @@
             </div>
 
             <!-- ===== USER MANAGEMENT ===== -->
-            <div id="tab-users" class="admin-tab-pane">
+            <div id="tab-users" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'users'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>User Management</h1>
@@ -245,7 +246,7 @@
             </div>
 
             <!-- ===== ADMIN MANAGEMENT ===== -->
-            <div id="tab-admins" class="admin-tab-pane">
+            <div id="tab-admins" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'admins'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Admin Management</h1>
@@ -273,7 +274,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="adm : ${adminUsers}">
+                                <tr th:each="adm : ${adminUsers}"
+                                    th:onclick="${admin != null and adm.id == admin.id} ? 'openAdminSelfProfile()' : 'openAdminAccountProfile(' + ${adm.id} + ')'">
                                     <td th:text="${adm.id}">1</td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:10px;">
@@ -302,7 +304,7 @@
             </div>
 
             <!-- ===== CATEGORIES ===== -->
-            <div id="tab-categories" class="admin-tab-pane">
+            <div id="tab-categories" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'categories'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Categories</h1>
@@ -333,6 +335,12 @@
                                 <option value="">All Levels</option>
                                 <option th:each="level : ${categoryLevelOptions}" th:value="${level}" th:text="${level}">A1</option>
                             </select>
+                            <span class="admin-result-count">Status:</span>
+                            <select class="admin-filter-select" id="filterCategoryStatus" onchange="filterCategoriesByType(document.getElementById('filterCategoryType').value)">
+                                <option value="">All Status</option>
+                                <option value="PUBLISHED">PUBLISHED</option>
+                                <option value="DRAFT">DRAFT</option>
+                            </select>
                             <span class="admin-result-count" id="categoriesCount"></span>
                         </div>
                     </div>
@@ -343,6 +351,7 @@
                                     <th>Name</th>
                                     <th>Practice</th>
                                     <th>Type</th>
+                                    <th>Status</th>
                                     <th>Lessons</th>
                                     <th>Actions</th>
                                 </tr>
@@ -375,6 +384,11 @@
                                               th:classappend="${c.type != null and c.type.name() == 'VIDEO'} ? ' badge-admin' : (${c.type != null and c.type.name() == 'AUDIO'} ? ' badge-user' : ' badge-inactive')"
                                               th:text="${c.type != null ? c.type.name() : 'N/A'}">AUDIO</span>
                                     </td>
+                                    <td>
+                                        <span class="admin-badge"
+                                              th:classappend="${c.status != null and c.status.name() == 'PUBLISHED'} ? ' badge-active' : ' badge-inactive'"
+                                              th:text="${c.status != null ? c.status.name() : 'N/A'}">DRAFT</span>
+                                    </td>
                                     <td th:text="${c.totalLessons}">0</td>
                                     <td>
                                         <div class="admin-action-group">
@@ -388,7 +402,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(categories)}" class="empty-row">
-                                    <td colspan="5">No categories</td>
+                                    <td colspan="6">No categories</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -397,7 +411,7 @@
             </div>
 
             <!-- ===== SECTIONS ===== -->
-            <div id="tab-sections" class="admin-tab-pane">
+            <div id="tab-sections" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'sections'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Sections</h1>
@@ -414,8 +428,14 @@
                             <select class="admin-filter-select" id="sectionsCategoryFilter" onchange="onSectionsCategoryChange()">
                                 <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}">Category</option>
                             </select>
+                            <span class="admin-result-count">Status:</span>
+                            <select class="admin-filter-select" id="filterSectionStatus" onchange="onSectionsCategoryChange()">
+                                <option value="">All Status</option>
+                                <option value="PUBLISHED">PUBLISHED</option>
+                                <option value="DRAFT">DRAFT</option>
+                            </select>
                             <input type="text" class="admin-search-input" id="searchSections"
-                                   placeholder="Search sections..." oninput="filterRenderedTable('sectionsTable', this.value)">
+                                   placeholder="Search sections..." oninput="onSectionsCategoryChange()">
                             <span class="admin-result-count" id="sectionsCount"></span>
                         </div>
                     </div>
@@ -425,12 +445,13 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Category</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="empty-row">
-                                    <td colspan="3">Select a Category to load Sections</td>
+                                    <td colspan="4">Select a Category to load Sections</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -439,7 +460,7 @@
             </div>
 
             <!-- ===== LESSONS ===== -->
-            <div id="tab-lessons" class="admin-tab-pane">
+            <div id="tab-lessons" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'lessons'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Lessons</h1>
@@ -464,6 +485,12 @@
                                 <option value="">All Levels</option>
                                 <option th:each="level : ${lessonLevelOptions}" th:value="${level}" th:text="${level}">A1</option>
                             </select>
+                            <span class="admin-result-count">Status:</span>
+                            <select class="admin-filter-select" id="filterLessonStatus" onchange="renderLessonsTable()">
+                                <option value="">All Status</option>
+                                <option value="PUBLISHED">PUBLISHED</option>
+                                <option value="DRAFT">DRAFT</option>
+                            </select>
                             <input type="text" class="admin-search-input" id="searchLessons"
                                    placeholder="Search lessons..." oninput="renderLessonsTable()">
                             <span class="admin-result-count" id="lessonsCount"></span>
@@ -477,12 +504,13 @@
                                     <th>Level</th>
                                     <th>Type</th>
                                     <th>Section</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="empty-row">
-                                    <td colspan="5">Select a Category to load Lessons</td>
+                                    <td colspan="6">Select a Category to load Lessons</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -491,7 +519,7 @@
             </div>
 
             <!-- ===== SENTENCES ===== -->
-            <div id="tab-sentences" class="admin-tab-pane">
+            <div id="tab-sentences" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'sentences'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Sentences + Media</h1>
@@ -514,6 +542,12 @@
                             <span class="admin-result-count">Lesson:</span>
                             <select class="admin-filter-select" id="sentencesLessonFilter" onchange="renderSentencesTable()">
                             </select>
+                            <span class="admin-result-count">Status:</span>
+                            <select class="admin-filter-select" id="filterSentenceStatus" onchange="renderSentencesTable()">
+                                <option value="">All Status</option>
+                                <option value="PUBLISHED">PUBLISHED</option>
+                                <option value="DRAFT">DRAFT</option>
+                            </select>
                             <input type="text" class="admin-search-input" id="searchSentences"
                                    placeholder="Search sentences..." oninput="renderSentencesTable()">
                             <select class="admin-filter-select" id="sentencesPageSize" onchange="onSentencesPageSizeChange()">
@@ -532,6 +566,7 @@
                                     <th>Sentence</th>
                                     <th>Lesson</th>
                                     <th>Type</th>
+                                    <th>Status</th>
                                     <th>Media Source</th>
                                     <th>Check</th>
                                     <th>Actions</th>
@@ -539,7 +574,7 @@
                             </thead>
                             <tbody>
                                 <tr class="empty-row">
-                                    <td colspan="7">Select a Category to load Sentences</td>
+                                    <td colspan="8">Select a Category to load Sentences</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -559,7 +594,7 @@
             </div>
 
             <!-- ===== COMMENTS ===== -->
-            <div id="tab-comments" class="admin-tab-pane">
+            <div id="tab-comments" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'comments'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Comments</h1>
@@ -568,10 +603,21 @@
                 </div>
                 <div class="admin-panel">
                     <div class="admin-panel-header">
-                        <h2>Latest Comments</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" id="searchComments"
+                                   placeholder="Search by user, sentence, or comment content..."
+                                   oninput="filterComments()">
+                            <span class="admin-result-count">Hidden:</span>
+                            <select class="admin-filter-select" id="filterCommentHidden" onchange="filterComments()">
+                                <option value="">All</option>
+                                <option value="visible">Visible</option>
+                                <option value="hidden">Hidden</option>
+                            </select>
+                            <span class="admin-result-count" id="commentsCount"></span>
+                        </div>
                     </div>
                     <div class="admin-table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table" id="commentsTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -584,7 +630,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="c : ${recentComments}">
+                                <tr th:each="c : ${recentComments}"
+                                    th:data-hidden="${c.isHidden != null and c.isHidden ? 'hidden' : 'visible'}"
+                                    th:data-username="${c.user != null ? c.user.username : ''}"
+                                    th:data-sentence="${c.sentence != null ? c.sentence.content : ''}"
+                                    th:data-comment-content="${c.content}">
                                     <td th:text="${c.id}">1</td>
                                     <td th:text="${c.user != null ? c.user.username : 'N/A'}">user</td>
                                     <td th:text="${c.sentence != null ? #strings.abbreviate(c.sentence.content,40) : 'N/A'}">sentence</td>
@@ -614,7 +664,7 @@
             </div>
 
             <!-- ===== SLIDESHOWS ===== -->
-            <div id="tab-slideshows" class="admin-tab-pane">
+            <div id="tab-slideshows" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'slideshows'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Slideshows</h1>
@@ -623,16 +673,36 @@
                 </div>
                 <div class="admin-panel">
                     <div class="admin-panel-header">
-                        <h2>All Slides</h2>
+                        <div class="admin-filter-bar">
+                            <button class="admin-btn admin-btn-primary admin-btn-small" onclick="createSlideshow()">
+                                <i class="fas fa-plus"></i> New Slideshow
+                            </button>
+                            <input type="text" class="admin-search-input" id="searchSlideshows"
+                                   placeholder="Search slideshows..."
+                                   oninput="filterSlideshows()">
+                            <span class="admin-result-count">Status:</span>
+                            <select class="admin-filter-select" id="filterSlideshowStatus" onchange="filterSlideshows()">
+                                <option value="">All</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <span class="admin-result-count">Position:</span>
+                            <select class="admin-filter-select" id="filterSlideshowPosition" onchange="filterSlideshows()">
+                                <option value="">All</option>
+                                <option value="HOME">HOME</option>
+                            </select>
+                            <span class="admin-result-count" id="slideshowsCount"></span>
+                        </div>
                     </div>
                     <div class="admin-table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table" id="slideshowsTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Title</th>
-                                    <th>Image URL</th>
+                                    <th>Image</th>
                                     <th>Link</th>
+                                    <th>Position</th>
                                     <th>Order</th>
                                     <th>Active</th>
                                     <th>Created</th>
@@ -640,11 +710,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="s : ${slideshows}">
+                                <tr th:each="s : ${slideshows}"
+                                    th:data-id="${s.id}"
+                                    th:data-title="${s.title}"
+                                    th:data-image-url="${s.imageUrl}"
+                                    th:data-cloud-image-id="${s.cloudImageId}"
+                                    th:data-link-url="${s.linkUrl}"
+                                    th:data-display-order="${s.displayOrder}"
+                                    th:data-position="${s.position}"
+                                    th:data-status="${s.isActive != null and s.isActive ? 'active' : 'inactive'}">
                                     <td th:text="${s.id}">1</td>
-                                    <td th:text="${s.title}">Title</td>
-                                    <td th:text="${s.imageUrl}">image</td>
-                                    <td th:text="${s.linkUrl}">link</td>
+                                    <td>
+                                        <strong th:text="${s.title}">Title</strong>
+                                    </td>
+                                    <td>
+                                        <a th:href="${s.imageUrl}" target="_blank" th:if="${s.imageUrl != null}">
+                                            <img th:src="${s.imageUrl}" alt="Slide image" style="width: 96px; height: 54px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-color);">
+                                        </a>
+                                        <span th:if="${s.imageUrl == null}" class="admin-badge badge-inactive">No Image</span>
+                                    </td>
+                                    <td th:text="${s.linkUrl != null ? s.linkUrl : 'N/A'}">link</td>
+                                    <td th:text="${s.position}">HOME</td>
                                     <td th:text="${s.displayOrder}">0</td>
                                     <td>
                                         <span class="admin-badge"
@@ -658,6 +744,10 @@
                                                 th:onclick="'toggleSlideshowActive(' + ${s.id} + ')'">
                                                 <i class="fas fa-power-off"></i>
                                             </button>
+                                            <button class="admin-btn admin-btn-outline admin-btn-small"
+                                                th:onclick="'editSlideshow(' + ${s.id} + ')'">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
                                             <button class="admin-btn admin-btn-danger admin-btn-small"
                                                 th:onclick="'deleteSlideshow(' + ${s.id} + ')'">
                                                 <i class="fas fa-trash"></i>
@@ -666,7 +756,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(slideshows)}" class="empty-row">
-                                    <td colspan="8">No slides defined</td>
+                                    <td colspan="9">No slides defined</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -675,7 +765,7 @@
             </div>
 
             <!-- ===== RECYCLE BIN ===== -->
-            <div id="tab-trash" class="admin-tab-pane">
+            <div id="tab-trash" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'trash'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Recycle Bin</h1>
@@ -706,9 +796,16 @@
                                     <td th:text="${u.id}">1</td>
                                     <td th:text="${u.username}">deleted_user</td>
                                     <td th:text="${u.email}">user@deleted</td>
-                                    <td><button class="admin-btn admin-btn-primary admin-btn-small"
-                                            th:onclick="'restoreUser(' + ${u.id} + ')'"><i class="fas fa-undo"></i>
-                                            Restore</button></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreUser(' + ${u.id} + ')'"><i class="fas fa-undo"></i>
+                                                Restore</button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteUser(' + ${u.id} + ')'"><i class="fas fa-trash"></i>
+                                                Delete Forever</button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(deletedUsers)}" class="empty-row">
                                     <td colspan="4">No locked accounts</td>
@@ -720,9 +817,147 @@
 
                 <div class="admin-panel">
                     <div class="admin-panel-header">
-                        <h2>Deleted Sentences (Hard Delete)</h2>
+                        <h2>Deleted Categories</h2>
                         <div class="admin-filter-bar">
-                            <input type="text" class="admin-search-input" placeholder="Search sentences..."
+                            <input type="text" class="admin-search-input" placeholder="Search deleted categories..."
+                                oninput="filterTable('trashCategoriesTable', this.value)" style="min-width:200px;">
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="trashCategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Practice</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c : ${deletedCategories}">
+                                    <td th:text="${c.id}">1</td>
+                                    <td th:text="${c.name}">Category</td>
+                                    <td th:text="${c.practiceType}">LISTENING</td>
+                                    <td><span class="admin-badge badge-inactive" th:text="${c.status}">ARCHIVED</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreCategory(' + ${c.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteCategory(' + ${c.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedCategories)}" class="empty-row">
+                                    <td colspan="5">No deleted categories</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Deleted Sections</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" placeholder="Search deleted sections..."
+                                oninput="filterTable('trashSectionsTable', this.value)" style="min-width:200px;">
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="trashSectionsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="s : ${deletedSections}">
+                                    <td th:text="${s.id}">1</td>
+                                    <td th:text="${s.name}">Section</td>
+                                    <td th:text="${s.category != null ? s.category.name : 'N/A'}">Category</td>
+                                    <td><span class="admin-badge badge-inactive" th:text="${s.status}">ARCHIVED</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreSection(' + ${s.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteSection(' + ${s.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedSections)}" class="empty-row">
+                                    <td colspan="5">No deleted sections</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Deleted Lessons</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" placeholder="Search deleted lessons..."
+                                oninput="filterTable('trashLessonsTable', this.value)" style="min-width:200px;">
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="trashLessonsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Section</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="l : ${deletedLessons}">
+                                    <td th:text="${l.id}">1</td>
+                                    <td th:text="${l.title}">Lesson</td>
+                                    <td th:text="${l.section != null ? l.section.name : 'N/A'}">Section</td>
+                                    <td><span class="admin-badge badge-inactive" th:text="${l.status}">ARCHIVED</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreLesson(' + ${l.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteLesson(' + ${l.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedLessons)}" class="empty-row">
+                                    <td colspan="5">No deleted lessons</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Deleted Sentences</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" placeholder="Search deleted sentences..."
                                 oninput="filterTable('trashSentencesTable', this.value)" style="min-width:200px;">
                         </div>
                     </div>
@@ -732,6 +967,8 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Content</th>
+                                    <th>Lesson</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -739,12 +976,115 @@
                                 <tr th:each="s : ${deletedSentences}">
                                     <td th:text="${s.id}">1</td>
                                     <td th:text="${s.content}">Sentence content</td>
-                                    <td><button class="admin-btn admin-btn-danger admin-btn-small"
-                                            th:onclick="'hardDeleteSentence(' + ${s.id} + ')'"><i
-                                                class="fas fa-trash"></i> Delete Forever</button></td>
+                                    <td th:text="${s.lesson != null ? s.lesson.title : 'N/A'}">Lesson</td>
+                                    <td><span class="admin-badge badge-inactive" th:text="${s.status}">ARCHIVED</span></td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreSentence(' + ${s.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteSentence(' + ${s.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(deletedSentences)}" class="empty-row">
-                                    <td colspan="3">No deleted sentences</td>
+                                    <td colspan="5">No deleted sentences</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Deleted Comments</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" placeholder="Search deleted comments..."
+                                oninput="filterTable('trashCommentsTable', this.value)" style="min-width:200px;">
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="trashCommentsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Sentence</th>
+                                    <th>Content</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c : ${deletedComments}">
+                                    <td th:text="${c.id}">1</td>
+                                    <td th:text="${c.user != null ? c.user.username : 'N/A'}">user</td>
+                                    <td th:text="${c.sentence != null ? #strings.abbreviate(c.sentence.content,40) : 'N/A'}">sentence</td>
+                                    <td th:text="${#strings.abbreviate(c.content, 70)}">content</td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreComment(' + ${c.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteComment(' + ${c.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedComments)}" class="empty-row">
+                                    <td colspan="5">No deleted comments</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Deleted Slideshows</h2>
+                        <div class="admin-filter-bar">
+                            <input type="text" class="admin-search-input" placeholder="Search deleted slideshows..."
+                                oninput="filterTable('trashSlideshowsTable', this.value)" style="min-width:200px;">
+                        </div>
+                    </div>
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="trashSlideshowsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Position</th>
+                                    <th>Order</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="s : ${deletedSlideshows}">
+                                    <td th:text="${s.id}">1</td>
+                                    <td th:text="${s.title}">Slideshow</td>
+                                    <td th:text="${s.position}">HOME</td>
+                                    <td th:text="${s.displayOrder}">0</td>
+                                    <td>
+                                        <div class="admin-action-group">
+                                            <button class="admin-btn admin-btn-primary admin-btn-small"
+                                                th:onclick="'restoreSlideshow(' + ${s.id} + ')'">
+                                                <i class="fas fa-undo"></i> Restore
+                                            </button>
+                                            <button class="admin-btn admin-btn-danger admin-btn-small"
+                                                th:onclick="'hardDeleteSlideshow(' + ${s.id} + ')'">
+                                                <i class="fas fa-trash"></i> Delete Forever
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(deletedSlideshows)}" class="empty-row">
+                                    <td colspan="5">No deleted slideshows</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -753,7 +1093,7 @@
             </div>
 
             <!-- ===== SETTINGS ===== -->
-            <div id="tab-settings" class="admin-tab-pane">
+            <div id="tab-settings" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'settings'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Settings</h1>
@@ -800,7 +1140,7 @@
             </div>
 
             <!-- ===== ADMIN PROFILE ===== -->
-            <div id="tab-profile" class="admin-tab-pane">
+            <div id="tab-profile" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'profile'} ? ' active'">
                 <div class="admin-main-header">
                     <div>
                         <h1>Admin Profile</h1>

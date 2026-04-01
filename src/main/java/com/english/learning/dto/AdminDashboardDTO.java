@@ -44,7 +44,12 @@ public class AdminDashboardDTO {
 
     // Recycle Bin
     private List<User> deletedUsers;
+    private List<Category> deletedCategories;
+    private List<Section> deletedSections;
+    private List<Lesson> deletedLessons;
     private List<Sentence> deletedSentences;
+    private List<Comment> deletedComments;
+    private List<Slideshow> deletedSlideshows;
 
     // Comments for moderation
     private List<Comment> recentComments;

@@ -13,4 +13,6 @@ public interface SectionService {
     Section createSection(com.english.learning.dto.AdminSectionRequest request);
     Section updateSection(Long id, com.english.learning.dto.AdminSectionRequest request);
     void deleteSection(Long id);
+    void restoreSection(Long id);
+    void hardDeleteSection(Long id);
 }

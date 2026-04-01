@@ -17,4 +17,6 @@ public interface LessonService {
     Lesson createLesson(com.english.learning.dto.AdminLessonRequest request);
     Lesson updateLesson(Long id, com.english.learning.dto.AdminLessonRequest request);
     void deleteLesson(Long id);
+    void restoreLesson(Long id);
+    void hardDeleteLesson(Long id);
 }

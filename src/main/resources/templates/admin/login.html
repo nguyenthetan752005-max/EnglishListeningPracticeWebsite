@@ -9,6 +9,7 @@
             <h1>Admin Panel</h1>
             <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;">Đăng nhập để quản lý hệ thống</p>
 
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
             <div th:if="${error}" style="color: red; text-align: center; margin-bottom: 15px;" th:text="${error}"></div>
 
             <form th:action="@{/admin/login}" method="post">
