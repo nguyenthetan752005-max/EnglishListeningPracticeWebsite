@@ -4,6 +4,7 @@ import com.english.learning.dto.AdminSentenceRequest;
 import com.english.learning.entity.Lesson;
 import com.english.learning.entity.Sentence;
 import com.english.learning.enums.ContentStatus;
+import com.english.learning.enums.LessonType;
 import com.english.learning.exception.ResourceInUseException;
 import com.english.learning.exception.ResourceNotFoundException;
 import com.english.learning.repository.LessonRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -87,6 +89,7 @@ public class SentenceServiceImpl implements SentenceService {
         Sentence sentence = sentenceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sentence không tồn tại."));
         Long oldLessonId = sentence.getLesson() != null ? sentence.getLesson().getId() : null;
+        assertSentenceChanged(sentence, request);
         applySentenceRequest(sentence, request);
         Sentence savedSentence = sentenceRepository.save(sentence);
         syncLessonSentenceCount(oldLessonId);
@@ -130,13 +133,58 @@ public class SentenceServiceImpl implements SentenceService {
     private void applySentenceRequest(Sentence sentence, AdminSentenceRequest request) {
         Lesson lesson = lessonRepository.findById(request.getLessonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson không tồn tại"));
+        validateLessonMedia(lesson);
+        String audioUrl = normalizeBlank(request.getAudioUrl());
+        String cloudAudioId = normalizeBlank(request.getCloudAudioId());
+        replaceCloudinaryAudio(sentence.getCloudAudioId(), cloudAudioId);
         sentence.setLesson(lesson);
         sentence.setContent(request.getContent().trim());
-        sentence.setAudioUrl(normalizeBlank(request.getAudioUrl()));
+        sentence.setAudioUrl(audioUrl);
+        sentence.setCloudAudioId(cloudAudioId);
         sentence.setStartTime(request.getStartTime());
         sentence.setEndTime(request.getEndTime());
         sentence.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
         sentence.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
+    }
+
+    private void assertSentenceChanged(Sentence sentence, AdminSentenceRequest request) {
+        Lesson lesson = lessonRepository.findById(request.getLessonId())
+                .orElseThrow(() -> new ResourceNotFoundException("Lesson không tồn tại"));
+        validateLessonMedia(lesson);
+        boolean unchanged = Objects.equals(sentence.getLesson() != null ? sentence.getLesson().getId() : null, request.getLessonId())
+                && Objects.equals(sentence.getContent(), request.getContent().trim())
+                && Objects.equals(sentence.getAudioUrl(), normalizeBlank(request.getAudioUrl()))
+                && Objects.equals(sentence.getCloudAudioId(), normalizeBlank(request.getCloudAudioId()))
+                && Objects.equals(sentence.getStartTime(), request.getStartTime())
+                && Objects.equals(sentence.getEndTime(), request.getEndTime())
+                && Objects.equals(sentence.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0)
+                && Objects.equals(sentence.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
+        if (unchanged) {
+            throw new IllegalArgumentException("Dữ liệu chưa thay đổi.");
+        }
+    }
+
+    private void validateLessonMedia(Lesson lesson) {
+        LessonType lessonType = lesson.getSection() != null && lesson.getSection().getCategory() != null
+                ? lesson.getSection().getCategory().getType()
+                : LessonType.AUDIO;
+        if (lessonType == LessonType.VIDEO) {
+            String youtubeVideoId = normalizeBlank(lesson.getYoutubeVideoId());
+            if (youtubeVideoId == null || youtubeVideoId.length() != 11) {
+                throw new IllegalArgumentException("Lesson video đang có link YouTube không hợp lệ.");
+            }
+        }
+    }
+
+    private void replaceCloudinaryAudio(String currentPublicId, String nextPublicId) {
+        if (Objects.equals(currentPublicId, nextPublicId) || currentPublicId == null || currentPublicId.isBlank()) {
+            return;
+        }
+        try {
+            cloudinaryService.deleteFile(currentPublicId);
+        } catch (Exception e) {
+            throw new IllegalStateException("Không thể thay thế audio cũ trên Cloudinary.");
+        }
     }
 
     private void syncLessonSentenceCount(Long lessonId) {

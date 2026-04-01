@@ -8,9 +8,10 @@ import lombok.Data;
 
 @Data
 public class AdminCategoryRequest {
-    @NotBlank
+    @NotBlank(message = "Tên danh mục không được để trống.")
     private String name;
     private String imageUrl;
+    private String cloudImageId;
     private String levelRange;
     private LessonType type = LessonType.AUDIO;
     private PracticeType practiceType = PracticeType.LISTENING;

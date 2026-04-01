@@ -18,7 +18,17 @@ public class CloudinaryService {
 
     @SuppressWarnings("rawtypes")
     public Map<String, String> uploadFile(MultipartFile file) throws IOException {
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        return uploadFile(file, "auto", null);
+    }
+
+    @SuppressWarnings("rawtypes")
+    public Map<String, String> uploadFile(MultipartFile file, String resourceType, String folder) throws IOException {
+        Map<String, Object> options = new HashMap<>();
+        options.put("resource_type", resourceType == null || resourceType.isBlank() ? "auto" : resourceType);
+        if (folder != null && !folder.isBlank()) {
+            options.put("folder", folder);
+        }
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
         Map<String, String> result = new HashMap<>();
         result.put("url", uploadResult.get("secure_url").toString());
         result.put("publicId", uploadResult.get("public_id").toString());

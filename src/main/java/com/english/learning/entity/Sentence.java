@@ -20,7 +20,7 @@ public class Sentence {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ContentStatus status = ContentStatus.DRAFT;
+    private ContentStatus status = ContentStatus.PUBLISHED;
     
     private String cloudAudioId;
     @Id

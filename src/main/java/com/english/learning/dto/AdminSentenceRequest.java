@@ -7,11 +7,12 @@ import lombok.Data;
 
 @Data
 public class AdminSentenceRequest {
-    @NotNull
+    @NotNull(message = "Lesson không được để trống.")
     private Long lessonId;
-    @NotBlank
+    @NotBlank(message = "Nội dung sentence không được để trống.")
     private String content;
     private String audioUrl;
+    private String cloudAudioId;
     private Double startTime;
     private Double endTime;
     private Integer orderIndex = 0;

@@ -14,14 +14,20 @@ import com.english.learning.repository.CommentRepository;
 import com.english.learning.repository.SlideshowRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.CategoryService;
+import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.LessonService;
 import com.english.learning.service.SectionService;
 import com.english.learning.service.SentenceService;
 import com.english.learning.service.UserService;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +35,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +56,7 @@ public class AdminApiController {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final SlideshowRepository slideshowRepository;
+    private final CloudinaryService cloudinaryService;
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Map<String, Object>> softDeleteUser(@PathVariable Long id) {
@@ -199,6 +208,27 @@ public class AdminApiController {
         return handleAction(() -> slideshowRepository.deleteById(id), "Đã xóa slideshow");
     }
 
+    @PostMapping("/uploads")
+    public ResponseEntity<Map<String, Object>> uploadAsset(@RequestParam("file") MultipartFile file,
+                                                           @RequestParam(value = "resourceType", defaultValue = "auto") String resourceType,
+                                                           @RequestParam(value = "folder", required = false) String folder) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            if (file.isEmpty()) {
+                throw new IllegalArgumentException("File upload không được để trống.");
+            }
+            Map<String, String> uploadResult = cloudinaryService.uploadFile(file, resourceType, folder);
+            response.put("success", true);
+            response.put("message", "Tải file lên thành công.");
+            response.put("data", uploadResult);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @GetMapping("/content/categories/{categoryId}/sections")
     public ResponseEntity<List<Section>> getSectionsByCategory(@PathVariable Long categoryId) {
         return ResponseEntity.ok(sectionService.getSectionsByCategoryId(categoryId));
@@ -264,5 +294,22 @@ public class AdminApiController {
     @FunctionalInterface
     private interface EntitySupplier {
         Object get();
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, Object> response = new HashMap<>();
+        FieldError fieldError = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
+        response.put("success", false);
+        response.put("message", fieldError != null ? fieldError.getDefaultMessage() : "Dữ liệu không hợp lệ.");
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<Map<String, Object>> handleBadRequest(Exception ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "Dữ liệu gửi lên không hợp lệ.");
+        return ResponseEntity.badRequest().body(response);
     }
 }

@@ -7,9 +7,9 @@ import lombok.Data;
 
 @Data
 public class AdminLessonRequest {
-    @NotNull
+    @NotNull(message = "Section không được để trống.")
     private Long sectionId;
-    @NotBlank
+    @NotBlank(message = "Tiêu đề bài học không được để trống.")
     private String title;
     private String youtubeVideoId;
     private String level;

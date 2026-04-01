@@ -6,6 +6,7 @@ import com.english.learning.dto.LessonNavigationDTO;
 import com.english.learning.entity.Lesson;
 import com.english.learning.entity.Section;
 import com.english.learning.enums.ContentStatus;
+import com.english.learning.enums.LessonType;
 import com.english.learning.enums.PracticeType;
 import com.english.learning.exception.ResourceInUseException;
 import com.english.learning.exception.ResourceNotFoundException;
@@ -19,11 +20,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class LessonServiceImpl implements LessonService {
+
+    private static final Pattern YOUTUBE_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{11}$");
+    private static final Pattern YOUTUBE_URL_PATTERN = Pattern.compile(
+            "^(?:https?://)?(?:www\\.)?(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([A-Za-z0-9_-]{11}).*$",
+            Pattern.CASE_INSENSITIVE
+    );
 
     private final LessonRepository lessonRepository;
     private final SectionRepository sectionRepository;
@@ -67,6 +77,7 @@ public class LessonServiceImpl implements LessonService {
         Long oldCategoryId = lesson.getSection() != null && lesson.getSection().getCategory() != null
                 ? lesson.getSection().getCategory().getId()
                 : null;
+        assertLessonChanged(lesson, request);
         applyLessonRequest(lesson, request);
         Lesson savedLesson = lessonRepository.save(lesson);
         syncCategoryLessonCount(oldCategoryId);
@@ -139,15 +150,50 @@ public class LessonServiceImpl implements LessonService {
     private void applyLessonRequest(Lesson lesson, AdminLessonRequest request) {
         Section section = sectionRepository.findById(request.getSectionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        String normalizedYoutubeValue = normalizeYoutubeReference(section, request.getYoutubeVideoId());
         lesson.setSection(section);
         lesson.setTitle(request.getTitle().trim());
-        lesson.setYoutubeVideoId(normalizeBlank(request.getYoutubeVideoId()));
+        lesson.setYoutubeVideoId(normalizedYoutubeValue);
         lesson.setLevel(normalizeBlank(request.getLevel()));
         lesson.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         lesson.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
         if (lesson.getTotalSentences() == null) {
             lesson.setTotalSentences(0);
         }
+    }
+
+    private void assertLessonChanged(Lesson lesson, AdminLessonRequest request) {
+        Section targetSection = sectionRepository.findById(request.getSectionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        String normalizedYoutubeValue = normalizeYoutubeReference(targetSection, request.getYoutubeVideoId());
+        boolean unchanged = Objects.equals(lesson.getSection() != null ? lesson.getSection().getId() : null, request.getSectionId())
+                && Objects.equals(lesson.getTitle(), request.getTitle().trim())
+                && Objects.equals(lesson.getYoutubeVideoId(), normalizedYoutubeValue)
+                && Objects.equals(lesson.getLevel(), normalizeBlank(request.getLevel()))
+                && Objects.equals(lesson.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
+                && Objects.equals(lesson.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+        if (unchanged) {
+            throw new IllegalArgumentException("Dữ liệu chưa thay đổi.");
+        }
+    }
+
+    private String normalizeYoutubeReference(Section section, String rawValue) {
+        String normalized = normalizeBlank(rawValue);
+        LessonType lessonType = section.getCategory() != null ? section.getCategory().getType() : LessonType.AUDIO;
+        if (lessonType != LessonType.VIDEO) {
+            return normalized;
+        }
+        if (normalized == null) {
+            throw new IllegalArgumentException("Link YouTube không được để trống với bài học video.");
+        }
+        if (YOUTUBE_ID_PATTERN.matcher(normalized).matches()) {
+            return normalized;
+        }
+        Matcher matcher = YOUTUBE_URL_PATTERN.matcher(normalized);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+        throw new IllegalArgumentException("Link YouTube không hợp lệ.");
     }
 
     private void syncCategoryLessonCount(Section section) {

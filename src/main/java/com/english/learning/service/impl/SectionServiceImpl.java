@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -58,6 +59,7 @@ public class SectionServiceImpl implements SectionService {
     public Section updateSection(Long id, AdminSectionRequest request) {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Section không tồn tại"));
+        assertSectionChanged(section, request);
         applySectionRequest(section, request);
         return sectionRepository.save(section);
     }
@@ -84,6 +86,17 @@ public class SectionServiceImpl implements SectionService {
         section.setDescription(normalizeBlank(request.getDescription()));
         section.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         section.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+    }
+
+    private void assertSectionChanged(Section section, AdminSectionRequest request) {
+        boolean unchanged = Objects.equals(section.getCategory() != null ? section.getCategory().getId() : null, request.getCategoryId())
+                && Objects.equals(section.getName(), request.getName().trim())
+                && Objects.equals(section.getDescription(), normalizeBlank(request.getDescription()))
+                && Objects.equals(section.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
+                && Objects.equals(section.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+        if (unchanged) {
+            throw new IllegalArgumentException("Dữ liệu chưa thay đổi.");
+        }
     }
 
     private String normalizeBlank(String value) {

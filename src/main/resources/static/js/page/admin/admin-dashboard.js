@@ -155,6 +155,10 @@ function renderTextField(name, label, value = '', required = false, type = 'text
     `;
 }
 
+function renderHiddenField(name, value = '') {
+    return `<input id="field-${name}" name="${name}" type="hidden" value="${escapeAttr(value)}">`;
+}
+
 function renderTextareaField(name, label, value = '', required = false, span2 = true) {
     const requiredAttr = required ? 'required' : '';
     return `
@@ -177,6 +181,17 @@ function renderSelectField(name, label, value, options, span2 = false) {
     `;
 }
 
+function renderUploadField(inputId, label, accept, uploadArgs, helpText = '', span2 = true) {
+    return `
+        <div class="admin-form-group ${span2 ? 'admin-field-span-2' : ''}">
+            <label for="${inputId}">${label}</label>
+            <input id="${inputId}" type="file" class="admin-form-control" accept="${accept}"
+                onchange="uploadAdminAsset('${inputId}', '${uploadArgs.urlField}', '${uploadArgs.publicIdField}', '${uploadArgs.resourceType}', '${uploadArgs.folder}')">
+            ${helpText ? `<span class="admin-form-help">${escapeHtml(helpText)}</span>` : ''}
+        </div>
+    `;
+}
+
 function getSelectOptionsFromElement(id) {
     const el = document.getElementById(id);
     if (!el) return [];
@@ -188,8 +203,17 @@ function getSelectOptionsFromElement(id) {
 
 function showAdminEntityFormError(message) {
     const { error } = getModalElements();
-    error.textContent = message;
-    error.hidden = false;
+    error.textContent = message || '';
+    error.hidden = !message;
+}
+
+function setAdminUploadState(isUploading) {
+    adminEntityModalState.isUploading = isUploading;
+    const { submitBtn } = getModalElements();
+    if (submitBtn) {
+        submitBtn.disabled = isUploading;
+        submitBtn.textContent = isUploading ? 'Uploading...' : (adminEntityModalState.submitLabel || 'Save');
+    }
 }
 
 function closeAdminEntityModal() {
@@ -199,6 +223,8 @@ function closeAdminEntityModal() {
     fields.innerHTML = '';
     error.hidden = true;
     error.textContent = '';
+    adminEntityModalState.originalPayload = null;
+    adminEntityModalState.isUploading = false;
 }
 
 async function sendJson(url, method, payload) {
@@ -212,6 +238,39 @@ async function sendJson(url, method, payload) {
         throw new Error(json.message || 'Server error');
     }
     return json;
+}
+
+async function uploadAdminAsset(fileInputId, urlFieldName, publicIdFieldName, resourceType, folder) {
+    const fileInput = document.getElementById(fileInputId);
+    const file = fileInput?.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('resourceType', resourceType || 'auto');
+    if (folder) formData.append('folder', folder);
+
+    try {
+        setAdminUploadState(true);
+        showAdminEntityFormError('');
+        const res = await fetch('/api/admin/uploads', {
+            method: 'POST',
+            body: formData
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+            throw new Error(json.message || 'Upload thất bại.');
+        }
+        const urlField = document.getElementById('field-' + urlFieldName);
+        const publicIdField = document.getElementById('field-' + publicIdFieldName);
+        if (urlField) urlField.value = json.data?.url || '';
+        if (publicIdField) publicIdField.value = json.data?.publicId || '';
+    } catch (e) {
+        showAdminEntityFormError(e.message || 'Upload thất bại.');
+    } finally {
+        setAdminUploadState(false);
+        if (fileInput) fileInput.value = '';
+    }
 }
 
 function invalidateCategoryCaches(categoryId) {
@@ -334,13 +393,16 @@ function openAdminEntityModal(config) {
     adminEntityModalState.submitUrl = config.submitUrl;
     adminEntityModalState.submitMethod = config.submitMethod;
     adminEntityModalState.afterSubmit = config.afterSubmit;
+    adminEntityModalState.originalPayload = config.initialPayload ? normalizePayloadForCompare(config.entityType, config.initialPayload) : null;
+    adminEntityModalState.submitLabel = config.submitLabel || 'Save';
 
     title.textContent = config.title;
     subtitle.textContent = config.subtitle;
     fields.innerHTML = config.fieldsHtml;
     error.hidden = true;
     error.textContent = '';
-    submitBtn.textContent = config.submitLabel || 'Save';
+    submitBtn.textContent = adminEntityModalState.submitLabel;
+    submitBtn.disabled = false;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -363,7 +425,14 @@ function buildCategoryFormFields(data = {}) {
             { value: 'ARCHIVED', label: 'ARCHIVED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number'),
+        renderHiddenField('cloudImageId', data.cloudImageId || ''),
         renderTextField('imageUrl', 'Image URL', data.imageUrl || '', false, 'text', true),
+        renderUploadField('categoryImageUpload', 'Upload image', 'image/*', {
+            urlField: 'imageUrl',
+            publicIdField: 'cloudImageId',
+            resourceType: 'image',
+            folder: 'categories'
+        }, 'Sau khi upload, link ảnh sẽ tự điền vào ô Image URL.'),
         renderTextareaField('description', 'Description', data.description || '')
     ].join('');
 }
@@ -387,7 +456,7 @@ function buildLessonFormFields(data = {}) {
         renderSelectField('sectionId', 'Section', data.sectionId || getSelectValue('lessonsSectionFilter'), getSelectOptionsFromElement('lessonsSectionFilter')),
         renderTextField('title', 'Lesson title', data.title || '', true),
         renderTextField('level', 'Level', data.level || ''),
-        renderTextField('youtubeVideoId', 'YouTube video ID', data.youtubeVideoId || ''),
+        renderTextField('youtubeVideoId', 'YouTube link or ID', data.youtubeVideoId || '', false, 'text', true),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
             { value: 'PUBLISHED', label: 'PUBLISHED' },
@@ -401,7 +470,14 @@ function buildSentenceFormFields(data = {}) {
     return [
         renderSelectField('lessonId', 'Lesson', data.lessonId || getSelectValue('sentencesLessonFilter'), getSelectOptionsFromElement('sentencesLessonFilter'), true),
         renderTextareaField('content', 'Sentence content', data.content || '', true),
+        renderHiddenField('cloudAudioId', data.cloudAudioId || ''),
         renderTextField('audioUrl', 'Audio URL', data.audioUrl || '', false, 'text', true),
+        renderUploadField('sentenceAudioUpload', 'Upload audio', 'audio/*', {
+            urlField: 'audioUrl',
+            publicIdField: 'cloudAudioId',
+            resourceType: 'auto',
+            folder: 'sentences'
+        }, 'Sau khi upload, link audio sẽ tự điền vào ô Audio URL.'),
         renderTextField('startTime', 'Start time (seconds)', data.startTime ?? '', false, 'number', false, '0.01'),
         renderTextField('endTime', 'End time (seconds)', data.endTime ?? '', false, 'number', false, '0.01'),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
@@ -421,6 +497,7 @@ function collectAdminEntityPayload(entityType) {
         return {
             name: String(raw.name || '').trim(),
             imageUrl: normalizeOptionalString(raw.imageUrl),
+            cloudImageId: normalizeOptionalString(raw.cloudImageId),
             levelRange: normalizeOptionalString(raw.levelRange),
             type: raw.type,
             practiceType: raw.practiceType,
@@ -455,6 +532,7 @@ function collectAdminEntityPayload(entityType) {
         lessonId: Number(raw.lessonId),
         content: String(raw.content || '').trim(),
         audioUrl: normalizeOptionalString(raw.audioUrl),
+        cloudAudioId: normalizeOptionalString(raw.cloudAudioId),
         startTime: raw.startTime === '' ? null : Number(raw.startTime),
         endTime: raw.endTime === '' ? null : Number(raw.endTime),
         orderIndex: Number(raw.orderIndex || 0),
@@ -463,30 +541,111 @@ function collectAdminEntityPayload(entityType) {
 }
 
 function validateAdminEntityPayload(entityType, payload) {
-    if (entityType === 'category' && !payload.name) return 'Category name is required.';
-    if (entityType === 'section' && (!payload.categoryId || !payload.name)) return 'Category and section name are required.';
-    if (entityType === 'lesson' && (!payload.sectionId || !payload.title)) return 'Section and lesson title are required.';
-    if (entityType === 'sentence' && (!payload.lessonId || !payload.content)) return 'Lesson and sentence content are required.';
-    if (Number.isNaN(payload.orderIndex)) return 'Order index must be a valid number.';
+    if (entityType === 'category' && !payload.name) return 'Tên danh mục không được để trống.';
+    if (entityType === 'section' && !payload.categoryId) return 'Danh mục không được để trống.';
+    if (entityType === 'section' && !payload.name) return 'Tên section không được để trống.';
+    if (entityType === 'lesson' && !payload.sectionId) return 'Section không được để trống.';
+    if (entityType === 'lesson' && !payload.title) return 'Tiêu đề bài học không được để trống.';
+    if (entityType === 'sentence' && !payload.lessonId) return 'Lesson không được để trống.';
+    if (entityType === 'sentence' && !payload.content) return 'Nội dung sentence không được để trống.';
+    if (Number.isNaN(payload.orderIndex)) return 'Order index không hợp lệ.';
     if (entityType === 'sentence') {
-        if (payload.startTime != null && Number.isNaN(payload.startTime)) return 'Start time must be a valid number.';
-        if (payload.endTime != null && Number.isNaN(payload.endTime)) return 'End time must be a valid number.';
+        if (payload.startTime != null && Number.isNaN(payload.startTime)) return 'Start time không hợp lệ.';
+        if (payload.endTime != null && Number.isNaN(payload.endTime)) return 'End time không hợp lệ.';
+    }
+    if (entityType === 'lesson') {
+        const section = contentCache.sectionsById.get(String(payload.sectionId));
+        const lessonType = String(section?.category?.type || 'AUDIO').toUpperCase();
+        const youtubeValue = normalizeOptionalString(payload.youtubeVideoId);
+        if (lessonType === 'VIDEO') {
+            if (!youtubeValue) return 'Link YouTube không được để trống với bài học video.';
+            if (!extractYoutubeVideoId(youtubeValue)) return 'Link YouTube không hợp lệ.';
+            payload.youtubeVideoId = extractYoutubeVideoId(youtubeValue);
+        }
     }
     return null;
 }
 
+function extractYoutubeVideoId(value) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return null;
+    if (/^[A-Za-z0-9_-]{11}$/.test(normalized)) return normalized;
+    const match = normalized.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/i);
+    return match ? match[1] : null;
+}
+
+function normalizePayloadForCompare(entityType, payload) {
+    if (!payload) return null;
+    if (entityType === 'category') {
+        return {
+            name: String(payload.name || '').trim(),
+            imageUrl: normalizeOptionalString(payload.imageUrl),
+            cloudImageId: normalizeOptionalString(payload.cloudImageId),
+            levelRange: normalizeOptionalString(payload.levelRange),
+            type: payload.type || 'AUDIO',
+            practiceType: payload.practiceType || 'LISTENING',
+            description: normalizeOptionalString(payload.description),
+            status: payload.status || 'DRAFT',
+            orderIndex: Number(payload.orderIndex || 0)
+        };
+    }
+    if (entityType === 'section') {
+        return {
+            categoryId: Number(payload.categoryId),
+            name: String(payload.name || '').trim(),
+            description: normalizeOptionalString(payload.description),
+            status: payload.status || 'DRAFT',
+            orderIndex: Number(payload.orderIndex || 0)
+        };
+    }
+    if (entityType === 'lesson') {
+        return {
+            sectionId: Number(payload.sectionId),
+            title: String(payload.title || '').trim(),
+            youtubeVideoId: normalizeOptionalString(extractYoutubeVideoId(payload.youtubeVideoId) || payload.youtubeVideoId),
+            level: normalizeOptionalString(payload.level),
+            status: payload.status || 'DRAFT',
+            orderIndex: Number(payload.orderIndex || 0)
+        };
+    }
+    return {
+        lessonId: Number(payload.lessonId),
+        content: String(payload.content || '').trim(),
+        audioUrl: normalizeOptionalString(payload.audioUrl),
+        cloudAudioId: normalizeOptionalString(payload.cloudAudioId),
+        startTime: payload.startTime === '' ? null : (payload.startTime == null ? null : Number(payload.startTime)),
+        endTime: payload.endTime === '' ? null : (payload.endTime == null ? null : Number(payload.endTime)),
+        orderIndex: Number(payload.orderIndex || 0),
+        status: payload.status || 'DRAFT'
+    };
+}
+
+function payloadEquals(left, right) {
+    return JSON.stringify(left) === JSON.stringify(right);
+}
+
 async function submitAdminEntityForm(event) {
     event.preventDefault();
+    if (adminEntityModalState.isUploading) {
+        showAdminEntityFormError('Vui lòng chờ upload hoàn tất.');
+        return;
+    }
     const payload = collectAdminEntityPayload(adminEntityModalState.entityType);
     const validationError = validateAdminEntityPayload(adminEntityModalState.entityType, payload);
     if (validationError) {
         showAdminEntityFormError(validationError);
         return;
     }
+    const normalizedPayload = normalizePayloadForCompare(adminEntityModalState.entityType, payload);
+    if (adminEntityModalState.mode === 'edit' && payloadEquals(normalizedPayload, adminEntityModalState.originalPayload)) {
+        showAdminEntityFormError('Dữ liệu chưa thay đổi.');
+        return;
+    }
 
     try {
-        await sendJson(adminEntityModalState.submitUrl, adminEntityModalState.submitMethod, payload);
+        const response = await sendJson(adminEntityModalState.submitUrl, adminEntityModalState.submitMethod, payload);
         closeAdminEntityModal();
+        alert(response.message || 'Thao tác thành công.');
         if (typeof adminEntityModalState.afterSubmit === 'function') {
             await adminEntityModalState.afterSubmit(payload);
         }
@@ -496,6 +655,17 @@ async function submitAdminEntityForm(event) {
 }
 
 async function createCategory() {
+    const initialPayload = {
+        name: '',
+        imageUrl: null,
+        cloudImageId: null,
+        levelRange: null,
+        type: 'AUDIO',
+        practiceType: 'LISTENING',
+        description: null,
+        status: 'DRAFT',
+        orderIndex: 0
+    };
     openAdminEntityModal({
         entityType: 'category',
         mode: 'create',
@@ -504,7 +674,8 @@ async function createCategory() {
         title: 'Create Category',
         subtitle: 'Enter the editable properties for a new category.',
         submitLabel: 'Create',
-        fieldsHtml: buildCategoryFormFields(),
+        fieldsHtml: buildCategoryFormFields(initialPayload),
+        initialPayload,
         afterSubmit: async () => location.reload()
     });
 }
@@ -524,6 +695,7 @@ async function editCategory(id) {
         fieldsHtml: buildCategoryFormFields({
             name: row.dataset.name || '',
             imageUrl: row.dataset.imageUrl || '',
+            cloudImageId: row.dataset.cloudImageId || '',
             levelRange: row.dataset.levelRange || '',
             description: row.dataset.description || '',
             status: row.dataset.status || 'DRAFT',
@@ -531,6 +703,17 @@ async function editCategory(id) {
             practiceType: row.dataset.categoryPractice || 'LISTENING',
             type: row.dataset.categoryType || 'AUDIO'
         }),
+        initialPayload: {
+            name: row.dataset.name || '',
+            imageUrl: row.dataset.imageUrl || '',
+            cloudImageId: row.dataset.cloudImageId || '',
+            levelRange: row.dataset.levelRange || '',
+            description: row.dataset.description || '',
+            status: row.dataset.status || 'DRAFT',
+            orderIndex: row.dataset.orderIndex || 0,
+            practiceType: row.dataset.categoryPractice || 'LISTENING',
+            type: row.dataset.categoryType || 'AUDIO'
+        },
         afterSubmit: async () => location.reload()
     });
 }
@@ -562,6 +745,13 @@ async function createSection() {
         subtitle: 'Choose category and fill section properties.',
         submitLabel: 'Create',
         fieldsHtml: buildSectionFormFields({ categoryId }),
+        initialPayload: {
+            categoryId,
+            name: '',
+            description: null,
+            status: 'DRAFT',
+            orderIndex: 0
+        },
         afterSubmit: async (payload) => {
             invalidateCategoryCaches(payload.categoryId);
             await onSectionsCategoryChange();
@@ -590,6 +780,13 @@ async function editSection(id) {
             status: section.status || 'DRAFT',
             orderIndex: section.orderIndex ?? 0
         }),
+        initialPayload: {
+            categoryId: section?.category?.id,
+            name: section.name || '',
+            description: section.description || '',
+            status: section.status || 'DRAFT',
+            orderIndex: section.orderIndex ?? 0
+        },
         afterSubmit: async (payload) => {
             invalidateCategoryCaches(payload.categoryId);
             await onSectionsCategoryChange();
@@ -632,6 +829,14 @@ async function createLesson() {
         subtitle: 'Fill the lesson properties. Auto-calculated fields are omitted.',
         submitLabel: 'Create',
         fieldsHtml: buildLessonFormFields({ sectionId }),
+        initialPayload: {
+            sectionId,
+            title: '',
+            youtubeVideoId: null,
+            level: null,
+            status: 'DRAFT',
+            orderIndex: 0
+        },
         afterSubmit: async (payload) => {
             invalidateSectionCaches(payload.sectionId);
             await onLessonsCategoryChange();
@@ -660,6 +865,14 @@ async function editLesson(id) {
             status: lesson.status || 'DRAFT',
             orderIndex: lesson.orderIndex ?? 0
         }),
+        initialPayload: {
+            sectionId: lesson?.section?.id,
+            title: lesson.title || '',
+            level: lesson.level || '',
+            youtubeVideoId: lesson.youtubeVideoId || '',
+            status: lesson.status || 'DRAFT',
+            orderIndex: lesson.orderIndex ?? 0
+        },
         afterSubmit: async (payload) => {
             invalidateSectionCaches(payload.sectionId);
             await onLessonsCategoryChange();
@@ -700,6 +913,16 @@ async function createSentence() {
         subtitle: 'Enter the sentence content and media timing.',
         submitLabel: 'Create',
         fieldsHtml: buildSentenceFormFields({ lessonId }),
+        initialPayload: {
+            lessonId,
+            content: '',
+            audioUrl: null,
+            cloudAudioId: null,
+            startTime: null,
+            endTime: null,
+            status: 'DRAFT',
+            orderIndex: 0
+        },
         afterSubmit: async (payload) => {
             invalidateLessonCaches(payload.lessonId);
             await renderSentencesTable();
@@ -724,11 +947,22 @@ async function editSentence(id) {
             lessonId: sentence?.lesson?.id,
             content: sentence.content || '',
             audioUrl: sentence.audioUrl || '',
+            cloudAudioId: sentence.cloudAudioId || '',
             startTime: sentence.startTime ?? '',
             endTime: sentence.endTime ?? '',
             status: sentence.status || 'DRAFT',
             orderIndex: sentence.orderIndex ?? 0
         }),
+        initialPayload: {
+            lessonId: sentence?.lesson?.id,
+            content: sentence.content || '',
+            audioUrl: sentence.audioUrl || '',
+            cloudAudioId: sentence.cloudAudioId || '',
+            startTime: sentence.startTime ?? '',
+            endTime: sentence.endTime ?? '',
+            status: sentence.status || 'DRAFT',
+            orderIndex: sentence.orderIndex ?? 0
+        },
         afterSubmit: async (payload) => {
             invalidateLessonCaches(payload.lessonId);
             await renderSentencesTable();
@@ -1410,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: Number(row.dataset.id),
             name: row.dataset.name || '',
             imageUrl: row.dataset.imageUrl || '',
+            cloudImageId: row.dataset.cloudImageId || '',
             levelRange: row.dataset.levelRange || '',
             description: row.dataset.description || '',
             status: row.dataset.status || 'DRAFT',

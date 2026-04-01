@@ -17,6 +17,7 @@ import com.english.learning.exception.ResourceNotFoundException;
 import com.english.learning.repository.CategoryRepository;
 import com.english.learning.repository.SectionRepository;
 import com.english.learning.service.CategoryService;
+import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.LessonService;
 import com.english.learning.service.SectionService;
 import com.english.learning.service.UserProgressService;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -38,6 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final SectionService sectionService;
     private final LessonService lessonService;
     private final UserProgressService userProgressService;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public List<Category> getAllCategories() {
@@ -152,6 +155,7 @@ public class CategoryServiceImpl implements CategoryService {
     public Category updateCategory(Long id, AdminCategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại"));
+        assertCategoryChanged(category, request);
         applyCategoryRequest(category, request);
         return categoryRepository.save(category);
     }
@@ -171,14 +175,45 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private void applyCategoryRequest(Category category, AdminCategoryRequest request) {
+        String imageUrl = normalizeBlank(request.getImageUrl());
+        String cloudImageId = normalizeBlank(request.getCloudImageId());
+        replaceCloudinaryAsset(category.getCloudImageId(), cloudImageId);
+
         category.setName(request.getName().trim());
-        category.setImageUrl(normalizeBlank(request.getImageUrl()));
+        category.setImageUrl(imageUrl);
+        category.setCloudImageId(cloudImageId);
         category.setLevelRange(normalizeBlank(request.getLevelRange()));
         category.setType(request.getType() != null ? request.getType() : LessonType.AUDIO);
         category.setPracticeType(request.getPracticeType() != null ? request.getPracticeType() : PracticeType.LISTENING);
         category.setDescription(normalizeBlank(request.getDescription()));
         category.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         category.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+    }
+
+    private void assertCategoryChanged(Category category, AdminCategoryRequest request) {
+        boolean unchanged = Objects.equals(category.getName(), request.getName().trim())
+                && Objects.equals(category.getImageUrl(), normalizeBlank(request.getImageUrl()))
+                && Objects.equals(category.getCloudImageId(), normalizeBlank(request.getCloudImageId()))
+                && Objects.equals(category.getLevelRange(), normalizeBlank(request.getLevelRange()))
+                && Objects.equals(category.getType(), request.getType() != null ? request.getType() : LessonType.AUDIO)
+                && Objects.equals(category.getPracticeType(), request.getPracticeType() != null ? request.getPracticeType() : PracticeType.LISTENING)
+                && Objects.equals(category.getDescription(), normalizeBlank(request.getDescription()))
+                && Objects.equals(category.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
+                && Objects.equals(category.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+        if (unchanged) {
+            throw new IllegalArgumentException("Dữ liệu chưa thay đổi.");
+        }
+    }
+
+    private void replaceCloudinaryAsset(String currentPublicId, String nextPublicId) {
+        if (Objects.equals(currentPublicId, nextPublicId) || currentPublicId == null || currentPublicId.isBlank()) {
+            return;
+        }
+        try {
+            cloudinaryService.deleteFile(currentPublicId);
+        } catch (Exception e) {
+            throw new IllegalStateException("Không thể thay thế ảnh cũ trên Cloudinary.");
+        }
     }
 
     private String normalizeBlank(String value) {

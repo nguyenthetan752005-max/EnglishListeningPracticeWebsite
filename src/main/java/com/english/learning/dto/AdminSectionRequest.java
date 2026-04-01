@@ -7,9 +7,9 @@ import lombok.Data;
 
 @Data
 public class AdminSectionRequest {
-    @NotNull
+    @NotNull(message = "Danh mục không được để trống.")
     private Long categoryId;
-    @NotBlank
+    @NotBlank(message = "Tên section không được để trống.")
     private String name;
     private String description;
     private ContentStatus status = ContentStatus.DRAFT;
