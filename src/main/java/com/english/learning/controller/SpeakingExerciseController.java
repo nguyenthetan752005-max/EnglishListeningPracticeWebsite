@@ -39,7 +39,7 @@ public class SpeakingExerciseController {
     @GetMapping("/speaking-exercises")
     public String showAllTopics(Model model, HttpSession session) {
         List<Category> categories = categoryService
-                .getCategoriesByPracticeType(PracticeType.SPEAKING);
+                .getPublishedCategoriesByPracticeType(PracticeType.SPEAKING);
         User user = (User) session.getAttribute("loggedInUser");
 
         Map<Long, UserProgressStatus> categoryStatuses = new HashMap<>();
@@ -59,7 +59,7 @@ public class SpeakingExerciseController {
 
     @GetMapping("/speaking/category/{id}/sections")
     public String getSections(@PathVariable Long id, Model model, HttpSession session) {
-        Category category = categoryService.getCategoryById(id)
+        Category category = categoryService.getPublishedCategoryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại!"));
 
         User user = (User) session.getAttribute("loggedInUser");
@@ -81,10 +81,10 @@ public class SpeakingExerciseController {
             @RequestParam(required = false) Integer sentenceIndex,
             Model model, HttpSession session) {
         Lesson lesson = lessonService.getLessonById(id)
+                .flatMap(candidate -> lessonService.getPublishedLessonById(candidate.getId()))
                 .orElseThrow(() -> new RuntimeException("Lesson không tồn tại!"));
 
-        // Lấy danh sách câu
-        List<Sentence> sentences = sentenceService.getSentencesByLessonId(id);
+        List<Sentence> sentences = sentenceService.getPublishedSentencesByLessonId(id);
 
         // Dùng HintService để lấy map
         Map<Long, List<String>> hintsMap = hintService.getHintsMap(sentences);

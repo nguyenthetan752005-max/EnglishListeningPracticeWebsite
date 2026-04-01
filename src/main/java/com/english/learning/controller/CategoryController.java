@@ -28,7 +28,7 @@ public class CategoryController {
 
     @GetMapping("/exercises")
     public String showAllTopics(Model model, HttpSession session) {
-        List<Category> categories = categoryService.getCategoriesByPracticeType(PracticeType.LISTENING);
+        List<Category> categories = categoryService.getPublishedCategoriesByPracticeType(PracticeType.LISTENING);
         User user = (User) session.getAttribute("loggedInUser");
 
         Map<Long, UserProgressStatus> categoryStatuses = new HashMap<>();
@@ -48,7 +48,7 @@ public class CategoryController {
 
     @GetMapping("/category/{id}/sections")
     public String getSections(@PathVariable Long id, Model model, HttpSession session) {
-        Category category = categoryService.getCategoryById(id)
+        Category category = categoryService.getPublishedCategoryById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại!"));
 
         User user = (User) session.getAttribute("loggedInUser");

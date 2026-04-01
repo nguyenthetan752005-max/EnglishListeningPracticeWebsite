@@ -6,6 +6,7 @@ import com.english.learning.entity.User;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
@@ -125,5 +126,19 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(false);
 
         userRepository.save(user);
+    }
+
+    @Override
+    public void updateActiveStatus(Long id, boolean isActive) {
+        userRepository.findById(id).ifPresent(user -> {
+            user.setIsActive(isActive);
+            userRepository.save(user);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void resetAllActiveStatuses() {
+        userRepository.resetAllActiveStatuses();
     }
 }

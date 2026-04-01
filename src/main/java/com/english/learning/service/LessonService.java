@@ -10,6 +10,11 @@ import java.util.Optional;
 
 public interface LessonService {
     List<Lesson> getLessonsBySectionId(Long sectionId);
+    List<Lesson> getPublishedLessonsBySectionId(Long sectionId);
     Optional<Lesson> getLessonById(Long id);
+    Optional<Lesson> getPublishedLessonById(Long id);
     LessonNavigationDTO getLessonNavigation(Lesson currentLesson, PracticeType practiceType);
+    Lesson createLesson(com.english.learning.dto.AdminLessonRequest request);
+    Lesson updateLesson(Long id, com.english.learning.dto.AdminLessonRequest request);
+    void deleteLesson(Long id);
 }

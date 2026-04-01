@@ -17,7 +17,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("categories", categoryService.getPublishedCategories());
         model.addAttribute("slideshows", slideshowService.getActiveSlideshowsByPosition(SlideshowPosition.HOME));
         return "home";
     }

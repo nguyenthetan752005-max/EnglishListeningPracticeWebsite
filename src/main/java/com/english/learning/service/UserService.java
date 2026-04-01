@@ -21,4 +21,6 @@ public interface UserService {
 
     void updatePassword(User user, String newPassword);
     void softDeleteUser(Long id);
+    void updateActiveStatus(Long id, boolean isActive);
+    void resetAllActiveStatuses();
 }

@@ -10,7 +10,7 @@
     <div th:fragment="player-layout (isSpeakingMode)">
 
         <!-- ======= VIDEO LESSON: 2-column layout ======= -->
-        <div th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}" class="video-dictation-split">
+        <div th:if="${lesson.section != null and lesson.section.category != null and lesson.section.category.type != null and lesson.section.category.type.name() == 'VIDEO'}" class="video-dictation-split">
             <!-- LEFT: YouTube Video -->
             <div class="video-left-column">
                 <div class="video-player-wrapper" id="dictationVideoWrapper">
@@ -54,7 +54,7 @@
         </div>
 
         <!-- ======= AUDIO LESSON: original stacked layout ======= -->
-        <div th:if="${lesson.type == null or lesson.type.name() == 'AUDIO'}">
+        <div th:if="${lesson.section == null or lesson.section.category == null or lesson.section.category.type == null or lesson.section.category.type.name() == 'AUDIO'}">
             <audio id="mainAudio" preload="auto"></audio>
 
             <!-- Player Controls -->
@@ -83,7 +83,7 @@
     <!-- Player Controls (Counter, Nav Arrows) -->
     <div th:fragment="player-controls" class="video-dictation-controls">
         <!-- Chỉ hiển thị nút play này ở chế độ VIDEO, chế độ AUDIO đã có nút ở thanh player bar -->
-        <button th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}" class="play-btn" id="videoDictPlayBtn">
+        <button th:if="${lesson.section != null and lesson.section.category != null and lesson.section.category.type != null and lesson.section.category.type.name() == 'VIDEO'}" class="play-btn" id="videoDictPlayBtn">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
         </button>
         <div class="sentence-counter">

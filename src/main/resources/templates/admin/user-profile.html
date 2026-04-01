@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('User Profile Detail')}"></head>
+<body>
+<div th:replace="~{fragments/navbar-admin :: adminNavbar}"></div>
+<link rel="stylesheet" th:href="@{/css/pages/admin-dashboard.css}">
+
+<main class="admin-main" style="max-width: 1200px; margin: 0 auto;">
+    <div class="admin-main-header">
+        <div>
+            <h1>User Detail</h1>
+            <p>Profile and learning progress overview.</p>
+        </div>
+        <a class="admin-btn admin-btn-outline" th:href="@{/admin/dashboard}">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="admin-stat-grid">
+        <div class="admin-stat-card"><div class="admin-stat-info"><h3>User</h3><p th:text="${userDetail.username}">name</p></div></div>
+        <div class="admin-stat-card"><div class="admin-stat-info"><h3>Top Score</h3><p th:text="${topScore}">0</p></div></div>
+        <div class="admin-stat-card"><div class="admin-stat-info"><h3>Avg Score</h3><p th:text="${avgScore}">0.0</p></div></div>
+        <div class="admin-stat-card"><div class="admin-stat-info"><h3>Status</h3><p th:text="${userDetail.isActive != null and userDetail.isActive ? 'Online' : 'Offline'}">Offline</p></div></div>
+    </div>
+
+    <div class="admin-panel">
+        <div class="admin-panel-header"><h2>Progress Summary</h2></div>
+        <div style="padding: 16px 24px;">
+            <span class="admin-badge badge-active">Completed: <span th:text="${progressCompleted}">0</span></span>
+            <span class="admin-badge" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">In Progress: <span th:text="${progressInProgress}">0</span></span>
+            <span class="admin-badge badge-inactive">Skipped: <span th:text="${progressSkipped}">0</span></span>
+        </div>
+    </div>
+
+    <div class="admin-panel">
+        <div class="admin-panel-header"><h2>Recent Learning Activity</h2></div>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Category</th>
+                    <th>Section</th>
+                    <th>Lesson</th>
+                    <th>Sentence</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${recentProgress}">
+                    <td th:text="${p.lastAccessed != null ? #temporals.format(p.lastAccessed, 'yyyy-MM-dd HH:mm') : 'N/A'}">2026-01-01</td>
+                    <td th:text="${p.sentence != null and p.sentence.lesson != null and p.sentence.lesson.section != null and p.sentence.lesson.section.category != null ? p.sentence.lesson.section.category.name : 'N/A'}">Category</td>
+                    <td th:text="${p.sentence != null and p.sentence.lesson != null and p.sentence.lesson.section != null ? p.sentence.lesson.section.name : 'N/A'}">Section</td>
+                    <td th:text="${p.sentence != null and p.sentence.lesson != null ? p.sentence.lesson.title : 'N/A'}">Lesson</td>
+                    <td th:text="${p.sentence != null ? #strings.abbreviate(p.sentence.content, 50) : 'N/A'}">Sentence</td>
+                    <td th:text="${p.status}">COMPLETED</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(recentProgress)}" class="empty-row">
+                    <td colspan="6">No progress records</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

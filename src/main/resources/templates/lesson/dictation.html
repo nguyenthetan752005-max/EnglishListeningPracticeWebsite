@@ -67,13 +67,13 @@
                     <div class="transcript-left-panel">
 
                         <!-- VIDEO: YouTube player container -->
-                        <div th:if="${lesson.type != null and lesson.type.name() == 'VIDEO'}"
+                        <div th:if="${lesson.section != null and lesson.section.category != null and lesson.section.category.type != null and lesson.section.category.type.name() == 'VIDEO'}"
                             class="video-player-wrapper transcript-video-wrapper" id="transcriptVideoWrapper">
                             <!-- Player sẽ được move vào đây bằng JS khi chuyển tab -->
                         </div>
 
                         <!-- AUDIO: Progress Bar only (No Play button as requested) -->
-                        <div th:if="${lesson.type == null or lesson.type.name() == 'AUDIO'}"
+                        <div th:if="${lesson.section == null or lesson.section.category == null or lesson.section.category.type == null or lesson.section.category.type.name() == 'AUDIO'}"
                             class="player-bar transcript-player-bar">
                             <span class="time-display" id="transcriptTimeDisplay">0:00 / 0:00</span>
                             <div class="progress-bar-wrapper" id="transcriptProgressWrapper">
@@ -142,7 +142,7 @@
     <script th:inline="javascript">
         const SENTENCES = /*[[${sentences}]]*/[];
         const HINTS_MAP = /*[[${hintsMap}]]*/{};
-        const LESSON_TYPE = /*[[${lesson.type != null ? lesson.type.name() : 'AUDIO'}]]*/ 'AUDIO';
+        const LESSON_TYPE = /*[[${lesson.section != null and lesson.section.category != null and lesson.section.category.type != null ? lesson.section.category.type.name() : 'AUDIO'}]]*/ 'AUDIO';
         const YOUTUBE_VIDEO_ID = /*[[${lesson.youtubeVideoId}]]*/ '';
         const LESSON_ID = /*[[${lesson.id}]]*/ 0;
 

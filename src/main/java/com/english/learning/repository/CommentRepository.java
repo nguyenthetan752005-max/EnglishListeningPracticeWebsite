@@ -9,4 +9,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findBySentence_IdAndParentIsNullOrderByCreatedAtDesc(Long sentenceId);
     List<Comment> findByParent_IdOrderByCreatedAtAsc(Long parentId);
     List<Comment> findByUser_IdOrderByCreatedAtDesc(Long userId);
+    List<Comment> findBySentence_IdAndIsHiddenFalseAndParentIsNullOrderByCreatedAtDesc(Long sentenceId);
+    List<Comment> findByParent_IdAndIsHiddenFalseOrderByCreatedAtAsc(Long parentId);
+    List<Comment> findByUser_IdAndIsHiddenFalseOrderByCreatedAtDesc(Long userId);
 }

@@ -9,8 +9,14 @@ import java.util.Optional;
 
 public interface CategoryService {
     List<Category> getAllCategories();
+    List<Category> getPublishedCategories();
     List<Category> getCategoriesByPracticeType(PracticeType practiceType);
+    List<Category> getPublishedCategoriesByPracticeType(PracticeType practiceType);
     Optional<Category> getCategoryById(Long id);
+    Optional<Category> getPublishedCategoryById(Long id);
     List<String> getExpandedLevels(String levelRange);
     List<com.english.learning.dto.SectionWithLessonsDTO> getSectionWithLessonsDTOs(Long categoryId, com.english.learning.entity.User user, PracticeType practiceType);
+    Category createCategory(com.english.learning.dto.AdminCategoryRequest request);
+    Category updateCategory(Long id, com.english.learning.dto.AdminCategoryRequest request);
+    void deleteCategory(Long id);
 }

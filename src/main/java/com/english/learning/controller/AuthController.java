@@ -47,7 +47,9 @@ public class AuthController {
             Model model, HttpSession session) {
         Optional<User> userOpt = userService.authenticateUser(username, password);
         if (userOpt.isPresent()) {
-            session.setAttribute("loggedInUser", userOpt.get());
+            User user = userOpt.get();
+            userService.updateActiveStatus(user.getId(), true);
+            session.setAttribute("loggedInUser", user);
             return "redirect:/";
         } else {
             model.addAttribute("error", "Sai tài khoản hoặc mật khẩu!");
@@ -57,7 +59,11 @@ public class AuthController {
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        session.invalidate();
+        User loggedInUser = (User) session.getAttribute("loggedInUser");
+        if (loggedInUser != null) {
+            userService.updateActiveStatus(loggedInUser.getId(), false);
+        }
+        session.removeAttribute("loggedInUser");
         return "redirect:/login";
     }
 }

@@ -36,9 +36,14 @@ public class LessonController {
     public String getLessons(@PathVariable Long id, Model model) {
         Section section = sectionService.getSectionById(id)
                 .orElseThrow(() -> new RuntimeException("Section không tồn tại!"));
+        if (section.getStatus() != com.english.learning.enums.ContentStatus.PUBLISHED
+                || section.getCategory() == null
+                || section.getCategory().getStatus() != com.english.learning.enums.ContentStatus.PUBLISHED) {
+            return "redirect:/";
+        }
 
         // Chỉ lấy các bài học có practiceType là LISTENING cho trang Dictation
-        List<Lesson> listeningLessons = lessonService.getLessonsBySectionId(id).stream()
+        List<Lesson> listeningLessons = lessonService.getPublishedLessonsBySectionId(id).stream()
                 .filter(l -> l.getSection().getCategory()
                         .getPracticeType() == com.english.learning.enums.PracticeType.LISTENING)
                 .toList();
@@ -52,13 +57,13 @@ public class LessonController {
     public String getLesson(@PathVariable Long id,
             @RequestParam(required = false) Integer sentenceIndex,
             Model model, HttpSession session) {
-        Optional<Lesson> lessonOpt = lessonService.getLessonById(id);
+        Optional<Lesson> lessonOpt = lessonService.getPublishedLessonById(id);
         if (lessonOpt.isEmpty()) {
             return "redirect:/";
         }
 
         Lesson lesson = lessonOpt.get();
-        List<Sentence> sentences = sentenceService.getSentencesByLessonId(id);
+        List<Sentence> sentences = sentenceService.getPublishedSentencesByLessonId(id);
 
         if (sentences == null || sentences.isEmpty()) {
             return "redirect:/";

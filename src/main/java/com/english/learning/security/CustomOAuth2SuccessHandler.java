@@ -41,8 +41,10 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
                 if (user.getAvatarUrl() == null) {
                     user.setAvatarUrl(picture);
                 }
-                user = userRepository.save(user);
             }
+            // Mark as online on OAuth login
+            user.setIsActive(true);
+            user = userRepository.save(user);
         } else {
             // Chưa tồn tại Email -> Tạo tài khoản mới
             user = new User();
@@ -58,6 +60,7 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
             user.setPassword(BCrypt.hashpw(UUID.randomUUID().toString(), BCrypt.gensalt()));
             user.setProvider("GOOGLE");
             user.setAvatarUrl(picture);
+            user.setIsActive(true);
             user = userRepository.save(user);
         }
 

@@ -26,27 +26,27 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<Comment> getCommentsBySentenceId(Long sentenceId) {
-        return commentRepository.findBySentence_Id(sentenceId);
+        return commentRepository.findBySentence_IdAndIsHiddenFalseAndParentIsNullOrderByCreatedAtDesc(sentenceId);
     }
 
     @Override
     public List<Comment> getTopLevelCommentsWithVotes(Long sentenceId) {
         List<Comment> comments = commentRepository
-                .findBySentence_IdAndParentIsNullOrderByCreatedAtDesc(sentenceId);
+                .findBySentence_IdAndIsHiddenFalseAndParentIsNullOrderByCreatedAtDesc(sentenceId);
         comments.forEach(this::populateVoteCounts);
         return comments;
     }
 
     @Override
     public List<Comment> getRepliesWithVotes(Long parentId) {
-        List<Comment> replies = commentRepository.findByParent_IdOrderByCreatedAtAsc(parentId);
+        List<Comment> replies = commentRepository.findByParent_IdAndIsHiddenFalseOrderByCreatedAtAsc(parentId);
         replies.forEach(this::populateVoteCounts);
         return replies;
     }
 
     @Override
     public List<Comment> getCommentsByUserId(Long userId) {
-        List<Comment> comments = commentRepository.findByUser_IdOrderByCreatedAtDesc(userId);
+        List<Comment> comments = commentRepository.findByUser_IdAndIsHiddenFalseOrderByCreatedAtDesc(userId);
         comments.forEach(this::populateVoteCounts);
         return comments;
     }
@@ -61,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = new Comment();
         comment.setContent(content);
 
-        Sentence sentence = sentenceRepository.findById(sentenceId)
+        Sentence sentence = sentenceRepository.findPublishedById(sentenceId, com.english.learning.enums.ContentStatus.PUBLISHED)
                 .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại!"));

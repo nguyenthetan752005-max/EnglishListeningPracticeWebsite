@@ -15,6 +15,9 @@ public interface SpeakingResultRepository extends JpaRepository<SpeakingResult, 
     // Lấy cả BEST + CURRENT cho 1 câu
     List<SpeakingResult> findByUser_IdAndSentence_Id(Long userId, Long sentenceId);
 
+    // Lấy toàn bộ kết quả của 1 user
+    List<SpeakingResult> findByUser_Id(Long userId);
+
     // Đếm kết quả dựa theo sentenceId cho chức năng Delete Sentence
     long countBySentence_Id(Long sentenceId);
 

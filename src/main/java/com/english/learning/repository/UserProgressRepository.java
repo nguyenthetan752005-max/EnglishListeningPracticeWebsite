@@ -37,4 +37,6 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Long
 
     @Query("SELECT DISTINCT up.sentence.lesson.id FROM UserProgress up WHERE up.user.id = :userId")
     List<Long> findLessonIdsWithProgressByUserId(@Param("userId") Long userId);
+
+    List<UserProgress> findTop100ByUser_IdOrderByLastAccessedDesc(Long userId);
 }
