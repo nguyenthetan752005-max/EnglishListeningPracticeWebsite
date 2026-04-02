@@ -2,6 +2,7 @@ package com.english.learning.security;
 
 import com.english.learning.entity.User;
 import com.english.learning.repository.UserRepository;
+import com.english.learning.service.AppSettingService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    private final AppSettingService appSettingService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -46,6 +48,10 @@ public class CustomOAuth2SuccessHandler extends SavedRequestAwareAuthenticationS
             user.setIsActive(true);
             user = userRepository.save(user);
         } else {
+            if (!appSettingService.isUserRegistrationAllowed()) {
+                getRedirectStrategy().sendRedirect(request, response, "/login?error=registration-disabled");
+                return;
+            }
             // Chưa tồn tại Email -> Tạo tài khoản mới
             user = new User();
             user.setEmail(email);

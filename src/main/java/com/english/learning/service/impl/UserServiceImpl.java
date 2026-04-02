@@ -83,7 +83,15 @@ public class UserServiceImpl implements UserService {
         user.setUsername(normalizedUsername);
         user.setAvatarUrl(normalizeBlank(avatarUrl));
         user.setIsActive(isActive);
-        user.setRole(role != null ? role : Role.USER);
+        Role currentRole = user.getRole();
+        Role requestedRole = role != null ? role : Role.USER;
+        if (currentRole != Role.ADMIN && requestedRole == Role.ADMIN) {
+            throw new Exception("Hệ thống chỉ cho phép một tài khoản admin duy nhất.");
+        }
+        if (currentRole == Role.ADMIN && requestedRole != Role.ADMIN) {
+            throw new Exception("Không thể thay đổi role của tài khoản admin duy nhất.");
+        }
+        user.setRole(requestedRole);
         userRepository.save(user);
     }
 

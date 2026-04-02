@@ -162,8 +162,10 @@
         const IS_LAST_LESSON_IN_SECTION = /*[[${isLastLessonInSection}]]*/ false;
         const SECTION_ID = /*[[${section != null ? section.id : null}]]*/ null;
         const INITIAL_SENTENCE_INDEX = /*[[${initialSentenceIndex}]]*/ 0;
+        const SPEAKING_PASS_THRESHOLD = /*[[${speakingPassThreshold != null ? speakingPassThreshold : appSpeakingPassThreshold}]]*/ 70;
         
         window.USER_PROGRESS_MAP = /*[[${userProgressMap}]]*/ {};
+        window.SPEAKING_PASS_THRESHOLD = SPEAKING_PASS_THRESHOLD;
     </script>
     <script src="/js/page/lesson-detail/state.js?v=9.0"></script>
     <script src="/js/page/lesson-detail/lesson-common-ui.js?v=9.0"></script>

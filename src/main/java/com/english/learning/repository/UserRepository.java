@@ -4,6 +4,7 @@ import com.english.learning.entity.User;
 import com.english.learning.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 import java.util.List;
 
@@ -16,8 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findTop30ByRoleOrderByActiveTime7dDesc(Role role);
     List<User> findTop30ByRoleOrderByActiveTime30dDesc(Role role);
 
-    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE is_deleted = false ORDER BY created_at DESC LIMIT 5", nativeQuery = true)
-    List<User> findRecentActiveUsers();
+    List<User> findByIsDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM users WHERE is_deleted = true", nativeQuery = true)
     List<User> findDeletedUsers();

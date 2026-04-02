@@ -245,7 +245,11 @@ public class SentenceServiceImpl implements SentenceService {
     }
 
     private void replaceCloudinaryAudio(String currentPublicId, String nextPublicId) {
-        if (Objects.equals(currentPublicId, nextPublicId) || currentPublicId == null || currentPublicId.isBlank()) {
+        if (Objects.equals(currentPublicId, nextPublicId)
+                || currentPublicId == null
+                || currentPublicId.isBlank()
+                || nextPublicId == null
+                || nextPublicId.isBlank()) {
             return;
         }
         try {

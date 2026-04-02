@@ -11,9 +11,11 @@ import com.english.learning.repository.SlideshowRepository;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.AdminDashboardService;
+import com.english.learning.service.AppSettingService;
 import com.english.learning.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final CommentRepository commentRepository;
     private final SlideshowRepository slideshowRepository;
     private final SpeakingResultRepository speakingResultRepository;
+    private final AppSettingService appSettingService;
 
     @Override
     public AdminDashboardDTO getDashboardData() {
@@ -59,7 +62,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
         // Recent Users (overview)
         try {
-            builder.recentUsers(userRepository.findRecentActiveUsers());
+            int maxRecentUsers = appSettingService.getSettings().getMaxRecentUsersOnDashboard();
+            builder.recentUsers(userRepository.findByIsDeletedFalseOrderByCreatedAtDesc(PageRequest.of(0, maxRecentUsers)));
         } catch (Exception e) {
             log.error("Error fetching recent users: {}", e.getMessage());
             builder.recentUsers(Collections.emptyList());

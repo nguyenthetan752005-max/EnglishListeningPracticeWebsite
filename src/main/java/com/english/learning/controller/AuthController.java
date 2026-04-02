@@ -1,6 +1,7 @@
 package com.english.learning.controller;
 
 import com.english.learning.entity.User;
+import com.english.learning.service.AppSettingService;
 import com.english.learning.service.AuthService;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final AppSettingService appSettingService;
 
     @GetMapping("/login")
     public String login() {
@@ -28,12 +30,20 @@ public class AuthController {
 
     @GetMapping("/register")
     public String register(Model model) {
+        if (!appSettingService.isUserRegistrationAllowed()) {
+            model.addAttribute("error", "User registration is currently disabled.");
+            return "auth/login";
+        }
         model.addAttribute("user", new User());
         return "auth/register";
     }
 
     @PostMapping("/register")
     public String doRegister(@ModelAttribute User user, Model model) {
+        if (!appSettingService.isUserRegistrationAllowed()) {
+            model.addAttribute("error", "User registration is currently disabled.");
+            return "auth/login";
+        }
         try {
             authService.register(user);
             return "redirect:/login";

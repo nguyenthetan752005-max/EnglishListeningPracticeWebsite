@@ -1,6 +1,7 @@
 package com.english.learning.controller;
 
 import com.english.learning.dto.AdminDashboardDTO;
+import com.english.learning.dto.AppSettingForm;
 import com.english.learning.entity.SpeakingResult;
 import com.english.learning.entity.User;
 import com.english.learning.enums.Role;
@@ -8,6 +9,7 @@ import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.service.AdminDashboardService;
+import com.english.learning.service.AppSettingService;
 import com.english.learning.service.AuthService;
 import com.english.learning.service.CategoryService;
 import com.english.learning.service.CloudinaryService;
@@ -15,6 +17,7 @@ import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +27,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +48,7 @@ public class AdminAuthController {
     private final SpeakingResultRepository speakingResultRepository;
     private final PasswordResetService passwordResetService;
     private final CloudinaryService cloudinaryService;
+    private final AppSettingService appSettingService;
 
     @GetMapping("/login")
     public String adminLogin(HttpSession session) {
@@ -139,6 +145,9 @@ public class AdminAuthController {
         model.addAttribute("slideshows", dashboard.getSlideshows());
         model.addAttribute("admin", admin);
         model.addAttribute("initialTab", initialTab);
+        if (!model.containsAttribute("settingForm")) {
+            model.addAttribute("settingForm", appSettingService.getSettingForm());
+        }
         boolean forceAdminOverviewTab = Boolean.TRUE.equals(session.getAttribute("forceAdminOverviewTab"));
         model.addAttribute("forceAdminOverviewTab", forceAdminOverviewTab);
         if (forceAdminOverviewTab) {
@@ -146,6 +155,29 @@ public class AdminAuthController {
         }
 
         return "admin/dashboard";
+    }
+
+    @PostMapping("/settings")
+    public String updateSettings(@Valid AppSettingForm settingForm,
+                                 BindingResult bindingResult,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        User admin = (User) session.getAttribute("loggedInAdmin");
+        if (admin == null) {
+            return "redirect:/admin/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.settingForm", bindingResult);
+            redirectAttributes.addFlashAttribute("settingForm", settingForm);
+            redirectAttributes.addFlashAttribute("settingsError",
+                    bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/dashboard?tab=settings";
+        }
+
+        appSettingService.updateSettings(settingForm);
+        redirectAttributes.addFlashAttribute("settingsSuccess", "Settings updated successfully.");
+        return "redirect:/admin/dashboard?tab=settings";
     }
 
     @GetMapping("/users/{id}/profile")
@@ -189,44 +221,11 @@ public class AdminAuthController {
         model.addAttribute("progressSkipped", skipped);
         model.addAttribute("topScore", topScore);
         model.addAttribute("avgScore", String.format(java.util.Locale.US, "%.1f", averageScore));
-        model.addAttribute("roles", Role.values());
+        model.addAttribute("roles", java.util.List.of(Role.USER));
         model.addAttribute("isSelfAdmin", false);
         model.addAttribute("canEditUser", true);
         model.addAttribute("canEditSelfAdmin", false);
         model.addAttribute("returnTab", "users");
-        return "admin/user-profile";
-    }
-
-    @GetMapping("/admins/{id}/profile")
-    public String adminAccountProfile(@PathVariable Long id,
-                                      HttpSession session,
-                                      Model model) {
-        User admin = (User) session.getAttribute("loggedInAdmin");
-        if (admin == null) {
-            return "redirect:/admin/login";
-        }
-        if (admin.getId().equals(id)) {
-            return "redirect:/admin/profile";
-        }
-
-        Optional<User> targetAdmin = userService.findById(id);
-        if (targetAdmin.isEmpty() || targetAdmin.get().getRole() != Role.ADMIN) {
-            return "redirect:/admin/dashboard";
-        }
-
-        model.addAttribute("admin", admin);
-        model.addAttribute("userDetail", targetAdmin.get());
-        model.addAttribute("recentProgress", java.util.List.of());
-        model.addAttribute("progressCompleted", 0);
-        model.addAttribute("progressInProgress", 0);
-        model.addAttribute("progressSkipped", 0);
-        model.addAttribute("topScore", 0);
-        model.addAttribute("avgScore", "0.0");
-        model.addAttribute("roles", Role.values());
-        model.addAttribute("isSelfAdmin", false);
-        model.addAttribute("canEditUser", false);
-        model.addAttribute("canEditSelfAdmin", false);
-        model.addAttribute("returnTab", "admins");
         return "admin/user-profile";
     }
 

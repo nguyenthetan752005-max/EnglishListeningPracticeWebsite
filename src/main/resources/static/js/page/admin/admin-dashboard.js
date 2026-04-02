@@ -119,6 +119,28 @@ function getSearchInput(tableId) {
     return document.getElementById('search' + capitalizedName);
 }
 
+function getCurrentDashboardTab() {
+    const activePane = document.querySelector('.admin-tab-pane.active');
+    if (activePane?.id?.startsWith('tab-')) {
+        return activePane.id.replace('tab-', '');
+    }
+    return readDashboardState().activeTab || getInitialDashboardTab() || 'overview';
+}
+
+function refreshDashboard(tabOverride = '') {
+    const activeTab = tabOverride || getCurrentDashboardTab();
+    saveDashboardState({ activeTab });
+    window.location.href = '/admin/dashboard?tab=' + encodeURIComponent(activeTab);
+}
+
+function parseNullableNumber(value) {
+    if (value == null || value === '') {
+        return null;
+    }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? Number.NaN : numericValue;
+}
+
 function updateResultCount(tableId, count) {
     const countEl = document.getElementById(tableId.replace('Table', 'Count'));
     if (countEl) countEl.textContent = count + ' result(s)';
@@ -327,7 +349,7 @@ async function deleteUser(id) {
     try {
         const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -337,7 +359,7 @@ async function restoreUser(id) {
     try {
         const res = await fetch('/api/admin/users/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -354,7 +376,7 @@ async function hardDeleteUser(id) {
     try {
         const res = await fetch('/api/admin/trash/users/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -364,7 +386,7 @@ async function restoreCategory(id) {
     try {
         const res = await fetch('/api/admin/categories/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -374,7 +396,7 @@ async function restoreSection(id) {
     try {
         const res = await fetch('/api/admin/sections/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -384,7 +406,7 @@ async function restoreLesson(id) {
     try {
         const res = await fetch('/api/admin/lessons/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -394,7 +416,7 @@ async function restoreSentence(id) {
     try {
         const res = await fetch('/api/admin/sentences/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -404,7 +426,7 @@ async function restoreComment(id) {
     try {
         const res = await fetch('/api/admin/comments/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -414,7 +436,7 @@ async function hardDeleteCategory(id) {
     try {
         const res = await fetch('/api/admin/trash/categories/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -424,7 +446,7 @@ async function hardDeleteSection(id) {
     try {
         const res = await fetch('/api/admin/trash/sections/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -434,7 +456,7 @@ async function hardDeleteLesson(id) {
     try {
         const res = await fetch('/api/admin/trash/lessons/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -444,7 +466,7 @@ async function hardDeleteComment(id) {
     try {
         const res = await fetch('/api/admin/trash/comments/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -454,7 +476,7 @@ async function hardDeleteSentence(id) {
     try {
         const res = await fetch('/api/admin/trash/sentences/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) { alert('Server error'); }
 }
@@ -464,7 +486,7 @@ async function toggleCommentHide(id) {
     try {
         const res = await fetch('/api/admin/comments/' + id + '/toggle-hide', { method: 'PATCH' });
         const json = await res.json();
-        if (json.success) { location.reload(); }
+        if (json.success) { refreshDashboard(); }
         else { alert(json.message || 'Server error'); }
     } catch (e) {
         alert('Server error');
@@ -476,7 +498,7 @@ async function adminDeleteComment(id) {
     try {
         const res = await fetch('/api/admin/comments/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) { location.reload(); }
+        if (json.success) { refreshDashboard(); }
         else { alert(json.message || 'Server error'); }
     } catch (e) {
         alert('Server error');
@@ -487,7 +509,7 @@ async function toggleSlideshowActive(id) {
     try {
         const res = await fetch('/api/admin/slideshows/' + id + '/toggle-active', { method: 'PATCH' });
         const json = await res.json();
-        if (json.success) { location.reload(); }
+        if (json.success) { refreshDashboard(); }
         else { alert(json.message || 'Server error'); }
     } catch (e) {
         alert('Server error');
@@ -499,7 +521,7 @@ async function deleteSlideshow(id) {
     try {
         const res = await fetch('/api/admin/slideshows/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) { location.reload(); }
+        if (json.success) { refreshDashboard(); }
         else { alert(json.message || 'Server error'); }
     } catch (e) {
         alert('Server error');
@@ -511,7 +533,7 @@ async function restoreSlideshow(id) {
     try {
         const res = await fetch('/api/admin/slideshows/' + id + '/restore', { method: 'POST' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message || 'Server error');
     } catch (e) {
         alert('Server error');
@@ -523,7 +545,7 @@ async function hardDeleteSlideshow(id) {
     try {
         const res = await fetch('/api/admin/trash/slideshows/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message || 'Server error');
     } catch (e) {
         alert('Server error');
@@ -874,16 +896,16 @@ function collectAdminEntityPayload(entityType) {
         };
     }
 
-    return {
-        lessonId: Number(raw.lessonId),
-        content: String(raw.content || '').trim(),
-        audioUrl: normalizeOptionalString(raw.audioUrl),
-        cloudAudioId: normalizeOptionalString(raw.cloudAudioId),
-        startTime: raw.startTime === '' ? null : Number(raw.startTime),
-        endTime: raw.endTime === '' ? null : Number(raw.endTime),
-        orderIndex: Number(raw.orderIndex || 0),
-        status: raw.status
-    };
+        return {
+            lessonId: Number(raw.lessonId),
+            content: String(raw.content || '').trim(),
+            audioUrl: normalizeOptionalString(raw.audioUrl),
+            cloudAudioId: normalizeOptionalString(raw.cloudAudioId),
+            startTime: parseNullableNumber(raw.startTime),
+            endTime: parseNullableNumber(raw.endTime),
+            orderIndex: Number(raw.orderIndex || 0),
+            status: raw.status
+        };
 }
 
 function validateAdminEntityPayload(entityType, payload) {
@@ -1043,7 +1065,7 @@ async function createCategory() {
         submitLabel: 'Create',
         fieldsHtml: buildCategoryFormFields(initialPayload),
         initialPayload,
-        afterSubmit: async () => location.reload()
+        afterSubmit: async () => refreshDashboard()
     });
 }
 
@@ -1081,7 +1103,7 @@ async function editCategory(id) {
             practiceType: row.dataset.categoryPractice || 'LISTENING',
             type: row.dataset.categoryType || 'AUDIO'
         },
-        afterSubmit: async () => location.reload()
+        afterSubmit: async () => refreshDashboard()
     });
 }
 
@@ -1090,7 +1112,7 @@ async function deleteCategory(id) {
     try {
         const res = await fetch('/api/admin/categories/' + id, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) location.reload();
+        if (json.success) refreshDashboard();
         else alert(json.message);
     } catch (e) {
         alert('Server error');
@@ -1934,7 +1956,7 @@ async function createSlideshow() {
         submitLabel: 'Create',
         fieldsHtml: buildSlideshowFormFields(initialPayload),
         initialPayload,
-        afterSubmit: async () => location.reload()
+        afterSubmit: async () => refreshDashboard()
     });
 }
 
@@ -1961,7 +1983,7 @@ async function editSlideshow(id) {
         submitLabel: 'Save changes',
         fieldsHtml: buildSlideshowFormFields(formData),
         initialPayload: formData,
-        afterSubmit: async () => location.reload()
+        afterSubmit: async () => refreshDashboard()
     });
 }
 
@@ -1971,10 +1993,6 @@ function openUserProfile(userId) {
 
 function openAdminSelfProfile() {
     window.location.href = '/admin/profile';
-}
-
-function openAdminAccountProfile(adminId) {
-    window.location.href = '/admin/admins/' + adminId + '/profile';
 }
 
 function sortUsersByTopScore(mode) {

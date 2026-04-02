@@ -146,7 +146,9 @@ public class LessonServiceImpl implements LessonService {
         if (section != null) {
             List<Lesson> sectionLessons = getPublishedLessonsBySectionId(section.getId()).stream()
                     .filter(l -> l.getSection().getCategory().getPracticeType() == practiceType)
-                    .sorted(Comparator.comparing(Lesson::getId))
+                    .sorted(Comparator
+                            .comparing(Lesson::getOrderIndex, Comparator.nullsFirst(Integer::compareTo))
+                            .thenComparing(Lesson::getId))
                     .toList();
 
             int currentIndex = -1;

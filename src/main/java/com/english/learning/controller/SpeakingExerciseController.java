@@ -4,6 +4,7 @@ import com.english.learning.entity.Category;
 import com.english.learning.entity.Lesson;
 import com.english.learning.service.CategoryService;
 import com.english.learning.service.LessonService;
+import com.english.learning.service.AppSettingService;
 import com.english.learning.dto.SectionWithLessonsDTO;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.enums.PracticeType;
@@ -35,6 +36,7 @@ public class SpeakingExerciseController {
     private final UserProgressService userProgressService;
     private final SentenceService sentenceService;
     private final HintService hintService;
+    private final AppSettingService appSettingService;
 
     @GetMapping("/speaking-exercises")
     public String showAllTopics(Model model, HttpSession session) {
@@ -107,6 +109,7 @@ public class SpeakingExerciseController {
         model.addAttribute("nextLesson", navigation.getNextLesson());
         model.addAttribute("isLastLessonInSection", navigation.isLastLessonInSection());
         model.addAttribute("initialSentenceIndex", sentenceIndex != null ? sentenceIndex : 0);
+        model.addAttribute("speakingPassThreshold", appSettingService.getSpeakingPassThreshold());
 
         return "speaking/speaking-practice";
     }

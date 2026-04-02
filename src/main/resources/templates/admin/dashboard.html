@@ -66,10 +66,6 @@
                     <div class="admin-sidebar-icon"><i class="fas fa-cog"></i></div>
                     Settings
                 </li>
-                <li class="admin-sidebar-item" onclick="openAdminSelfProfile()">
-                    <div class="admin-sidebar-icon"><i class="fas fa-id-badge"></i></div>
-                    Admin Profile
-                </li>
                 <div class="admin-sidebar-divider"></div>
                 <li class="admin-sidebar-item" style="color: #ef4444;">
                     <div class="admin-sidebar-icon"><i class="fas fa-sign-out-alt"></i></div>
@@ -250,15 +246,13 @@
                 <div class="admin-main-header">
                     <div>
                         <h1>Admin Management</h1>
-                        <p>View and manage administrator accounts (role = ADMIN).</p>
+                        <p>Open the single administrator account profile.</p>
                     </div>
                 </div>
                 <div class="admin-panel">
                     <div class="admin-panel-header">
                         <div class="admin-filter-bar">
-                            <input type="text" class="admin-search-input" id="searchAdmins"
-                                placeholder="Search admins..." oninput="filterTable('adminsTable', this.value)">
-                            <span class="admin-result-count" id="adminsCount"></span>
+                            <span class="admin-result-count">Only one administrator account is supported.</span>
                         </div>
                     </div>
                     <div class="admin-table-wrapper">
@@ -274,28 +268,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="adm : ${adminUsers}"
-                                    th:onclick="${admin != null and adm.id == admin.id} ? 'openAdminSelfProfile()' : 'openAdminAccountProfile(' + ${adm.id} + ')'">
-                                    <td th:text="${adm.id}">1</td>
+                                <tr th:if="${admin != null}" onclick="openAdminSelfProfile()">
+                                    <td th:text="${admin.id}">1</td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:10px;">
                                             <div style="width:32px;height:32px;background:rgba(139,92,246,0.15);color:#7c3aed;border-radius:50%;display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:13px;"
-                                                th:text="${#strings.substring(adm.username, 0, 1).toUpperCase()}">A
+                                                th:text="${#strings.substring(admin.username, 0, 1).toUpperCase()}">A
                                             </div>
-                                            <strong th:text="${adm.username}">admin</strong>
+                                            <strong th:text="${admin.username}">admin</strong>
                                         </div>
                                     </td>
-                                    <td th:text="${adm.email}">admin@test.com</td>
+                                    <td th:text="${admin.email}">admin@test.com</td>
                                     <td><span class="admin-badge badge-admin">ADMIN</span></td>
                                     <td><span class="admin-badge"
-                                            th:classappend="${adm.isActive != null and adm.isActive ? 'badge-active' : 'badge-inactive'}"
-                                            th:text="${adm.isActive != null and adm.isActive ? 'Online' : 'Offline'}">Active</span></td>
+                                            th:classappend="${admin.isActive != null and admin.isActive ? 'badge-active' : 'badge-inactive'}"
+                                            th:text="${admin.isActive != null and admin.isActive ? 'Online' : 'Offline'}">Active</span></td>
                                     <td
-                                        th:text="${adm.createdAt != null ? #temporals.format(adm.createdAt, 'yyyy-MM-dd') : 'N/A'}">
+                                        th:text="${admin.createdAt != null ? #temporals.format(admin.createdAt, 'yyyy-MM-dd') : 'N/A'}">
                                         2024-01-01</td>
                                 </tr>
-                                <tr th:if="${#lists.isEmpty(adminUsers)}" class="empty-row">
-                                    <td colspan="6">No admin accounts found</td>
+                                <tr th:if="${admin == null}" class="empty-row">
+                                    <td colspan="6">No admin account found</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1099,90 +1092,49 @@
                         <h1>Settings</h1>
                         <p>System-wide configuration.</p>
                     </div>
-                    <button class="admin-btn admin-btn-primary"><i class="fas fa-save"></i> Save Changes</button>
                 </div>
                 <div class="admin-panel" style="padding: 32px;">
-                    <form>
+                    <div th:if="${settingsSuccess}" class="admin-alert admin-alert-success" th:text="${settingsSuccess}" style="margin-bottom:16px;padding:14px 16px;border-radius:12px;background:#ecfdf3;color:#166534;border:1px solid #bbf7d0;"></div>
+                    <div th:if="${settingsError}" class="admin-alert admin-alert-error" th:text="${settingsError}" style="margin-bottom:16px;padding:14px 16px;border-radius:12px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;"></div>
+                    <form th:action="@{/admin/settings}" th:object="${settingForm}" method="post">
                         <h3 style="margin-top:0;margin-bottom:24px;color:var(--text-primary);font-size:18px;">General
                             Information</h3>
                         <div class="admin-form-group">
                             <label>Site Name</label>
-                            <input type="text" class="admin-form-control" value="English Listening Practice">
+                            <input type="text" class="admin-form-control" th:field="*{siteName}" maxlength="150" required>
                         </div>
                         <div class="admin-form-group">
                             <label>SEO Meta Description</label>
-                            <textarea class="admin-form-control"
-                                rows="3">Free English listening and speaking practice platform with real-world conversations.</textarea>
+                            <textarea class="admin-form-control" th:field="*{seoMetaDescription}"
+                                rows="3" maxlength="500" required></textarea>
                         </div>
                         <hr style="border:0;border-top:1px solid var(--border-color);margin:32px 0;">
                         <h3 style="margin-top:0;margin-bottom:24px;color:var(--text-primary);font-size:18px;">Feature
                             Configuration</h3>
                         <div class="admin-grid-2">
                             <div class="admin-form-group">
-                                <label>Max Lessons on Dashboard</label>
-                                <input type="number" class="admin-form-control" value="10">
+                                <label>Max Recent Users on Overview</label>
+                                <input type="number" class="admin-form-control" th:field="*{maxRecentUsersOnDashboard}" min="1" max="100" required>
+                                <span class="admin-form-help">Controls the size of the `Recently Registered` table on the overview tab.</span>
                             </div>
                             <div class="admin-form-group">
                                 <label>Speaking Pass Threshold (&gt;= %)</label>
-                                <input type="number" class="admin-form-control" value="70">
+                                <input type="number" class="admin-form-control" th:field="*{speakingPassThreshold}" min="0" max="100" required>
+                                <span class="admin-form-help">Used by speaking practice to mark a sentence as completed.</span>
                             </div>
                         </div>
                         <div class="admin-form-group">
                             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                                <input type="checkbox" checked
+                                <input type="checkbox" th:field="*{allowUserRegistration}"
                                     style="width:18px;height:18px;accent-color:var(--primary);">
                                 Allow User Registration
                             </label>
-                            <span class="admin-form-help">Unchecking will block new signups at /register.</span>
+                            <span class="admin-form-help">Unchecking will block new signups from both `/register` and Google OAuth account creation.</span>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+                            <button type="submit" class="admin-btn admin-btn-primary"><i class="fas fa-save"></i> Save Changes</button>
                         </div>
                     </form>
-                </div>
-            </div>
-
-            <!-- ===== ADMIN PROFILE ===== -->
-            <div id="tab-profile" class="admin-tab-pane" th:classappend="${resolvedInitialTab == 'profile'} ? ' active'">
-                <div class="admin-main-header">
-                    <div>
-                        <h1>Admin Profile</h1>
-                        <p>Your account information and session details.</p>
-                    </div>
-                </div>
-                <div class="admin-profile-card">
-                    <div class="admin-profile-avatar">
-                        <img th:if="${admin.avatarUrl != null}" th:src="${admin.avatarUrl}" alt="Avatar">
-                        <span th:if="${admin.avatarUrl == null}"
-                            th:text="${#strings.substring(admin.username, 0, 1).toUpperCase()}">A</span>
-                    </div>
-                    <div class="admin-profile-info">
-                        <div class="label">Username</div>
-                        <div class="value" th:text="${admin.username}">admin</div>
-                        <div class="label">Email</div>
-                        <div class="value" th:text="${admin.email}">admin@test.com</div>
-                        <div class="label">Role</div>
-                        <div class="value"><span class="admin-badge badge-admin" th:text="${admin.role}">ADMIN</span>
-                        </div>
-                    </div>
-                    <div class="admin-profile-grid">
-                        <div>
-                            <div class="label">Account Status</div>
-                            <div class="value"><span class="admin-badge badge-active">Active</span></div>
-                        </div>
-                        <div>
-                            <div class="label">Created At</div>
-                            <div class="value"
-                                th:text="${admin.createdAt != null ? #temporals.format(admin.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">
-                                2024-01-01</div>
-                        </div>
-                        <div>
-                            <div class="label">Provider</div>
-                            <div class="value" th:text="${admin.provider != null ? admin.provider : 'LOCAL'}">LOCAL
-                            </div>
-                        </div>
-                        <div>
-                            <div class="label">Account ID</div>
-                            <div class="value" th:text="${'#' + admin.id}">#1</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
