@@ -66,7 +66,7 @@ public class ProfileController {
             userService.updateUsername(loggedInUser.getId(), newUsername);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tên thành công!");
             // Cập nhật lại session
-            loggedInUser.setUsername(newUsername);
+            loggedInUser.setUsername(newUsername == null ? null : newUsername.trim());
             session.setAttribute("loggedInUser", loggedInUser);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -90,9 +90,7 @@ public class ProfileController {
         try {
             Optional<User> freshUserOpt = userService.findById(loggedInUser.getId());
             User freshUser = freshUserOpt.orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-            if (freshUser.getAvatarPublicId() != null && !freshUser.getAvatarPublicId().isBlank()) {
-                cloudinaryService.deleteFile(freshUser.getAvatarPublicId());
-            }
+            String previousAvatarPublicId = freshUser.getAvatarPublicId();
             Map<String, String> uploadResult = cloudinaryService.uploadFile(
                     file,
                     "image",
@@ -107,6 +105,12 @@ public class ProfileController {
             loggedInUser.setAvatarUrl(avatarUrl);
             loggedInUser.setAvatarPublicId(avatarPublicId);
             session.setAttribute("loggedInUser", loggedInUser);
+
+            if (previousAvatarPublicId != null
+                    && !previousAvatarPublicId.isBlank()
+                    && !previousAvatarPublicId.equals(avatarPublicId)) {
+                cloudinaryService.deleteFile(previousAvatarPublicId);
+            }
             
             response.put("success", true);
             response.put("avatarUrl", avatarUrl);

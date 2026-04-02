@@ -117,6 +117,15 @@ public class LessonServiceImpl implements LessonService {
         if (section == null || Boolean.TRUE.equals(section.getIsDeleted())) {
             throw new ResourceNotFoundException("Không thể khôi phục Lesson khi Section cha đang bị xóa.");
         }
+        if (section.getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Lesson khi Section cha đang ở trạng thái ARCHIVED. Hãy khôi phục Section trước.");
+        }
+        if (section.getCategory() == null || Boolean.TRUE.equals(section.getCategory().getIsDeleted())) {
+            throw new ResourceInUseException("Không thể khôi phục Lesson khi Category cha đang bị xóa.");
+        }
+        if (section.getCategory().getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Lesson khi Category cha đang ở trạng thái ARCHIVED. Hãy khôi phục Category trước.");
+        }
         lesson.setSection(section);
         lesson.setIsDeleted(false);
         lesson.setStatus(ContentStatus.DRAFT);

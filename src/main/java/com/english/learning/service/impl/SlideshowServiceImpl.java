@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,8 +42,12 @@ public class SlideshowServiceImpl implements SlideshowService {
         Slideshow slideshow = slideshowRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Slideshow không tồn tại."));
         assertChanged(slideshow, request);
+        String previousCloudImageId = slideshow.getCloudImageId();
+        String previousImageUrl = slideshow.getImageUrl();
         applyRequest(slideshow, request);
-        return slideshowRepository.save(slideshow);
+        Slideshow savedSlideshow = slideshowRepository.save(slideshow);
+        deleteObsoleteCloudinaryAsset(previousCloudImageId, previousImageUrl, savedSlideshow.getCloudImageId());
+        return savedSlideshow;
     }
 
     @Override
@@ -69,8 +75,9 @@ public class SlideshowServiceImpl implements SlideshowService {
     public void hardDeleteSlideshow(Long id) throws Exception {
         Slideshow slideshow = slideshowRepository.findAnyById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Slideshow không tồn tại."));
-        if (slideshow.getCloudImageId() != null && !slideshow.getCloudImageId().isBlank()) {
-            cloudinaryService.deleteFile(slideshow.getCloudImageId());
+        String cloudinaryAssetId = resolveCloudinaryAssetId(slideshow.getCloudImageId(), slideshow.getImageUrl());
+        if (cloudinaryAssetId != null && !cloudinaryAssetId.isBlank()) {
+            cloudinaryService.deleteFile(cloudinaryAssetId);
         }
         slideshowRepository.deleteById(id);
     }
@@ -87,7 +94,6 @@ public class SlideshowServiceImpl implements SlideshowService {
     private void applyRequest(Slideshow slideshow, AdminSlideshowRequest request) {
         String nextImageUrl = normalizeBlank(request.getImageUrl());
         String nextCloudImageId = normalizeBlank(request.getCloudImageId());
-        replaceCloudinaryAsset(slideshow.getCloudImageId(), nextCloudImageId);
         slideshow.setTitle(request.getTitle().trim());
         slideshow.setImageUrl(nextImageUrl);
         slideshow.setCloudImageId(nextCloudImageId);
@@ -110,15 +116,44 @@ public class SlideshowServiceImpl implements SlideshowService {
         }
     }
 
-    private void replaceCloudinaryAsset(String currentPublicId, String nextPublicId) {
-        if (Objects.equals(currentPublicId, nextPublicId) || currentPublicId == null || currentPublicId.isBlank()) {
+    private void deleteObsoleteCloudinaryAsset(String currentPublicId, String currentImageUrl, String nextPublicId) {
+        String resolvedCurrentId = resolveCloudinaryAssetId(currentPublicId, currentImageUrl);
+        if (Objects.equals(resolvedCurrentId, nextPublicId) || resolvedCurrentId == null || resolvedCurrentId.isBlank()) {
             return;
         }
         try {
-            cloudinaryService.deleteFile(currentPublicId);
+            cloudinaryService.deleteFile(resolvedCurrentId);
         } catch (Exception e) {
             throw new IllegalStateException("Không thể thay thế ảnh slideshow cũ trên Cloudinary.");
         }
+    }
+
+    private String resolveCloudinaryAssetId(String publicId, String imageUrl) {
+        if (publicId != null && !publicId.isBlank()) {
+            return publicId;
+        }
+        String normalizedUrl = normalizeBlank(imageUrl);
+        if (normalizedUrl == null || !normalizedUrl.contains("/upload/")) {
+            return null;
+        }
+        String path = normalizedUrl.substring(normalizedUrl.indexOf("/upload/") + "/upload/".length());
+        int versionIndex = path.indexOf("/v");
+        if (versionIndex == 0) {
+            int slashAfterVersion = path.indexOf('/', 2);
+            if (slashAfterVersion >= 0) {
+                path = path.substring(slashAfterVersion + 1);
+            }
+        }
+        int queryIndex = path.indexOf('?');
+        if (queryIndex >= 0) {
+            path = path.substring(0, queryIndex);
+        }
+        path = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        int extensionIndex = path.lastIndexOf('.');
+        if (extensionIndex > path.lastIndexOf('/')) {
+            path = path.substring(0, extensionIndex);
+        }
+        return path.isBlank() ? null : path;
     }
 
     private String normalizeBlank(String value) {

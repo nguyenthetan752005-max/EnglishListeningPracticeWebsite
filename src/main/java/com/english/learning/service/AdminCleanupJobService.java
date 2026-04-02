@@ -44,8 +44,9 @@ public class AdminCleanupJobService {
         int count = 0;
         for (SpeakingResult result : oldResults) {
             try {
-                if (result.getUserAudioPublicId() != null && !result.getUserAudioPublicId().isEmpty()) {
-                    cloudinaryService.deleteFile(result.getUserAudioPublicId());
+                String audioPublicId = resolveSpeakingAudioPublicId(result);
+                if (audioPublicId != null && !audioPublicId.isEmpty()) {
+                    cloudinaryService.deleteFile(audioPublicId);
                 } else {
                     log.warn("SpeakingResult ID " + result.getId() + " không có publicId để xoá trên Cloudinary.");
                 }
@@ -58,5 +59,18 @@ public class AdminCleanupJobService {
         }
         
         log.info("Đã dọn dẹp thành công " + count + " bản ghi SpeakingResult cũ.");
+    }
+
+    private String resolveSpeakingAudioPublicId(SpeakingResult result) {
+        if (result.getUserAudioPublicId() != null && !result.getUserAudioPublicId().isBlank()) {
+            return result.getUserAudioPublicId();
+        }
+        if (result.getUser() == null || result.getSentence() == null || result.getResultType() == null) {
+            return null;
+        }
+        String suffix = result.getResultType().name().toLowerCase();
+        return "speaking_audio/user_" + result.getUser().getId()
+                + "_sentence_" + result.getSentence().getId()
+                + "_" + suffix;
     }
 }

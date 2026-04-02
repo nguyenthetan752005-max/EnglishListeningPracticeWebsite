@@ -74,6 +74,7 @@ public class SpeakingServiceImpl implements SpeakingService {
                 String currentPublicId = "user_" + userId + "_sentence_" + sentenceId + "_current";
                 Map<String, String> uploadResult = cloudinaryService.uploadAudio(audio.getBytes(), currentPublicId);
                 String audioUrl = uploadResult.get("url");
+                String audioPublicId = uploadResult.get("publicId");
                 dto.setAudioUrl(audioUrl);
 
                 // Lấy user + sentence entity
@@ -94,6 +95,7 @@ public class SpeakingServiceImpl implements SpeakingService {
                 currentResult.setRecognizedText(transcribedText);
                 currentResult.setFeedback(feedback);
                 currentResult.setUserAudioUrl(audioUrl);
+                currentResult.setUserAudioPublicId(audioPublicId);
                 speakingResultRepository.save(currentResult);
 
                 // --- Xử lý BEST: Cập nhật nếu điểm mới cao hơn ---
@@ -107,11 +109,13 @@ public class SpeakingServiceImpl implements SpeakingService {
                         String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
                         Map<String, String> uploadBestResult = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
                         String bestAudioUrl = uploadBestResult.get("url");
+                        String bestAudioPublicId = uploadBestResult.get("publicId");
 
                         bestResult.setScore(aiScore.getScore());
                         bestResult.setRecognizedText(transcribedText);
                         bestResult.setFeedback(feedback);
                         bestResult.setUserAudioUrl(bestAudioUrl);
+                        bestResult.setUserAudioPublicId(bestAudioPublicId);
                         speakingResultRepository.save(bestResult);
 
                         // Trả DTO với best mới
@@ -128,6 +132,7 @@ public class SpeakingServiceImpl implements SpeakingService {
                     String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
                     Map<String, String> uploadBestResult = cloudinaryService.uploadAudio(audio.getBytes(), bestPublicId);
                     String bestAudioUrl = uploadBestResult.get("url");
+                    String bestAudioPublicId = uploadBestResult.get("publicId");
 
                     SpeakingResult newBest = new SpeakingResult();
                     newBest.setUser(user);
@@ -137,6 +142,7 @@ public class SpeakingServiceImpl implements SpeakingService {
                     newBest.setRecognizedText(transcribedText);
                     newBest.setFeedback(feedback);
                     newBest.setUserAudioUrl(bestAudioUrl);
+                    newBest.setUserAudioPublicId(bestAudioPublicId);
                     speakingResultRepository.save(newBest);
 
                     dto.setBestResult(new SpeakingResultDTO.BestResult(

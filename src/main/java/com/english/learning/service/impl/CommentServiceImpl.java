@@ -72,6 +72,9 @@ public class CommentServiceImpl implements CommentService {
         if (parentId != null) {
             Comment parent = commentRepository.findById(parentId)
                     .orElseThrow(() -> new RuntimeException("Comment gốc không tồn tại!"));
+            if (parent.getSentence() == null || !parent.getSentence().getId().equals(sentenceId)) {
+                throw new RuntimeException("Reply phải thuộc cùng một sentence với comment gốc.");
+            }
             comment.setParent(parent);
         }
 
@@ -129,13 +132,9 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.getUser().getId().equals(userId)) {
             throw new RuntimeException("Bạn không có quyền xóa comment này!");
         }
-        // Nếu có reply → soft delete (giữ comment, đổi nội dung)
-        List<Comment> replies = commentRepository.findByParent_IdOrderByCreatedAtAsc(commentId);
-        if (replies != null && !replies.isEmpty()) {
-            comment.setContent("comment has been deleted by author");
-            commentRepository.save(comment);
-        } else {
-            commentRepository.deleteById(commentId);
-        }
+        // Đồng bộ với recycle bin của admin: luôn chuyển sang soft delete.
+        comment.setIsDeleted(true);
+        comment.setIsHidden(true);
+        commentRepository.save(comment);
     }
 }

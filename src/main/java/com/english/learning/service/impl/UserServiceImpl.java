@@ -43,12 +43,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUsername(Long id, String newUsername) throws Exception {
-        Optional<User> existingUserOpt = userRepository.findByUsername(newUsername);
+        String normalizedUsername = newUsername == null ? "" : newUsername.trim();
+        if (normalizedUsername.isEmpty()) {
+            throw new Exception("Tên người dùng không được để trống.");
+        }
+
+        Optional<User> existingUserOpt = userRepository.findByUsername(normalizedUsername);
         if (existingUserOpt.isPresent() && !existingUserOpt.get().getId().equals(id)) {
             throw new Exception("Tên người dùng đã tồn tại!");
         }
         User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
-        user.setUsername(newUsername);
+        user.setUsername(normalizedUsername);
         userRepository.save(user);
     }
 
@@ -128,8 +133,9 @@ public class UserServiceImpl implements UserService {
 
         // External service cleanup: Delete Cloudinary assets (not handled by JPA Cascade)
         for (SpeakingResult speakingResult : speakingResultRepository.findByUser_Id(id)) {
-            if (speakingResult.getUserAudioPublicId() != null && !speakingResult.getUserAudioPublicId().isBlank()) {
-                cloudinaryService.deleteFile(speakingResult.getUserAudioPublicId());
+            String audioPublicId = resolveSpeakingAudioPublicId(speakingResult);
+            if (audioPublicId != null && !audioPublicId.isBlank()) {
+                cloudinaryService.deleteFile(audioPublicId);
             }
         }
         if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isBlank()) {
@@ -195,5 +201,18 @@ public class UserServiceImpl implements UserService {
         }
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String resolveSpeakingAudioPublicId(SpeakingResult speakingResult) {
+        if (speakingResult.getUserAudioPublicId() != null && !speakingResult.getUserAudioPublicId().isBlank()) {
+            return speakingResult.getUserAudioPublicId();
+        }
+        if (speakingResult.getUser() == null || speakingResult.getSentence() == null || speakingResult.getResultType() == null) {
+            return null;
+        }
+        String suffix = speakingResult.getResultType().name().toLowerCase();
+        return "speaking_audio/user_" + speakingResult.getUser().getId()
+                + "_sentence_" + speakingResult.getSentence().getId()
+                + "_" + suffix;
     }
 }

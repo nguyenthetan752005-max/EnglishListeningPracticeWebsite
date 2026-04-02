@@ -94,6 +94,9 @@ public class SectionServiceImpl implements SectionService {
         if (category == null || Boolean.TRUE.equals(category.getIsDeleted())) {
             throw new ResourceNotFoundException("Không thể khôi phục Section khi Category cha đang bị xóa.");
         }
+        if (category.getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Section khi Category cha đang ở trạng thái ARCHIVED. Hãy khôi phục Category trước.");
+        }
         section.setCategory(category);
         section.setIsDeleted(false);
         section.setStatus(ContentStatus.DRAFT);

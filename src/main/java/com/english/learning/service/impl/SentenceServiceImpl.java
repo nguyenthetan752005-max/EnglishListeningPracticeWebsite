@@ -7,6 +7,7 @@ import com.english.learning.enums.ContentStatus;
 import com.english.learning.enums.LessonType;
 import com.english.learning.exception.ResourceInUseException;
 import com.english.learning.exception.ResourceNotFoundException;
+import com.english.learning.repository.CommentRepository;
 import com.english.learning.repository.LessonRepository;
 import com.english.learning.repository.SentenceRepository;
 import com.english.learning.repository.SpeakingResultRepository;
@@ -33,6 +34,7 @@ public class SentenceServiceImpl implements SentenceService {
     private final HintService hintService;
     private final SpeakingResultRepository speakingResultRepository;
     private final UserProgressRepository userProgressRepository;
+    private final CommentRepository commentRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -124,6 +126,21 @@ public class SentenceServiceImpl implements SentenceService {
         if (lesson == null || Boolean.TRUE.equals(lesson.getIsDeleted())) {
             throw new ResourceNotFoundException("Không thể khôi phục Sentence khi Lesson cha đang bị xóa.");
         }
+        if (lesson.getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Sentence khi Lesson cha đang ở trạng thái ARCHIVED. Hãy khôi phục Lesson trước.");
+        }
+        if (lesson.getSection() == null || Boolean.TRUE.equals(lesson.getSection().getIsDeleted())) {
+            throw new ResourceInUseException("Không thể khôi phục Sentence khi Section cha đang bị xóa.");
+        }
+        if (lesson.getSection().getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Sentence khi Section cha đang ở trạng thái ARCHIVED. Hãy khôi phục Section trước.");
+        }
+        if (lesson.getSection().getCategory() == null || Boolean.TRUE.equals(lesson.getSection().getCategory().getIsDeleted())) {
+            throw new ResourceInUseException("Không thể khôi phục Sentence khi Category cha đang bị xóa.");
+        }
+        if (lesson.getSection().getCategory().getStatus() == ContentStatus.ARCHIVED) {
+            throw new ResourceInUseException("Không thể khôi phục Sentence khi Category cha đang ở trạng thái ARCHIVED. Hãy khôi phục Category trước.");
+        }
         sentence.setLesson(lesson);
         sentence.setIsDeleted(false);
         sentence.setStatus(ContentStatus.DRAFT);
@@ -141,6 +158,9 @@ public class SentenceServiceImpl implements SentenceService {
 
         if (speakingResultRepository.countBySentence_Id(id) > 0 || userProgressRepository.countBySentence_Id(id) > 0) {
             throw new ResourceInUseException("Không thể xoá cứng. Dữ liệu đang chịu ràng buộc khóa ngoại (người dùng đã làm bài hoặc lưu ghi âm).");
+        }
+        if (commentRepository.countAnyBySentenceId(id) > 0) {
+            throw new ResourceInUseException("Không thể xoá cứng Sentence khi vẫn còn Comment liên quan. Hãy xóa cứng comment trước.");
         }
 
         Long lessonId = sentence.getLesson() != null ? sentence.getLesson().getId() : null;

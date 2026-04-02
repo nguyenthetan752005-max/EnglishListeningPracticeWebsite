@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -230,11 +231,41 @@ public class AdminApiController {
             if (sentence == null || Boolean.TRUE.equals(sentence.getIsDeleted())) {
                 throw new RuntimeException("Không thể khôi phục Comment khi Sentence cha đang bị xóa.");
             }
+            if (sentence.getStatus() == com.english.learning.enums.ContentStatus.ARCHIVED) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Sentence cha đang ở trạng thái ARCHIVED. Hãy khôi phục Sentence trước.");
+            }
+            if (sentence.getLesson() == null || Boolean.TRUE.equals(sentence.getLesson().getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Lesson cha đang bị xóa.");
+            }
+            if (sentence.getLesson().getStatus() == com.english.learning.enums.ContentStatus.ARCHIVED) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Lesson cha đang ở trạng thái ARCHIVED. Hãy khôi phục Lesson trước.");
+            }
+            if (sentence.getLesson().getSection() == null || Boolean.TRUE.equals(sentence.getLesson().getSection().getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Section cha đang bị xóa.");
+            }
+            if (sentence.getLesson().getSection().getStatus() == com.english.learning.enums.ContentStatus.ARCHIVED) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Section cha đang ở trạng thái ARCHIVED. Hãy khôi phục Section trước.");
+            }
+            if (sentence.getLesson().getSection().getCategory() == null || Boolean.TRUE.equals(sentence.getLesson().getSection().getCategory().getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Category cha đang bị xóa.");
+            }
+            if (sentence.getLesson().getSection().getCategory().getStatus() == com.english.learning.enums.ContentStatus.ARCHIVED) {
+                throw new RuntimeException("Không thể khôi phục Comment khi Category cha đang ở trạng thái ARCHIVED. Hãy khôi phục Category trước.");
+            }
             if (user == null || Boolean.TRUE.equals(user.getIsDeleted())) {
                 throw new RuntimeException("Không thể khôi phục Comment khi User đã bị xóa.");
             }
+            Long parentId = comment.getParent() != null ? comment.getParent().getId() : null;
+            Comment parent = parentId != null ? commentRepository.findAnyCommentById(parentId).orElse(null) : null;
+            if (parentId != null && parent == null) {
+                throw new RuntimeException("Không thể khôi phục Comment vì comment cha không còn tồn tại.");
+            }
+            if (parent != null && Boolean.TRUE.equals(parent.getIsDeleted())) {
+                throw new RuntimeException("Không thể khôi phục Comment khi comment cha vẫn đang ở thùng rác. Hãy khôi phục comment cha trước.");
+            }
             comment.setSentence(sentence);
             comment.setUser(user);
+            comment.setParent(parent);
             comment.setIsDeleted(false);
             comment.setIsHidden(false);
             commentRepository.save(comment);
@@ -249,6 +280,7 @@ public class AdminApiController {
     }
 
     @DeleteMapping("/trash/comments/{id}")
+    @Transactional
     public ResponseEntity<Map<String, Object>> hardDeleteComment(@PathVariable Long id) {
         return handleAction(() -> hardDeleteCommentTree(id), "Đã xóa vĩnh viễn Comment");
     }

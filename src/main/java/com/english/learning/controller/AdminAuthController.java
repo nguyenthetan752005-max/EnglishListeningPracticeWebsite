@@ -296,9 +296,7 @@ public class AdminAuthController {
         try {
             Optional<User> freshAdminOpt = userService.findById(admin.getId());
             User freshAdmin = freshAdminOpt.orElseThrow(() -> new RuntimeException("Không tìm thấy admin"));
-            if (freshAdmin.getAvatarPublicId() != null && !freshAdmin.getAvatarPublicId().isBlank()) {
-                cloudinaryService.deleteFile(freshAdmin.getAvatarPublicId());
-            }
+            String previousAvatarPublicId = freshAdmin.getAvatarPublicId();
             java.util.Map<String, String> uploadResult = cloudinaryService.uploadFile(
                     file,
                     "image",
@@ -313,6 +311,12 @@ public class AdminAuthController {
             admin.setAvatarUrl(avatarUrl);
             admin.setAvatarPublicId(avatarPublicId);
             session.setAttribute("loggedInAdmin", admin);
+
+            if (previousAvatarPublicId != null
+                    && !previousAvatarPublicId.isBlank()
+                    && !previousAvatarPublicId.equals(avatarPublicId)) {
+                cloudinaryService.deleteFile(previousAvatarPublicId);
+            }
 
             response.put("success", true);
             response.put("avatarUrl", avatarUrl);
@@ -338,6 +342,10 @@ public class AdminAuthController {
         }
 
         try {
+            User targetUser = userService.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+            if (targetUser.getRole() == Role.ADMIN) {
+                throw new RuntimeException("Không được dùng màn quản lý user để chỉnh sửa tài khoản admin.");
+            }
             userService.adminUpdateBasicInfo(id, username, avatarUrl, isActive, role);
             redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin người dùng.");
         } catch (Exception e) {
@@ -364,6 +372,10 @@ public class AdminAuthController {
         }
 
         try {
+            User targetUser = userService.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+            if (targetUser.getRole() == Role.ADMIN) {
+                throw new RuntimeException("Không được dùng màn quản lý user để đổi mật khẩu tài khoản admin.");
+            }
             userService.adminUpdatePassword(id, newPassword);
             redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật mật khẩu người dùng.");
         } catch (Exception e) {
