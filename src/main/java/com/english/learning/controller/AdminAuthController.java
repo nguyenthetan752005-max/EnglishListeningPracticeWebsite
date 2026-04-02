@@ -8,6 +8,7 @@ import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.service.AdminDashboardService;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.CategoryService;
 import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.PasswordResetService;
@@ -34,6 +35,7 @@ import java.util.TreeSet;
 @RequiredArgsConstructor
 public class AdminAuthController {
 
+    private final AuthService authService;
     private final UserService userService;
     private final CategoryService categoryService;
     private final AdminDashboardService adminDashboardService;
@@ -55,7 +57,7 @@ public class AdminAuthController {
     public String doAdminLogin(@RequestParam(value = "username", required = false) String username,
                                @RequestParam(value = "password", required = false) String password,
                                Model model, HttpSession session) {
-        Optional<User> adminOpt = userService.authenticateAdmin(username, password);
+        Optional<User> adminOpt = authService.authenticateAdmin(username, password);
         if (adminOpt.isPresent()) {
             User admin = adminOpt.get();
             userService.updateActiveStatus(admin.getId(), true);

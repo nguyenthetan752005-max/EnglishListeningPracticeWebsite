@@ -1,6 +1,7 @@
 package com.english.learning.controller;
 
 import com.english.learning.entity.User;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final AuthService authService;
     private final UserService userService;
 
     @GetMapping("/login")
@@ -33,7 +35,7 @@ public class AuthController {
     @PostMapping("/register")
     public String doRegister(@ModelAttribute User user, Model model) {
         try {
-            userService.register(user);
+            authService.register(user);
             return "redirect:/login";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
@@ -45,7 +47,7 @@ public class AuthController {
     public String doLogin(@RequestParam(value = "username", required = false) String username,
             @RequestParam(value = "password", required = false) String password,
             Model model, HttpSession session) {
-        Optional<User> userOpt = userService.authenticateUser(username, password);
+        Optional<User> userOpt = authService.authenticateUser(username, password);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             userService.updateActiveStatus(user.getId(), true);
@@ -67,3 +69,4 @@ public class AuthController {
         return "redirect:/login";
     }
 }
+

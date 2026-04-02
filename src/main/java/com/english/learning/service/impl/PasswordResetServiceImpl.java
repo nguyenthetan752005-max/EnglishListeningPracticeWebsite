@@ -3,8 +3,8 @@ package com.english.learning.service.impl;
 import com.english.learning.entity.PasswordResetToken;
 import com.english.learning.entity.User;
 import com.english.learning.repository.PasswordResetTokenRepository;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.PasswordResetService;
-import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -23,7 +23,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private static final int TOKEN_EXPIRY_MINUTES = 30;
 
     private final PasswordResetTokenRepository tokenRepository;
-    private final UserService userService;
+    private final AuthService authService;
     private final JavaMailSender mailSender;
 
     @Value("${app.url}")
@@ -81,7 +81,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         User user = resetToken.getUser();
-        userService.updatePassword(user, newPassword);
+        authService.updatePassword(user, newPassword);
 
         // Xóa token sau khi đã sử dụng
         tokenRepository.delete(resetToken);
