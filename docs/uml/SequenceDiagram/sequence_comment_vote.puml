@@ -7,17 +7,17 @@ participant "CommentController" as CMC
 database "Database" as DB
 
 == Xem Comments ==
-U -> V : Xem comments của Lesson
-V -> CMC : GET /lesson/{id}/comments
-CMC -> DB : SELECT FROM comments\nWHERE lesson_id = ?\nJOIN users ON user_id
+U -> V : Xem comments của Sentence
+V -> CMC : GET /sentence/{id}/comments
+CMC -> DB : SELECT FROM comments\nWHERE sentence_id = ?\nJOIN users ON user_id
 DB --> CMC : List<Comment> with User info
 CMC --> V : Render comments\n(threaded by parent_id)
 V --> U : Hiển thị danh sách comments
 
 == Viết Comment ==
 U -> V : Viết comment mới
-V -> CMC : POST /comment\n(content, lesson_id, parent_id)
-CMC -> DB : INSERT INTO comments\n(content, lesson_id, user_id, parent_id, created_at)
+V -> CMC : POST /comment\n(content, sentence_id, parent_id)
+CMC -> DB : INSERT INTO comments\n(content, sentence_id, user_id, parent_id, created_at)
 DB --> CMC : OK
 CMC --> V : Refresh danh sách comments
 V --> U : Cập nhật hiển thị

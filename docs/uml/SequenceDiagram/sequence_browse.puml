@@ -14,7 +14,7 @@ CC -> CS : getAllCategories()
 CS -> DB : SELECT * FROM categories
 DB --> CS : List<Category>
 CS --> CC : List<Category>
-CC --> V : Hiển thị danh mục\n(image_url, level_range, total_lessons)
+CC --> V : Hiển thị danh mục\n(image_url, level_range, type, total_lessons)
 V --> U : Trang chủ với danh mục
 
 U -> V : Chọn Category
@@ -31,6 +31,6 @@ LS -> DB : SELECT FROM lessons\nWHERE section_id = ?
 DB --> LS : List<Lesson>
 LS --> CC : List<Lesson>
 CC --> V : Hiển thị danh sách bài học
-V --> U : Danh sách bài học\n(title, level, totalSentences)
+V --> U : Danh sách bài học\n(title, level, type, totalSentences)
 
 @enduml

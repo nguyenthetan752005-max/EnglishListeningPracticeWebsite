@@ -1,7 +1,4 @@
 <!DOCTYPE html>
-<!-- GIAO DIỆN TRANG ĐĂNG NHẬP -->
-<!-- Cung cấp Form nhập Email và Mật khẩu (Dùng Spring Security nếu có sau này) -->
-
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head('Login')}"></head>
 <body>
@@ -23,6 +20,9 @@
             <div th:if="${param.error}" style="color: red; text-align: center; margin-bottom: 15px;">
                 Đăng nhập OAuth2 thất bại. Hãy kiểm tra lại cấu hình GOOGLE_CLIENT_ID và SECRET.
             </div>
+            <div th:if="${param.error != null and param.error[0] == 'registration-disabled'}" style="color: red; text-align: center; margin-bottom: 15px;">
+                User registration is currently disabled.
+            </div>
 
             <form th:action="@{/login}" method="post">
                 <div class="form-group">
@@ -38,7 +38,7 @@
 
             <div class="auth-links">
                 <p>Forgot your password? <a th:href="@{/forgot-password}">Click here</a></p>
-                <p>Haven't had an account? <a th:href="@{/register}">Register here</a></p>
+                <p th:if="${registrationEnabled}">Haven't had an account? <a th:href="@{/register}">Register here</a></p>
             </div>
         </div>
     </main>

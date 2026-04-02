@@ -9,30 +9,51 @@ import com.english.learning.entity.CommentVote;
 import com.english.learning.entity.Sentence;
 import com.english.learning.entity.User;
 import com.english.learning.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
-    private CommentVoteRepository commentVoteRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private SentenceRepository sentenceRepository;
+    private final CommentRepository commentRepository;
+    private final CommentVoteRepository commentVoteRepository;
+    private final UserRepository userRepository;
+    private final SentenceRepository sentenceRepository;
 
     @Override
     public List<Comment> getCommentsBySentenceId(Long sentenceId) {
-        return commentRepository.findBySentence_Id(sentenceId);
+        return commentRepository.findBySentence_IdAndIsHiddenFalseAndParentIsNullOrderByCreatedAtDesc(sentenceId);
+    }
+
+    @Override
+    public List<Comment> getTopLevelCommentsWithVotes(Long sentenceId) {
+        List<Comment> comments = commentRepository
+                .findBySentence_IdAndIsHiddenFalseAndParentIsNullOrderByCreatedAtDesc(sentenceId);
+        comments.forEach(this::populateVoteCounts);
+        return comments;
+    }
+
+    @Override
+    public List<Comment> getRepliesWithVotes(Long parentId) {
+        List<Comment> replies = commentRepository.findByParent_IdAndIsHiddenFalseOrderByCreatedAtAsc(parentId);
+        replies.forEach(this::populateVoteCounts);
+        return replies;
+    }
+
+    @Override
+    public List<Comment> getCommentsByUserId(Long userId) {
+        List<Comment> comments = commentRepository.findByUser_IdAndIsHiddenFalseOrderByCreatedAtDesc(userId);
+        comments.forEach(this::populateVoteCounts);
+        return comments;
+    }
+
+    private void populateVoteCounts(Comment comment) {
+        comment.setLikeCount(commentVoteRepository.countVotes(comment.getId(), true));
+        comment.setDislikeCount(commentVoteRepository.countVotes(comment.getId(), false));
     }
 
     @Override
@@ -40,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = new Comment();
         comment.setContent(content);
 
-        Sentence sentence = sentenceRepository.findById(sentenceId)
+        Sentence sentence = sentenceRepository.findPublishedById(sentenceId, com.english.learning.enums.ContentStatus.PUBLISHED)
                 .orElseThrow(() -> new RuntimeException("Sentence không tồn tại!"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại!"));
@@ -51,10 +72,15 @@ public class CommentServiceImpl implements CommentService {
         if (parentId != null) {
             Comment parent = commentRepository.findById(parentId)
                     .orElseThrow(() -> new RuntimeException("Comment gốc không tồn tại!"));
+            if (parent.getSentence() == null || !parent.getSentence().getId().equals(sentenceId)) {
+                throw new RuntimeException("Reply phải thuộc cùng một sentence với comment gốc.");
+            }
             comment.setParent(parent);
         }
 
-        return commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        populateVoteCounts(saved);
+        return saved;
     }
 
     @Override
@@ -84,5 +110,31 @@ public class CommentServiceImpl implements CommentService {
             vote.setIsLike(isLike);
             return commentVoteRepository.save(vote);
         }
+    }
+
+    @Override
+    public Comment editComment(Long commentId, Long userId, String newContent) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment không tồn tại!"));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền chỉnh sửa comment này!");
+        }
+        comment.setContent(newContent + " [author edited comment]");
+        Comment saved = commentRepository.save(comment);
+        populateVoteCounts(saved);
+        return saved;
+    }
+
+    @Override
+    public void deleteComment(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment không tồn tại!"));
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền xóa comment này!");
+        }
+        // Đồng bộ với recycle bin của admin: luôn chuyển sang soft delete.
+        comment.setIsDeleted(true);
+        comment.setIsHidden(true);
+        commentRepository.save(comment);
     }
 }

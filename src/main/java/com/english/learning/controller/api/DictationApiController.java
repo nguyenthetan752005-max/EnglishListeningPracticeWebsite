@@ -5,20 +5,23 @@
 
 package com.english.learning.controller.api;
 
+import com.english.learning.dto.CheckDictationRequest;
 import com.english.learning.dto.DictationResultDTO;
+import com.english.learning.dto.SkipSentenceRequest;
 import com.english.learning.service.DictationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dictation")
 public class DictationApiController {
 
-    @Autowired
-    private DictationService dictationService;
+    private final DictationService dictationService;
+
+    public DictationApiController(DictationService dictationService) {
+        this.dictationService = dictationService;
+    }
 
     /**
      * API Chấm đáp án chép chính tả.
@@ -27,16 +30,8 @@ public class DictationApiController {
      * Response: { "correct": false, "matchedCount": 3, "hint": "it snowed all *** ***", ... }
      */
     @PostMapping("/check")
-    public ResponseEntity<DictationResultDTO> checkAnswer(@RequestBody Map<String, Object> request) {
-        Long sentenceId = Long.valueOf(request.get("sentenceId").toString());
-        String userInput = (String) request.get("userInput");
-
-        // Kiểm tra input rỗng
-        if (userInput == null || userInput.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        DictationResultDTO result = dictationService.checkAnswer(sentenceId, userInput);
+    public ResponseEntity<DictationResultDTO> checkAnswer(@Valid @RequestBody CheckDictationRequest request) {
+        DictationResultDTO result = dictationService.checkAnswer(request.getSentenceId(), request.getUserInput());
         return ResponseEntity.ok(result);
     }
 
@@ -47,10 +42,8 @@ public class DictationApiController {
      * Response: { "correct": false, "hint": "It snowed all day today.", "correctSentence": "..." }
      */
     @PostMapping("/skip")
-    public ResponseEntity<DictationResultDTO> skipSentence(@RequestBody Map<String, Object> request) {
-        Long sentenceId = Long.valueOf(request.get("sentenceId").toString());
-
-        DictationResultDTO result = dictationService.skipSentence(sentenceId);
+    public ResponseEntity<DictationResultDTO> skipSentence(@Valid @RequestBody SkipSentenceRequest request) {
+        DictationResultDTO result = dictationService.skipSentence(request.getSentenceId());
         return ResponseEntity.ok(result);
     }
 }

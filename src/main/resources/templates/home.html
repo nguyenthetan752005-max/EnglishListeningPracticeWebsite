@@ -12,12 +12,15 @@
     <main>
         <!-- Hero Section -->
         <section class="hero">
-            <div class="container">
+            <div class="container hero-container">
                 <div class="hero-content">
                     <h1>Practice English with dictation exercises</h1>
                     <p class="hero-lead">Dictation is a method to learn languages by listening and writing down what you hear. It is a <strong>highly effective method!</strong></p>
                     <p class="hero-sub">This website contains thousands of audio recordings &amp; videos to help English learners practice easily and improve quickly.</p>
                     <a href="/exercises" class="btn btn-primary btn-lg">Start Now</a>
+                </div>
+                <div class="hero-slideshow">
+                    <div th:replace="~{fragments/home/slideshow :: slideshow}"></div>
                 </div>
             </div>
         </section>

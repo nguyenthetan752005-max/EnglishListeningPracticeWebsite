@@ -1,23 +1,25 @@
 package com.english.learning;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.util.Properties;
-import java.util.Map;
 
 @SpringBootApplication
+@EnableScheduling
+@RequiredArgsConstructor
 public class EnglishLearningProjectApplication {
 
-    @Autowired
-    private Environment env;
+    private final Environment env;
 
     public static void main(String[] args) {
 

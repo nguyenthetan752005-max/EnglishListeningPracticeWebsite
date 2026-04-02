@@ -3,9 +3,9 @@ package com.english.learning.service.impl;
 import com.english.learning.entity.PasswordResetToken;
 import com.english.learning.entity.User;
 import com.english.learning.repository.PasswordResetTokenRepository;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.PasswordResetService;
-import com.english.learning.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,18 +17,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PasswordResetServiceImpl implements PasswordResetService {
 
     private static final int TOKEN_EXPIRY_MINUTES = 30;
 
-    @Autowired
-    private PasswordResetTokenRepository tokenRepository;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JavaMailSender mailSender;
+    private final PasswordResetTokenRepository tokenRepository;
+    private final AuthService authService;
+    private final JavaMailSender mailSender;
 
     @Value("${app.url}")
     private String appUrl;
@@ -55,20 +51,17 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     @Override
     public void sendResetEmail(String email, String token) {
-        String resetUrl = appUrl + "/reset-password?token=" + token;
+        sendEmail(email, token, "forgot-password");
+    }
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(email);
-        message.setSubject("English Learning - Đặt lại mật khẩu");
-        message.setText("Xin chào,\n\n"
-                + "Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào link bên dưới để đặt mật khẩu mới:\n\n"
-                + resetUrl + "\n\n"
-                + "Link này sẽ hết hạn sau " + TOKEN_EXPIRY_MINUTES + " phút.\n\n"
-                + "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n"
-                + "Trân trọng,\nEnglish Learning Team");
+    @Override
+    public void sendProfilePasswordChangeEmail(String email, String token) {
+        sendEmail(email, token, "user-profile");
+    }
 
-        mailSender.send(message);
+    @Override
+    public void sendAdminPasswordChangeEmail(String email, String token) {
+        sendEmail(email, token, "admin-profile");
     }
 
     @Override
@@ -88,9 +81,39 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         User user = resetToken.getUser();
-        userService.updatePassword(user, newPassword);
+        authService.updatePassword(user, newPassword);
 
         // Xóa token sau khi đã sử dụng
         tokenRepository.delete(resetToken);
+    }
+
+    private void sendEmail(String email, String token, String source) {
+        boolean fromProfile = !"forgot-password".equals(source);
+        boolean fromAdminProfile = "admin-profile".equals(source);
+        String resetUrl = appUrl + "/reset-password?token=" + token + "&source=" + source;
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(email);
+        message.setSubject(fromProfile
+                ? (fromAdminProfile
+                    ? "English Learning - Xác nhận đổi mật khẩu admin"
+                    : "English Learning - Xác nhận đổi mật khẩu")
+                : "English Learning - Đặt lại mật khẩu");
+        message.setText("Xin chào,\n\n"
+                + (fromAdminProfile
+                ? "Bạn đã yêu cầu đổi mật khẩu cho tài khoản admin đang đăng nhập. Vui lòng nhấn vào link bên dưới để xác nhận và đặt mật khẩu mới:\n\n"
+                : (fromProfile
+                ? "Bạn đã yêu cầu đổi mật khẩu từ trang hồ sơ. Vui lòng nhấn vào link bên dưới để xác nhận và đặt mật khẩu mới:\n\n"
+                : "Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào link bên dưới để đặt mật khẩu mới:\n\n"))
+                + resetUrl + "\n\n"
+                + "Link này sẽ hết hạn sau " + TOKEN_EXPIRY_MINUTES + " phút.\n\n"
+                + (fromProfile
+                ? "Sau khi đổi mật khẩu thành công, phiên đăng nhập hiện tại sẽ bị đăng xuất.\n\n"
+                : "")
+                + "Nếu bạn không yêu cầu thao tác này, vui lòng bỏ qua email này.\n\n"
+                + "Trân trọng,\nEnglish Learning Team");
+
+        mailSender.send(message);
     }
 }

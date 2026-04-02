@@ -4,16 +4,16 @@ import com.english.learning.entity.User;
 import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 
 @Component
+@RequiredArgsConstructor
 public class AdminDataInitializer implements CommandLineRunner {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Value("${app.admin.username}")
     private String adminUsername;

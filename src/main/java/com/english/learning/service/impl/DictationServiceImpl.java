@@ -8,9 +8,10 @@ package com.english.learning.service.impl;
 
 import com.english.learning.dto.DictationResultDTO;
 import com.english.learning.entity.Sentence;
+import com.english.learning.exception.SentenceNotFoundException;
 import com.english.learning.repository.SentenceRepository;
 import com.english.learning.service.DictationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.english.learning.util.TextNormalizerUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,15 +20,10 @@ import java.util.List;
 @Service
 public class DictationServiceImpl implements DictationService {
 
-    @Autowired
-    private SentenceRepository sentenceRepository;
+    private final SentenceRepository sentenceRepository;
 
-    /**
-     * Loại bỏ dấu câu để so sánh công bằng.
-     * "Jane?" -> "jane", "Hello!" -> "hello"
-     */
-    private String normalizeWord(String word) {
-        return word.replaceAll("[.,?!;:'\"-]", "").toLowerCase().trim();
+    public DictationServiceImpl(SentenceRepository sentenceRepository) {
+        this.sentenceRepository = sentenceRepository;
     }
 
     /**
@@ -42,7 +38,7 @@ public class DictationServiceImpl implements DictationService {
     @Override
     public DictationResultDTO checkAnswer(Long sentenceId, String userInput) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
-                .orElseThrow(() -> new RuntimeException("Sentence not found: " + sentenceId));
+                .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
         String correctContent = sentence.getContent();
 
@@ -53,7 +49,8 @@ public class DictationServiceImpl implements DictationService {
         // Đếm số từ đúng liên tiếp (bỏ qua dấu câu khi so sánh)
         int matchedCount = 0;
         for (int i = 0; i < Math.min(correctWords.length, userWords.length); i++) {
-            if (normalizeWord(correctWords[i]).equals(normalizeWord(userWords[i]))) {
+            if (TextNormalizerUtil.removePunctuationAndLowercase(correctWords[i])
+                    .equals(TextNormalizerUtil.removePunctuationAndLowercase(userWords[i]))) {
                 matchedCount++;
             } else {
                 break;
@@ -101,7 +98,7 @@ public class DictationServiceImpl implements DictationService {
     @Override
     public DictationResultDTO skipSentence(Long sentenceId) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
-                .orElseThrow(() -> new RuntimeException("Sentence not found: " + sentenceId));
+                .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
         String correctContent = sentence.getContent();
         String[] correctWords = correctContent.trim().split("\\s+");

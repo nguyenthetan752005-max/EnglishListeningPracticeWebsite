@@ -19,10 +19,10 @@ V --> A : Hiển thị danh sách Category
 
 == Thêm Category mới ==
 A -> V : Nhấn "Thêm mới"
-A -> V : Nhập name, imageUrl, levelRange
-V -> AC : POST /admin/category\n{name, imageUrl, levelRange}
+A -> V : Nhập name, imageUrl, levelRange, type
+V -> AC : POST /admin/category\n{name, imageUrl, levelRange, type}
 AC -> AS : createCategory(category)
-AS -> DB : INSERT INTO categories\n(name, image_url, level_range, total_lessons)
+AS -> DB : INSERT INTO categories\n(name, image_url, level_range, type, total_lessons)
 DB --> AS : Saved Category
 AS --> AC : Category
 AC --> V : Redirect danh sách
@@ -30,14 +30,14 @@ V --> A : Hiển thị thành công
 
 == Thêm Lesson + Sentences ==
 A -> V : Chọn Section → Thêm Lesson
-V -> AC : POST /admin/lesson\n{title, level, sectionId}
+V -> AC : POST /admin/lesson\n{title, level, type, youtubeVideoId, sectionId}
 AC -> AS : createLesson(lesson)
 AS -> DB : INSERT INTO lessons(...)
 DB --> AS : Saved Lesson
 AS --> AC : Lesson
 
 A -> V : Thêm Sentences cho Lesson
-V -> AC : POST /admin/sentence\n{content, audioUrl, orderIndex, lessonId}
+V -> AC : POST /admin/sentence\n{content, audioUrl, startTime, endTime, orderIndex, lessonId}
 AC -> AS : createSentence(sentence)
 AS -> DB : INSERT INTO sentences(...)
 DB --> AS : OK
