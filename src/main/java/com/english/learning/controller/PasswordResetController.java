@@ -1,6 +1,7 @@
 package com.english.learning.controller;
 
 import com.english.learning.entity.User;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.PasswordResetService;
 import com.english.learning.service.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -17,6 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PasswordResetController {
 
+    private final AuthService authService;
     private final UserService userService;
     private final PasswordResetService passwordResetService;
 
@@ -29,7 +31,7 @@ public class PasswordResetController {
 
     @PostMapping("/forgot-password")
     public String processForgotPassword(@RequestParam("email") String email, Model model) {
-        Optional<User> userOpt = userService.findByEmail(email);
+        Optional<User> userOpt = authService.findByEmail(email);
 
         if (userOpt.isEmpty()) {
             model.addAttribute("error", "Không tìm thấy tài khoản với email này!");

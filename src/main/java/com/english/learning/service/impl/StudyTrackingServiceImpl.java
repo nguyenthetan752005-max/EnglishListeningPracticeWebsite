@@ -49,8 +49,11 @@ public class StudyTrackingServiceImpl implements StudyTrackingService {
         dailyStat.setActiveTimeSeconds(dailyStat.getActiveTimeSeconds() + finalSeconds);
         dailyRepo.save(dailyStat);
 
-        // 3. Update all-time total in User table (for all-time stats)
+        // 3. Update all-time and cached totals in User table (for real-time leaderboard stats)
         user.setTotalActiveTime((user.getTotalActiveTime() != null ? user.getTotalActiveTime() : 0) + finalSeconds);
+        user.setActiveTime7d((user.getActiveTime7d() != null ? user.getActiveTime7d() : 0) + finalSeconds);
+        user.setActiveTime30d((user.getActiveTime30d() != null ? user.getActiveTime30d() : 0) + finalSeconds);
+        
         userRepository.save(user);
         
         log.info("Action-based tracking: Added {} seconds to user {} for date {}. (Requested: {})", finalSeconds, username, today, seconds);

@@ -1,25 +1,30 @@
 package com.english.learning.service.impl;
 
 import com.english.learning.enums.Role;
-import com.english.learning.repository.CommentRepository;
-import com.english.learning.repository.CommentVoteRepository;
-import com.english.learning.repository.DailyStudyStatisticRepository;
-import com.english.learning.repository.PasswordResetTokenRepository;
 import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserRepository;
-import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.entity.User;
 import com.english.learning.entity.SpeakingResult;
+import com.english.learning.service.AuthService;
 import com.english.learning.service.CloudinaryService;
 import com.english.learning.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ * SRP: User Management Service Implementation (OOSE / SOLID).
+ *
+ * Single Responsibility: This class handles ONLY user profile and account management.
+ * - Profile updates (username, avatar)
+ * - Admin moderation (role changes, status toggles, password resets)
+ * - User lifecycle (soft delete, hard delete with JPA Cascade, restore)
+ *
+ * Authentication logic (register, login, password hashing) belongs to AuthServiceImpl.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -27,57 +32,9 @@ public class UserServiceImpl implements UserService {
     private static final Pattern DELETED_SUFFIX_PATTERN = Pattern.compile("_deleted_\\d+$");
 
     private final UserRepository userRepository;
-    private final UserProgressRepository userProgressRepository;
     private final SpeakingResultRepository speakingResultRepository;
-    private final CommentRepository commentRepository;
-    private final CommentVoteRepository commentVoteRepository;
-    private final DailyStudyStatisticRepository dailyStudyStatisticRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final CloudinaryService cloudinaryService;
-
-    @Override
-    public User register(User user) {
-        // Kiểm tra email đã tồn tại
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email đã tồn tại!");
-        }
-        // Kiểm tra username đã tồn tại
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new RuntimeException("Username đã tồn tại!");
-        }
-
-        // Hash password trước khi lưu
-        String hashedPassword = BCrypt.hashpw(user.getPassword(), BCrypt.gensalt());
-        user.setPassword(hashedPassword);
-
-        return userRepository.save(user);
-    }
-
-    @Override
-    public Optional<User> authenticate(String username, String password) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            userOpt = userRepository.findByEmail(username);
-        }
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-
-            String storedPassword = user.getPassword();
-
-            // Hỗ trợ cả tài khoản cũ chưa mã hóa mật khẩu
-            if (storedPassword.startsWith("$2a$")) {
-                if (BCrypt.checkpw(password, storedPassword)) {
-                    return Optional.of(user);
-                }
-            } else {
-                if (storedPassword.equals(password)) {
-                    return Optional.of(user);
-                }
-            }
-        }
-        return Optional.empty();
-    }
+    private final AuthService authService;
 
     @Override
     public Optional<User> findById(Long id) {
@@ -110,35 +67,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    public Optional<User> authenticateAdmin(String username, String password) {
-        Optional<User> userOpt = authenticate(username, password);
-        if (userOpt.isPresent() && Role.ADMIN.equals(userOpt.get().getRole())) {
-            return userOpt;
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<User> authenticateUser(String username, String password) {
-        Optional<User> userOpt = authenticate(username, password);
-        if (userOpt.isPresent() && Role.USER.equals(userOpt.get().getRole())) {
-            return userOpt;
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    @Override
-    public void updatePassword(User user, String newPassword) {
-        String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-        user.setPassword(hashedPassword);
-        userRepository.save(user);
-    }
-
     @Override
     public void adminUpdateBasicInfo(Long id, String username, String avatarUrl, boolean isActive, Role role) throws Exception {
         User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
@@ -165,7 +93,8 @@ public class UserServiceImpl implements UserService {
             throw new Exception("Mật khẩu phải có ít nhất 6 ký tự.");
         }
         User user = userRepository.findById(id).orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
-        updatePassword(user, newPassword.trim());
+        // Delegate password hashing to AuthService (SRP)
+        authService.updatePassword(user, newPassword.trim());
     }
 
     @Override
@@ -189,6 +118,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findAnyUserById(id)
                 .orElseThrow(() -> new com.english.learning.exception.ResourceNotFoundException("Người dùng không tồn tại"));
 
+        // External service cleanup: Delete Cloudinary assets (not handled by JPA Cascade)
         for (SpeakingResult speakingResult : speakingResultRepository.findByUser_Id(id)) {
             if (speakingResult.getUserAudioPublicId() != null && !speakingResult.getUserAudioPublicId().isBlank()) {
                 cloudinaryService.deleteFile(speakingResult.getUserAudioPublicId());
@@ -198,14 +128,8 @@ public class UserServiceImpl implements UserService {
             cloudinaryService.deleteFile(user.getAvatarPublicId());
         }
 
-        passwordResetTokenRepository.deleteByUserId(id);
-        commentVoteRepository.deleteByUserId(id);
-        commentVoteRepository.deleteByOwnedCommentUserId(id);
-        commentRepository.deleteRepliesToOwnedComments(id);
-        commentRepository.deleteByUserId(id);
-        userProgressRepository.deleteByUserId(id);
-        speakingResultRepository.deleteByUserId(id);
-        dailyStudyStatisticRepository.deleteByUserId(id);
+        // JPA Cascade handles deletion of all child entities:
+        // PasswordResetToken, CommentVote, Comment, UserProgress, SpeakingResult, DailyStudyStatistic
         userRepository.delete(user);
     }
 
