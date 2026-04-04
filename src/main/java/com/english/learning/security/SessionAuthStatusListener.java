@@ -1,7 +1,7 @@
 package com.english.learning.security;
 
 import com.english.learning.entity.User;
-import com.english.learning.service.UserService;
+import com.english.learning.service.user.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionAttributeListener;
 import jakarta.servlet.http.HttpSessionBindingEvent;

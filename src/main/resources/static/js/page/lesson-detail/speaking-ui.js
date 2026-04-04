@@ -238,7 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Display Evaluation Result (After Recording) ---
-    // Score >= 70 → COMPLETED, else → IN_PROGRESS (mirrors dictation logic)
+    const PASS_THRESHOLD = Number(window.SPEAKING_PASS_THRESHOLD || 70);
+
+    // Score >= PASS_THRESHOLD → COMPLETED, else → IN_PROGRESS (mirrors dictation logic)
     function displayEvaluationResult(data) {
         // Hiển thị Current Result
         renderCurrentResult(data);
@@ -251,10 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- SAVE PROGRESS based on score ---
         const sentenceId = window.LessonState.sentences[window.LessonState.currentIndex]?.id;
         if (sentenceId && data.score != null) {
-            if (data.score >= 70) {
+            if (data.score >= PASS_THRESHOLD) {
                 window.LessonCommonUI.saveProgressCompleted(sentenceId);
             } else {
-                // Score < 70: mark as IN_PROGRESS (user attempted but not yet passing)
+                // Score below pass threshold: mark as IN_PROGRESS
                 const userId = window.CURRENT_USER_ID;
                 if (userId) {
                     const formData = new URLSearchParams();

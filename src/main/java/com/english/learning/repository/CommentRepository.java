@@ -23,6 +23,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM comments WHERE parent_id = :parentId", nativeQuery = true)
     java.util.List<Comment> findAnyByParentId(@org.springframework.data.repository.query.Param("parentId") Long parentId);
 
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM comments WHERE sentence_id = :sentenceId", nativeQuery = true)
+    long countAnyBySentenceId(@org.springframework.data.repository.query.Param("sentenceId") Long sentenceId);
+
     @Modifying
     @org.springframework.data.jpa.repository.Query(value = "DELETE FROM comments WHERE parent_id IN (SELECT id FROM (SELECT id FROM comments WHERE user_id = :userId) owned_comments)", nativeQuery = true)
     void deleteRepliesToOwnedComments(@org.springframework.data.repository.query.Param("userId") Long userId);

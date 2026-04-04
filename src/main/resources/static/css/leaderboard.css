@@ -53,14 +53,14 @@
     .leaderboard-card { min-width: 100%; }
 }
 
-/* Tien UI Admin Overrides */
-.leaderboard-page { color: #000000; }
-.leaderboard-card { background: #ffffff; }
-.card-header h2 { color: #000000; }
-.card-header p { color: #6b7280; }
-.leaderboard-table th { border-bottom: 2px solid #e5e7eb; color: #000000; }
-.leaderboard-table td { border-bottom: 1px solid #e5e7eb; color: #000000; }
-.lb-rank { color: #4b5563 !important; }
+/* Light Mode Defaults */
+.leaderboard-page { color: var(--text-primary); }
+.leaderboard-card { background: var(--bg-card); }
+.card-header h2 { color: var(--text-primary); }
+.card-header p { color: var(--text-secondary); }
+.leaderboard-table th { border-bottom: 2px solid var(--border-color); color: var(--text-primary); }
+.leaderboard-table td { border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+.lb-rank { color: var(--text-secondary) !important; }
 .lb-avatar { color: #ffffff; }
-.leaderboard-table th.lb-active-time, .leaderboard-table td.lb-active-time { text-align: right; color: #4b5563 !important; }
-.lb-empty { color: #6b7280 !important; }
+.leaderboard-table th.lb-active-time, .leaderboard-table td.lb-active-time { text-align: right; color: var(--text-secondary) !important; }
+.lb-empty { color: var(--text-secondary) !important; }

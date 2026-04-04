@@ -7,9 +7,11 @@
     <main class="auth-container">
         <div class="auth-card">
             <h1>Login</h1>
-            
-            <a th:href="@{/oauth2/authorization/google}" class="btn-google" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
-                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16" style="margin-right:8px;">
+
+            <a th:href="@{/oauth2/authorization/google}" class="btn-google"
+               style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                <img th:src="@{/images/social_media/Googe.png}" alt="Google Logo" width="16" height="16"
+                     style="margin-right:8px;">
                 Đăng nhập bằng Google
             </a>
 
@@ -17,8 +19,13 @@
 
             <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
             <div th:if="${error}" style="color: red; text-align: center; margin-bottom: 15px;" th:text="${error}"></div>
-            <div th:if="${param.error}" style="color: red; text-align: center; margin-bottom: 15px;">
-                Đăng nhập OAuth2 thất bại. Hãy kiểm tra lại cấu hình GOOGLE_CLIENT_ID và SECRET.
+            <div th:if="${param.error != null and param.error[0] == 'registration-disabled'}"
+                 style="color: red; text-align: center; margin-bottom: 15px;">
+                User registration is currently disabled.
+            </div>
+            <div th:if="${param.error != null and param.error[0] != 'registration-disabled'}"
+                 style="color: red; text-align: center; margin-bottom: 15px;">
+                Đăng nhập OAuth2 thất bại. Hãy kiểm tra lại cấu hình GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET.
             </div>
 
             <form th:action="@{/login}" method="post">
@@ -35,7 +42,7 @@
 
             <div class="auth-links">
                 <p>Forgot your password? <a th:href="@{/forgot-password}">Click here</a></p>
-                <p>Haven't had an account? <a th:href="@{/register}">Register here</a></p>
+                <p th:if="${registrationEnabled}">Haven't had an account? <a th:href="@{/register}">Register here</a></p>
             </div>
         </div>
     </main>

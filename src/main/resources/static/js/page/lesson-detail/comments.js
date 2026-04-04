@@ -126,9 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `isLike=${isLike}`
             })
-            .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập để vote!'); throw new Error('401'); } return r.json(); })
-            .then(() => { if (currentSentenceId) loadComments(currentSentenceId); })
-            .catch(() => {});
+            .then(r => {
+                if (r.status === 401) { alert('Bạn cần đăng nhập để vote!'); return; }
+                if (r.ok && currentSentenceId) loadComments(currentSentenceId);
+            })
+            .catch(err => console.error('Error voting:', err));
         },
 
         showReplyForm(commentId) {
@@ -157,9 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('content', content);
 
             fetch(`/comment/${commentId}`, { method: 'PUT', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
-                .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập!'); throw new Error('401'); } return r.json(); })
-                .then(() => { if (currentSentenceId) loadComments(currentSentenceId); })
-                .catch(() => {});
+                .then(r => {
+                    if (r.status === 401) { alert('Bạn cần đăng nhập!'); return; }
+                    if (r.ok && currentSentenceId) loadComments(currentSentenceId);
+                })
+                .catch(err => console.error('Error editing comment:', err));
         },
 
         submitReply(parentId) {
@@ -173,9 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('parentId', parentId);
 
             fetch('/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
-                .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); throw new Error('401'); } return r.json(); })
-                .then(() => { loadComments(currentSentenceId); })
-                .catch(() => {});
+                .then(r => {
+                    if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); return; }
+                    if (r.ok) loadComments(currentSentenceId);
+                })
+                .catch(err => console.error('Error submitting reply:', err));
         },
 
         submitComment(content) {
@@ -185,17 +191,25 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('content', content);
 
             fetch('/comment', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData })
-                .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); throw new Error('401'); } return r.json(); })
-                .then(() => { loadComments(currentSentenceId); })
-                .catch(() => {});
+                .then(r => {
+                    if (r.status === 401) { alert('Bạn cần đăng nhập để bình luận!'); return; }
+                    if (r.ok) {
+                        const form = document.getElementById('newCommentForm');
+                        if (form) form.remove();
+                        loadComments(currentSentenceId);
+                    }
+                })
+                .catch(err => console.error('Error submitting comment:', err));
         },
 
         deleteComment(commentId) {
             if (!confirm('Bạn có chắc muốn xóa bình luận này?')) return;
             fetch(`/comment/${commentId}`, { method: 'DELETE' })
-                .then(r => { if (r.status === 401) { alert('Bạn cần đăng nhập!'); throw new Error('401'); } return r.json(); })
-                .then(() => { if (currentSentenceId) loadComments(currentSentenceId); })
-                .catch(() => {});
+                .then(r => {
+                    if (r.status === 401) { alert('Bạn cần đăng nhập!'); return; }
+                    if (r.ok && currentSentenceId) loadComments(currentSentenceId);
+                })
+                .catch(err => console.error('Error deleting comment:', err));
         }
     };
 

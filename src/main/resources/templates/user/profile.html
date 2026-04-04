@@ -241,7 +241,8 @@
             </div>
             <div class="detail-card">
                 <strong>Trạng thái</strong>
-                <span style="color: #4CAF50;">Active</span>
+                <span th:style="${user.isActive != null and user.isActive} ? 'color: #4CAF50;' : 'color: #f44336;'"
+                      th:text="${user.isActive != null and user.isActive ? 'Active' : 'Inactive'}">Active</span>
             </div>
         </div>
 

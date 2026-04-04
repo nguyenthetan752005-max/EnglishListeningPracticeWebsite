@@ -1,7 +1,7 @@
 package com.english.learning.config;
 
 import com.english.learning.security.SessionAuthStatusListener;
-import com.english.learning.service.UserService;
+import com.english.learning.service.user.UserService;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

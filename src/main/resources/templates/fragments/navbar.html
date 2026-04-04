@@ -9,7 +9,7 @@
         <!-- Logo -->
         <a href="/" class="navbar-brand">
             <span class="brand-icon">🎧</span>
-            <span class="brand-text">EnglishListening</span>
+            <span class="brand-text" th:text="${appSiteName != null ? appSiteName : 'EnglishListening'}">EnglishListening</span>
         </a>
 
         <!-- Nav Links (Desktop) -->
@@ -42,7 +42,7 @@
             
             <th:block th:if="${session.loggedInUser == null}">
                 <a href="/login" class="nav-link btn-login">Login</a>
-                <a href="/register" class="nav-link">Register</a>
+                <a th:if="${registrationEnabled}" href="/register" class="nav-link">Register</a>
             </th:block>
             <th:block th:unless="${session.loggedInUser == null}">
                 <div class="user-dropdown">
@@ -80,9 +80,9 @@
                     }
                     .dropdown-content a:hover { background-color: var(--hover-color, #f1f1f1); }
                     
-                    body.dark-mode .dropdown-content { background-color: #383838; }
-                    body.dark-mode .dropdown-content a { color: #ffffff; }
-                    body.dark-mode .dropdown-content a:hover { background-color: #555555; }
+                    [data-theme="dark"] .dropdown-content { background-color: #383838; }
+                    [data-theme="dark"] .dropdown-content a { color: #ffffff; }
+                    [data-theme="dark"] .dropdown-content a:hover { background-color: #555555; }
 
                     /* In-progress Dropdown Styles */
                     .inprogress-dropdown { position: relative; display: inline-block; }
@@ -177,10 +177,10 @@
                         text-align: center;
                         color: var(--text-secondary, #666);
                     }
-                    body.dark-mode .inprogress-dropdown-content { background-color: #383838; }
-                    body.dark-mode .inprogress-item { color: #ffffff; border-color: #555; }
-                    body.dark-mode .inprogress-item:hover { background-color: #555555; }
-                    body.dark-mode .inprogress-bar { background: #555; }
+                    [data-theme="dark"] .inprogress-dropdown-content { background-color: #383838; }
+                    [data-theme="dark"] .inprogress-item { color: #ffffff; border-color: #555; }
+                    [data-theme="dark"] .inprogress-item:hover { background-color: #555555; }
+                    [data-theme="dark"] .inprogress-bar { background: #555; }
                 </style>
             </th:block>
         </div>
@@ -201,12 +201,13 @@
         
         <div class="mobile-auth" th:if="${session.loggedInUser == null}">
             <a href="/login" class="mobile-link">Login</a>
-            <a href="/register" class="mobile-link">Register</a>
+            <a th:if="${registrationEnabled}" href="/register" class="mobile-link">Register</a>
         </div>
         <div class="mobile-auth" th:unless="${session.loggedInUser == null}">
             <a href="/profile" class="mobile-link">My Profile</a>
             <a href="/my-comments" class="mobile-link">My Comments</a>
             <a href="/logout" class="mobile-link" style="color: #f44336;">Logout</a>
+        </div>
     </div>
 
     <!-- In-Progress Dropdown Script -->

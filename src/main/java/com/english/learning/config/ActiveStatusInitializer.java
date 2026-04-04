@@ -1,6 +1,6 @@
 package com.english.learning.config;
 
-import com.english.learning.service.UserService;
+import com.english.learning.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;

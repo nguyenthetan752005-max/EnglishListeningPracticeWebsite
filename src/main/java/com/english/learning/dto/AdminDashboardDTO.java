@@ -12,6 +12,7 @@ import lombok.Data;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * DTO aggregating all data needed to render the Admin Dashboard.
@@ -33,13 +34,13 @@ public class AdminDashboardDTO {
     private List<User> regularUsers;
     private Map<Long, Integer> userTopScoreMap;
 
-    // Admin Management (role=ADMIN only)
-    private List<User> adminUsers;
-
     // Content hierarchy
     private List<Category> categories;
+    private Map<Long, String> categoryLevelsMap;
+    private Set<String> categoryLevelOptions;
     private List<Section> sections;
     private List<Lesson> allLessons;
+    private Set<String> lessonLevelOptions;
     private List<Sentence> allSentences;
 
     // Recycle Bin
