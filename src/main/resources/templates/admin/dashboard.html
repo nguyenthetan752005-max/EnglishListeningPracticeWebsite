@@ -366,6 +366,7 @@
                                     th:data-description="${c.description}"
                                     th:data-status="${c.status != null ? c.status.name() : ''}"
                                     th:data-order-index="${c.orderIndex}"
+                                    th:data-folder-name="${c.folderName}"
                                     th:data-category-type="${c.type != null ? c.type.name() : ''}"
                                     th:data-category-practice="${c.practiceType != null ? c.practiceType.name() : ''}"
                                     th:data-category-levels="${categoryLevelsMap[c.id]}">

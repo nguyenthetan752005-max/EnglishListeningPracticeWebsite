@@ -1,11 +1,15 @@
 package com.english.learning.entity;
 
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import com.english.learning.enums.ContentStatus;
 import com.english.learning.enums.LessonType;
 import com.english.learning.enums.PracticeType;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -32,14 +36,25 @@ public class Category {
     private String imageUrl;
     private String levelRange;
 
+    @Column(unique = true)
+    private String slug;
+
     @Enumerated(EnumType.STRING)
     private LessonType type = LessonType.AUDIO;
 
     @Enumerated(EnumType.STRING)
     private PracticeType practiceType = PracticeType.LISTENING;
 
+    private String folderName;
+
     @Column(nullable = false, columnDefinition = "int default 0")
     private Integer totalLessons = 0;
 
     private String description;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

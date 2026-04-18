@@ -14,6 +14,7 @@ import com.english.learning.entity.Sentence;
 import com.english.learning.entity.User;
 import com.english.learning.dto.LessonNavigationDTO;
 import com.english.learning.exception.ResourceNotFoundException;
+import com.english.learning.util.AudioUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,6 +36,7 @@ public class SpeakingExerciseController {
     private final UserProgressService userProgressService;
     private final SentenceService sentenceService;
     private final HintService hintService;
+    private final AudioUrlResolver audioUrlResolver;
 
     @GetMapping("/speaking-exercises")
     public String showAllTopics(Model model, HttpSession session) {
@@ -96,8 +98,15 @@ public class SpeakingExerciseController {
             userProgressMap = userProgressService.getUserProgressMapAsStrings(user.getId(), id);
         }
 
+        Map<Long, String> sentenceAudioUrls = new HashMap<>();
+        for (Sentence s : sentences) {
+            String url = audioUrlResolver.resolve(s);
+            if (url != null) sentenceAudioUrls.put(s.getId(), url);
+        }
+
         model.addAttribute("lesson", lesson);
         model.addAttribute("sentences", sentences);
+        model.addAttribute("sentenceAudioUrls", sentenceAudioUrls);
         model.addAttribute("hintsMap", hintsMap); // Truyền map này xuống Thymeleaf
         model.addAttribute("userProgressMap", userProgressMap);
         model.addAttribute("category", lesson.getSection().getCategory());

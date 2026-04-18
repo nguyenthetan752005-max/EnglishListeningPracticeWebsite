@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,7 +19,7 @@ import java.util.Objects;
 public class SlideshowServiceImpl implements SlideshowService {
 
     private final SlideshowRepository slideshowRepository;
-    private final MediaStorageGateway cloudinaryService;
+    private final MediaStorageGateway mediaStorageGateway;
 
     @Override
     public List<Slideshow> getActiveSlideshowsByPosition(SlideshowPosition position) {
@@ -46,7 +44,7 @@ public class SlideshowServiceImpl implements SlideshowService {
         String previousImageUrl = slideshow.getImageUrl();
         applyRequest(slideshow, request);
         Slideshow savedSlideshow = slideshowRepository.save(slideshow);
-        deleteObsoleteCloudinaryAsset(previousCloudImageId, previousImageUrl, savedSlideshow.getCloudImageId());
+        deleteObsoleteStoredAsset(previousCloudImageId, previousImageUrl, savedSlideshow.getCloudImageId());
         return savedSlideshow;
     }
 
@@ -75,9 +73,9 @@ public class SlideshowServiceImpl implements SlideshowService {
     public void hardDeleteSlideshow(Long id) throws Exception {
         Slideshow slideshow = slideshowRepository.findAnyById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Slideshow khong ton tai."));
-        String cloudinaryAssetId = resolveCloudinaryAssetId(slideshow.getCloudImageId(), slideshow.getImageUrl());
-        if (cloudinaryAssetId != null && !cloudinaryAssetId.isBlank()) {
-            cloudinaryService.deleteFile(cloudinaryAssetId);
+        String storedAssetKey = resolveStoredAssetKey(slideshow.getCloudImageId(), slideshow.getImageUrl());
+        if (storedAssetKey != null && !storedAssetKey.isBlank()) {
+            mediaStorageGateway.deleteFile(storedAssetKey);
         }
         slideshowRepository.deleteById(id);
     }
@@ -116,49 +114,23 @@ public class SlideshowServiceImpl implements SlideshowService {
         }
     }
 
-    private void deleteObsoleteCloudinaryAsset(String currentPublicId, String currentImageUrl, String nextPublicId) {
-        String resolvedCurrentId = resolveCloudinaryAssetId(currentPublicId, currentImageUrl);
+    private void deleteObsoleteStoredAsset(String currentPublicId, String currentImageUrl, String nextPublicId) {
+        String resolvedCurrentId = resolveStoredAssetKey(currentPublicId, currentImageUrl);
         if (Objects.equals(resolvedCurrentId, nextPublicId) || resolvedCurrentId == null || resolvedCurrentId.isBlank()) {
             return;
         }
         try {
-            cloudinaryService.deleteFile(resolvedCurrentId);
+            mediaStorageGateway.deleteFile(resolvedCurrentId);
         } catch (Exception e) {
-            throw new IllegalStateException("Khong the thay the anh slideshow cu tren Cloudinary.");
+            throw new IllegalStateException("Khong the thay the anh slideshow cu tren kho media.");
         }
     }
 
-    private String resolveCloudinaryAssetId(String publicId, String imageUrl) {
+    private String resolveStoredAssetKey(String publicId, String imageUrl) {
         if (publicId != null && !publicId.isBlank()) {
             return publicId;
         }
-
-        String normalizedUrl = normalizeBlank(imageUrl);
-        if (normalizedUrl == null || !normalizedUrl.contains("/upload/")) {
-            return null;
-        }
-
-        String path = normalizedUrl.substring(normalizedUrl.indexOf("/upload/") + "/upload/".length());
-        int versionIndex = path.indexOf("/v");
-        if (versionIndex == 0) {
-            int slashAfterVersion = path.indexOf('/', 2);
-            if (slashAfterVersion >= 0) {
-                path = path.substring(slashAfterVersion + 1);
-            }
-        }
-
-        int queryIndex = path.indexOf('?');
-        if (queryIndex >= 0) {
-            path = path.substring(0, queryIndex);
-        }
-
-        path = URLDecoder.decode(path, StandardCharsets.UTF_8);
-        int extensionIndex = path.lastIndexOf('.');
-        if (extensionIndex > path.lastIndexOf('/')) {
-            path = path.substring(0, extensionIndex);
-        }
-
-        return path.isBlank() ? null : path;
+        return normalizeBlank(imageUrl);
     }
 
     private String normalizeBlank(String value) {

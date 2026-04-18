@@ -1,0 +1,95 @@
+package com.english.learning.controller.api.mobile;
+
+import com.english.learning.dto.mobile.MobileBootstrapLiteResponse;
+import com.english.learning.dto.mobile.MobileBootstrapResponse;
+import com.english.learning.dto.mobile.MobileLessonDetailResponse;
+import com.english.learning.service.mobile.MobileBootstrapLiteService;
+import com.english.learning.service.mobile.MobileBootstrapService;
+import com.english.learning.service.mobile.MobileLessonDetailService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * REST Controller: Mobile Content API.
+ * Provides JSON endpoints for Android app consumption.
+ * All responses use camelCase field naming (Jackson default).
+ */
+@RestController
+@RequestMapping("/api/mobile")
+@RequiredArgsConstructor
+public class MobileContentApiController {
+
+    private final MobileBootstrapService mobileBootstrapService;
+    private final MobileBootstrapLiteService mobileBootstrapLiteService;
+    private final MobileLessonDetailService mobileLessonDetailService;
+    private final com.english.learning.service.mobile.MobileCategoryService mobileCategoryService;
+
+    /**
+     * GET /api/mobile/bootstrap
+     *
+     * Returns all published content for Android app initial sync (v1 - heavy).
+     * Kept for backward compatibility.
+     */
+    @GetMapping("/bootstrap")
+    public ResponseEntity<MobileBootstrapResponse> getBootstrap() {
+        MobileBootstrapResponse response = mobileBootstrapService.getBootstrapData();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/mobile/catalog/bootstrap-lite
+     *
+     * Returns catalog data WITHOUT sentences for lighter initial sync (v2).
+     * Android should use this endpoint instead of /bootstrap.
+     */
+    @GetMapping("/catalog/bootstrap-lite")
+    public ResponseEntity<MobileBootstrapLiteResponse> getBootstrapLite() {
+        MobileBootstrapLiteResponse response = mobileBootstrapLiteService.getBootstrapLiteData();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/mobile/lessons/{id}
+     *
+     * Returns lesson metadata + all published sentences for a specific lesson.
+     * Android calls this when user opens a lesson.
+     */
+    @GetMapping("/lessons/{id}")
+    public ResponseEntity<MobileLessonDetailResponse> getLessonDetail(@PathVariable Long id) {
+        MobileLessonDetailResponse response = mobileLessonDetailService.getLessonDetail(id);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/mobile/categories
+     *
+     * Returns a lightweight list of all published categories.
+     * Android uses this for the Explore screen.
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<java.util.List<com.english.learning.dto.mobile.MobileCategoryResponse>> getCategories() {
+        return ResponseEntity.ok(mobileCategoryService.getAllCategories());
+    }
+
+    /**
+     * GET /api/mobile/categories/{categorySlug}/sections
+     *
+     * Returns category metadata, along with its sections and lessons.
+     * Android uses this when opening a specific category.
+     */
+    @GetMapping("/categories/{categorySlug}/sections")
+    public ResponseEntity<com.english.learning.dto.mobile.MobileCategoryCollectionResponse> getCategorySections(@PathVariable String categorySlug) {
+        com.english.learning.dto.mobile.MobileCategoryCollectionResponse response = mobileCategoryService.getCategoryWithSections(categorySlug);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(response);
+    }
+}

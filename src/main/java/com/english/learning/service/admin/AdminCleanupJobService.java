@@ -21,7 +21,7 @@ public class AdminCleanupJobService {
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final SpeakingResultRepository speakingResultRepository;
-    private final MediaStorageGateway cloudinaryService;
+    private final MediaStorageGateway mediaStorageGateway;
     private final SpeakingAudioPublicIdResolver speakingAudioPublicIdResolver;
 
     // Cháº¡y vÃ o 2:00 AM má»—i ngÃ y
@@ -49,14 +49,14 @@ public class AdminCleanupJobService {
             try {
                 String audioPublicId = speakingAudioPublicIdResolver.resolveStoredPublicId(result);
                 if (audioPublicId != null && !audioPublicId.isBlank()) {
-                    cloudinaryService.deleteFile(audioPublicId);
+                    mediaStorageGateway.deleteFile(audioPublicId);
                 } else {
-                    log.warn("SpeakingResult ID " + result.getId() + " khÃ´ng cÃ³ publicId Ä‘á»ƒ xoÃ¡ trÃªn Cloudinary.");
+                    log.warn("SpeakingResult ID {} khong co storage key de xoa tren media storage.", result.getId());
                 }
                 speakingResultRepository.delete(result);
                 count++;
             } catch (Exception e) {
-                log.error("Lá»—i xÃ³a file Cloudinary cho SpeakingResult ID " + result.getId() + ": " + e.getMessage());
+                log.error("Loi xoa file media cho SpeakingResult ID {}: {}", result.getId(), e.getMessage());
                 // KhÃ´ng throw exception Ä‘á»ƒ tiáº¿p tá»¥c xoÃ¡ cÃ¡c record khÃ¡c
             }
         }

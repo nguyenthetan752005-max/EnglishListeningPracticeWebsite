@@ -12,6 +12,28 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
     List<Section> findByCategoryId(Long categoryId);
     List<Section> findByCategory_IdOrderByOrderIndexAscIdAsc(Long categoryId);
     List<Section> findByCategory_IdAndStatusOrderByOrderIndexAscIdAsc(Long categoryId, ContentStatus status);
+    List<Section> findByStatusOrderByOrderIndexAscIdAsc(ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT s FROM Section s
+            WHERE s.isDeleted = false
+              AND s.status = :status
+              AND s.category.isDeleted = false
+            ORDER BY s.orderIndex ASC, s.id ASC
+            """)
+    List<Section> findPublishedSections(@org.springframework.data.repository.query.Param("status") ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT s FROM Section s
+            WHERE s.isDeleted = false
+              AND s.status = :status
+              AND s.category.id = :categoryId
+              AND s.category.isDeleted = false
+            ORDER BY s.orderIndex ASC, s.id ASC
+            """)
+    List<Section> findPublishedSectionsByCategoryId(@org.springframework.data.repository.query.Param("categoryId") Long categoryId,
+                                                      @org.springframework.data.repository.query.Param("status") ContentStatus status);
+
     long countByCategory_Id(Long categoryId);
     long countByCategory_IdAndStatus(Long categoryId, ContentStatus status);
 

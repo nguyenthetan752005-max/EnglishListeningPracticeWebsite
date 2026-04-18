@@ -17,13 +17,15 @@ public class SpeakingMediaServiceImpl implements SpeakingMediaService {
     @Override
     public Map<String, String> uploadCurrentAudio(byte[] audioBytes, Long userId, Long sentenceId) throws IOException {
         String currentPublicId = "user_" + userId + "_sentence_" + sentenceId + "_current";
-        return mediaStorageGateway.uploadAudio(audioBytes, currentPublicId);
+        // Dùng path "speaking" cho user audio
+        return mediaStorageGateway.uploadAudio(audioBytes, currentPublicId, "speaking");
     }
 
     @Override
     public Map<String, String> uploadBestAudio(byte[] audioBytes, Long userId, Long sentenceId) throws IOException {
         String bestPublicId = "user_" + userId + "_sentence_" + sentenceId + "_best";
-        return mediaStorageGateway.uploadAudio(audioBytes, bestPublicId);
+        // Dùng path "speaking" cho user audio
+        return mediaStorageGateway.uploadAudio(audioBytes, bestPublicId, "speaking");
     }
 }
 

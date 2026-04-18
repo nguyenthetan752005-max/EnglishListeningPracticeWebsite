@@ -124,8 +124,14 @@ public class SpeakingResultStoreServiceImpl implements SpeakingResultStoreServic
         }
 
         SpeakingResultDTO dto = new SpeakingResultDTO();
+        SpeakingResult currentResult = null;
         for (SpeakingResult result : results) {
+            // Lấy referenceText từ sentence.content (chung cho cả CURRENT và BEST)
+            if (dto.getReferenceText() == null && result.getSentence() != null) {
+                dto.setReferenceText(result.getSentence().getContent());
+            }
             if (result.getResultType() == SpeakingResultType.CURRENT) {
+                currentResult = result;
                 dto.setScore(result.getScore());
                 dto.setTranscribedText(result.getRecognizedText());
                 dto.setFeedback(result.getFeedback());
@@ -139,6 +145,17 @@ public class SpeakingResultStoreServiceImpl implements SpeakingResultStoreServic
                 ));
             }
         }
+
+        // Nếu chưa có BEST nhưng có CURRENT → dùng CURRENT làm BEST
+        if (dto.getBestResult() == null && currentResult != null) {
+            dto.setBestResult(new SpeakingResultDTO.BestResult(
+                    currentResult.getScore(),
+                    currentResult.getRecognizedText(),
+                    currentResult.getFeedback(),
+                    currentResult.getUserAudioUrl()
+            ));
+        }
+
         return dto;
     }
 }

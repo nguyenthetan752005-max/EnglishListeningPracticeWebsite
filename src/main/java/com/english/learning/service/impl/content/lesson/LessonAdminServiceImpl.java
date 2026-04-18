@@ -129,6 +129,7 @@ public class LessonAdminServiceImpl implements LessonAdminService {
         lesson.setSection(section);
         lesson.setTitle(request.getTitle().trim());
         lesson.setYoutubeVideoId(normalizedYoutubeValue);
+        lesson.setFolderName(normalizeBlank(request.getFolderName()));
         lesson.setLevel(normalizeBlank(request.getLevel()));
         lesson.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         lesson.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
@@ -159,6 +160,7 @@ public class LessonAdminServiceImpl implements LessonAdminService {
         boolean unchanged = Objects.equals(lesson.getSection() != null ? lesson.getSection().getId() : null, request.getSectionId())
                 && Objects.equals(lesson.getTitle(), request.getTitle().trim())
                 && Objects.equals(lesson.getYoutubeVideoId(), normalizedYoutubeValue)
+                && Objects.equals(lesson.getFolderName(), normalizeBlank(request.getFolderName()))
                 && Objects.equals(lesson.getLevel(), normalizeBlank(request.getLevel()))
                 && Objects.equals(lesson.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
                 && Objects.equals(lesson.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);
@@ -198,7 +200,7 @@ public class LessonAdminServiceImpl implements LessonAdminService {
             return;
         }
         categoryRepository.findAnyCategoryById(categoryId).ifPresent(category -> {
-            category.setTotalLessons((int) lessonRepository.countBySection_Category_Id(categoryId));
+            category.setTotalLessons((int) lessonRepository.countActiveBySection_Category_Id(categoryId));
             categoryRepository.save(category);
         });
     }

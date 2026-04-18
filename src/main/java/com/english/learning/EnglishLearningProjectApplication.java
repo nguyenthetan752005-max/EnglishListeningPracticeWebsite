@@ -11,7 +11,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.util.Enumeration;
 import java.util.Properties;
 
 @SpringBootApplication
@@ -58,13 +61,46 @@ public class EnglishLearningProjectApplication {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void printApplicationUrl() {
-        String port = env.getProperty("server.port", "8080");
+    public void printApplicationUrl(ApplicationReadyEvent event) {
+        if (!(event.getApplicationContext() instanceof org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext webServerAppCtx)) {
+            return;
+        }
+        int port = webServerAppCtx.getWebServer().getPort();
         String contextPath = env.getProperty("server.servlet.context-path", "");
 
         System.out.println("\n=======================================================");
         System.out.println("ỨNG DỤNG ĐÃ KHỞI ĐỘNG THÀNH CÔNG!");
-        System.out.println("Click vào link này để mở web: http://localhost:" + port + contextPath);
+        System.out.println("Web UI:           http://localhost:" + port + contextPath);
+        System.out.println("Bootstrap (v1):   http://localhost:" + port + contextPath + "/api/mobile/bootstrap");
+        System.out.println("Bootstrap-Lite:   http://localhost:" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
+        System.out.println("Lesson Detail:    http://localhost:" + port + contextPath + "/api/mobile/lessons/{id}");
+        System.out.println("Mobile Auth:      http://localhost:" + port + contextPath + "/api/mobile/auth/login");
+        System.out.println("Android (emu):    http://10.0.2.2:" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
+        String localIp = getLocalIpAddress();
+        System.out.println("Android (USB):    http://" + localIp + ":" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
         System.out.println("=======================================================\n");
+    }
+
+    private String getLocalIpAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface ni = interfaces.nextElement();
+                // Bỏ qua interface loopback và disabled
+                if (ni.isLoopback() || !ni.isUp()) continue;
+                Enumeration<InetAddress> addresses = ni.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    String ip = addr.getHostAddress();
+                    // Chỉ lấy IPv4 (không phải IPv6)
+                    if (ip.contains(".") && !ip.startsWith("127.")) {
+                        return ip;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Fallback nếu lỗi
+        }
+        return "127.0.0.1";
     }
 }

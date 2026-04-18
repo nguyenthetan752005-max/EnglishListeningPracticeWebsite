@@ -8,6 +8,15 @@
 const sentencesList = (typeof SENTENCES !== 'undefined') ? SENTENCES : [];
 sentencesList.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
 
+// Merge derived audioUrl from SENTENCE_AUDIO_URLS map (built server-side from folder_name + file_name + imagekit endpoint)
+if (typeof SENTENCE_AUDIO_URLS !== 'undefined' && SENTENCE_AUDIO_URLS) {
+    sentencesList.forEach(s => {
+        if (SENTENCE_AUDIO_URLS[s.id]) {
+            s.audioUrl = SENTENCE_AUDIO_URLS[s.id];
+        }
+    });
+}
+
 const isVideo = (typeof LESSON_TYPE !== 'undefined') && LESSON_TYPE === 'VIDEO';
 
 // Get initial sentence index from URL parameter (passed from backend)

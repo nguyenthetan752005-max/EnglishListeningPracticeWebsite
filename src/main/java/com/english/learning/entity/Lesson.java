@@ -1,9 +1,14 @@
 package com.english.learning.entity;
 
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import com.english.learning.enums.ContentStatus;
+import com.english.learning.enums.LessonType;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -32,4 +37,18 @@ public class Lesson {
     private String title;
     private String level;
     private Integer totalSentences;
+    private String folderName;
+
+    @Column(name = "pass_threshold")
+    private Integer passThreshold = 70;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "content_type")
+    private LessonType contentType;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

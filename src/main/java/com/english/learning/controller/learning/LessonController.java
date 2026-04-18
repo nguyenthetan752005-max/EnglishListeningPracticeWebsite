@@ -10,6 +10,7 @@ import com.english.learning.service.learning.hint.HintService;
 import com.english.learning.dto.LessonNavigationDTO;
 import com.english.learning.enums.PracticeType;
 import com.english.learning.entity.User;
+import com.english.learning.util.AudioUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +21,7 @@ import com.english.learning.entity.Sentence;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.HashMap;
 
 @Controller
@@ -31,6 +33,7 @@ public class LessonController {
     private final SentenceService sentenceService;
     private final UserProgressService userProgressService;
     private final HintService hintService;
+    private final AudioUrlResolver audioUrlResolver;
 
     @GetMapping("/section/{id}/lessons")
     public String getLessons(@PathVariable Long id, Model model) {
@@ -74,8 +77,15 @@ public class LessonController {
         boolean isLastLessonInSection = navigation.isLastLessonInSection();
         Section section = lesson.getSection();
 
+        Map<Long, String> sentenceAudioUrls = new HashMap<>();
+        for (Sentence s : sentences) {
+            String url = audioUrlResolver.resolve(s);
+            if (url != null) sentenceAudioUrls.put(s.getId(), url);
+        }
+
         model.addAttribute("lesson", lesson);
         model.addAttribute("sentences", sentences);
+        model.addAttribute("sentenceAudioUrls", sentenceAudioUrls);
         model.addAttribute("hintsMap", hintService.getHintsMap(sentences));
 
         if (session.getAttribute("loggedInUser") != null) {

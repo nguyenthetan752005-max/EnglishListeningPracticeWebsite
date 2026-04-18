@@ -20,9 +20,9 @@ public class SpeakingResult {
     @Column(columnDefinition = "TEXT")
     private String recognizedText;
 
-    private String userAudioUrl; // Cloudinary URL
+    private String userAudioUrl; // Storage URL
 
-    private String userAudioPublicId; // Cloudinary Public ID for deletion
+    private String userAudioPublicId; // Storage key for deletion
 
     @Column(columnDefinition = "TEXT")
     private String feedback; // AI feedback text

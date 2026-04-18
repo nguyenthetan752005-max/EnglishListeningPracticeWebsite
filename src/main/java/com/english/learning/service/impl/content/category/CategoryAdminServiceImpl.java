@@ -83,16 +83,45 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         if (sectionRepository.countAnyByCategoryId(id) > 0) {
             throw new ResourceInUseException("Khong the xoa vinh vien Category khi van con Section ben duoi.");
         }
-        if (category.getCloudImageId() != null && !category.getCloudImageId().isBlank()) {
-            mediaStorageGateway.deleteFile(category.getCloudImageId());
+        String imageToDelete = resolveImageStorageKey(category);
+        if (imageToDelete != null && !imageToDelete.isBlank()) {
+            try {
+                mediaStorageGateway.deleteFile(imageToDelete);
+            } catch (Exception e) {
+                // Log nhung khong chan viec xoa category
+                System.err.println("Canh bao: Khong the xoa anh tren ImageKit: " + e.getMessage());
+            }
         }
         categoryRepository.deleteById(id);
+    }
+
+    private String resolveImageStorageKey(Category category) {
+        // Uu tien dung cloudImageId neu co
+        if (category.getCloudImageId() != null && !category.getCloudImageId().isBlank()) {
+            return category.getCloudImageId();
+        }
+        // Neu khong co, thu extract tu imageUrl neu la URL ImageKit
+        String imageUrl = category.getImageUrl();
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+        // Kiem tra co phai URL ImageKit khong (bat dau bang urlEndpoint)
+        String endpoint = mediaStorageGateway.getUrlEndpoint(); // Can them method nay
+        if (endpoint != null && imageUrl.startsWith(endpoint)) {
+            // Extract file path tu URL: https://ik.imagekit.io/xxx/path/file.jpg -> path/file.jpg
+            String filePath = imageUrl.substring(endpoint.length());
+            if (filePath.startsWith("/")) {
+                filePath = filePath.substring(1);
+            }
+            return filePath;
+        }
+        return null;
     }
 
     private void applyCategoryRequest(Category category, AdminCategoryRequest request) {
         String imageUrl = normalizeBlank(request.getImageUrl());
         String cloudImageId = normalizeBlank(request.getCloudImageId());
-        replaceCloudinaryAsset(category.getCloudImageId(), cloudImageId);
+        replaceStoredAsset(category.getCloudImageId(), cloudImageId);
 
         category.setName(request.getName().trim());
         category.setImageUrl(imageUrl);
@@ -100,6 +129,7 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         category.setLevelRange(normalizeBlank(request.getLevelRange()));
         category.setType(request.getType() != null ? request.getType() : LessonType.AUDIO);
         category.setPracticeType(request.getPracticeType() != null ? request.getPracticeType() : PracticeType.LISTENING);
+        category.setFolderName(normalizeBlank(request.getFolderName()));
         category.setDescription(normalizeBlank(request.getDescription()));
         category.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         category.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
@@ -130,6 +160,7 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
                 && Objects.equals(category.getLevelRange(), normalizeBlank(request.getLevelRange()))
                 && Objects.equals(category.getType(), request.getType() != null ? request.getType() : LessonType.AUDIO)
                 && Objects.equals(category.getPracticeType(), request.getPracticeType() != null ? request.getPracticeType() : PracticeType.LISTENING)
+                && Objects.equals(category.getFolderName(), normalizeBlank(request.getFolderName()))
                 && Objects.equals(category.getDescription(), normalizeBlank(request.getDescription()))
                 && Objects.equals(category.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
                 && Objects.equals(category.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);
@@ -138,14 +169,14 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         }
     }
 
-    private void replaceCloudinaryAsset(String currentPublicId, String nextPublicId) {
+    private void replaceStoredAsset(String currentPublicId, String nextPublicId) {
         if (Objects.equals(currentPublicId, nextPublicId) || currentPublicId == null || currentPublicId.isBlank()) {
             return;
         }
         try {
             mediaStorageGateway.deleteFile(currentPublicId);
         } catch (Exception e) {
-            throw new IllegalStateException("Khong the thay the anh cu tren Cloudinary.");
+            throw new IllegalStateException("Khong the thay the anh cu tren kho media.");
         }
     }
 

@@ -15,6 +15,7 @@ public class AdminCategoryRequest {
     private String levelRange;
     private LessonType type = LessonType.AUDIO;
     private PracticeType practiceType = PracticeType.LISTENING;
+    private String folderName;
     private String description;
     private ContentStatus status = ContentStatus.DRAFT;
     private Integer orderIndex = 0;

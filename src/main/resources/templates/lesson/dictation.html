@@ -101,7 +101,7 @@
                     <div class="transcript-right-panel">
                         <div class="transcript-list" id="transcriptList">
                             <div class="transcript-item" th:each="sentence, iterStat : ${sentences}"
-                                th:data-index="${iterStat.index}" th:data-audio="${sentence.audioUrl}"
+                                th:data-index="${iterStat.index}" th:data-audio="${sentenceAudioUrls[sentence.id]}"
                                 th:data-start="${sentence.startTime}" th:data-end="${sentence.endTime}">
                                 <button class="play-small-btn">
                                     <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
@@ -141,6 +141,7 @@
     <!-- Pass sentence data and lesson type from Thymeleaf to JavaScript -->
     <script th:inline="javascript">
         const SENTENCES = /*[[${sentences}]]*/[];
+        const SENTENCE_AUDIO_URLS = /*[[${sentenceAudioUrls}]]*/ {};
         const HINTS_MAP = /*[[${hintsMap}]]*/{};
         const LESSON_TYPE = /*[[${lesson.section != null and lesson.section.category != null and lesson.section.category.type != null ? lesson.section.category.type.name() : 'AUDIO'}]]*/ 'AUDIO';
         const YOUTUBE_VIDEO_ID = /*[[${lesson.youtubeVideoId}]]*/ '';

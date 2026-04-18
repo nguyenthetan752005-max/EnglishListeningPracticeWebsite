@@ -12,6 +12,7 @@ public class AdminLessonRequest {
     @NotBlank(message = "Tiêu đề bài học không được để trống.")
     private String title;
     private String youtubeVideoId;
+    private String folderName;
     private String level;
     private ContentStatus status = ContentStatus.DRAFT;
     private Integer orderIndex = 0;

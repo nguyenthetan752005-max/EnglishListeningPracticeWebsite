@@ -97,6 +97,7 @@ public class SectionAdminServiceImpl implements SectionAdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category khong ton tai."));
         section.setCategory(category);
         section.setName(request.getName().trim());
+        section.setFolderName(normalizeBlank(request.getFolderName()));
         section.setDescription(normalizeBlank(request.getDescription()));
         section.setStatus(request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT);
         section.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
@@ -122,6 +123,7 @@ public class SectionAdminServiceImpl implements SectionAdminService {
     private void assertSectionChanged(Section section, AdminSectionRequest request) {
         boolean unchanged = Objects.equals(section.getCategory() != null ? section.getCategory().getId() : null, request.getCategoryId())
                 && Objects.equals(section.getName(), request.getName().trim())
+                && Objects.equals(section.getFolderName(), normalizeBlank(request.getFolderName()))
                 && Objects.equals(section.getDescription(), normalizeBlank(request.getDescription()))
                 && Objects.equals(section.getStatus(), request.getStatus() != null ? request.getStatus() : ContentStatus.DRAFT)
                 && Objects.equals(section.getOrderIndex(), request.getOrderIndex() != null ? request.getOrderIndex() : 0);

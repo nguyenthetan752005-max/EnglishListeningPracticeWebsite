@@ -48,7 +48,7 @@
             <div th:unless="${userDetail.avatarUrl != null}" style="width:120px; height:120px; border-radius:50%; background:#dbeafe; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:42px; font-weight:bold; cursor:pointer;"
                  onclick="triggerAvatarPicker()" th:text="${#strings.substring(userDetail.username, 0, 1).toUpperCase()}">A</div>
             <div>
-                <p style="margin:0 0 8px 0; color:var(--text-secondary);">Ảnh đại diện mới sẽ được upload lên Cloudinary và thay thế ảnh cũ.</p>
+                <p style="margin:0 0 8px 0; color:var(--text-secondary);">Ảnh đại diện mới sẽ được upload lên ImageKit và thay thế ảnh cũ.</p>
                 <button type="button" class="admin-btn admin-btn-primary" onclick="triggerAvatarPicker()">
                     <i class="fas fa-camera"></i> Change Avatar
                 </button>

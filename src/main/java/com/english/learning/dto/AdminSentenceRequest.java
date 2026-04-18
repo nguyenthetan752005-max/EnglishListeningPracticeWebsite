@@ -11,7 +11,7 @@ public class AdminSentenceRequest {
     private Long lessonId;
     @NotBlank(message = "Nội dung sentence không được để trống.")
     private String content;
-    private String audioUrl;
+    private String fileName;
     private String cloudAudioId;
     private Double startTime;
     private Double endTime;

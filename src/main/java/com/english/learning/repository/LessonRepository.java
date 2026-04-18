@@ -12,10 +12,40 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findBySection_Id(Long sectionId);
     List<Lesson> findBySection_IdOrderByOrderIndexAscIdAsc(Long sectionId);
     List<Lesson> findBySection_IdAndStatusOrderByOrderIndexAscIdAsc(Long sectionId, ContentStatus status);
+    List<Lesson> findByStatusOrderByOrderIndexAscIdAsc(ContentStatus status);
     long countBySection_Id(Long sectionId);
     long countBySection_IdAndStatus(Long sectionId, ContentStatus status);
     long countBySection_Category_Id(Long categoryId);
     long countBySection_Category_IdAndStatus(Long categoryId, ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT COUNT(l) FROM Lesson l
+            WHERE l.section.category.id = :categoryId
+              AND l.isDeleted = false
+            """)
+    long countActiveBySection_Category_Id(@org.springframework.data.repository.query.Param("categoryId") Long categoryId);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT l FROM Lesson l
+            WHERE l.isDeleted = false
+              AND l.status = :status
+              AND l.section.isDeleted = false
+              AND l.section.category.isDeleted = false
+            ORDER BY l.orderIndex ASC, l.id ASC
+            """)
+    List<Lesson> findPublishedLessons(@org.springframework.data.repository.query.Param("status") ContentStatus status);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT l FROM Lesson l
+            WHERE l.isDeleted = false
+              AND l.status = :status
+              AND l.section.id = :sectionId
+              AND l.section.isDeleted = false
+              AND l.section.category.isDeleted = false
+            ORDER BY l.orderIndex ASC, l.id ASC
+            """)
+    List<Lesson> findPublishedLessonsBySectionId(@org.springframework.data.repository.query.Param("sectionId") Long sectionId,
+                                                 @org.springframework.data.repository.query.Param("status") ContentStatus status);
 
     @org.springframework.data.jpa.repository.Query("""
             select l from Lesson l

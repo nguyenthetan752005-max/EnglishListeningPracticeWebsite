@@ -14,7 +14,7 @@ public class SpeakingResultDTO {
     private String transcribedText;
     private int score; // 0-100
     private String feedback;
-    private String audioUrl; // Cloudinary URL of current audio
+    private String audioUrl; // Storage URL of current audio
 
     // Nested: Kết quả best (nếu có)
     private BestResult bestResult;

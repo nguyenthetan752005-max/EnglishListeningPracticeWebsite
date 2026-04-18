@@ -11,6 +11,7 @@ public class AdminSectionRequest {
     private Long categoryId;
     @NotBlank(message = "Tên section không được để trống.")
     private String name;
+    private String folderName;
     private String description;
     private ContentStatus status = ContentStatus.DRAFT;
     private Integer orderIndex = 0;

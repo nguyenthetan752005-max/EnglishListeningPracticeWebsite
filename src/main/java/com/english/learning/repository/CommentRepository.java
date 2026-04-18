@@ -14,6 +14,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByParent_IdAndIsHiddenFalseOrderByCreatedAtAsc(Long parentId);
     List<Comment> findByUser_IdAndIsHiddenFalseOrderByCreatedAtDesc(Long userId);
 
+    @org.springframework.data.jpa.repository.Query(
+        value = "SELECT * FROM comments WHERE is_deleted = false AND is_hidden = false ORDER BY created_at DESC",
+        nativeQuery = true)
+    List<Comment> findVisibleComments();
+
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM comments WHERE is_deleted = true ORDER BY created_at DESC", nativeQuery = true)
     List<Comment> findDeletedComments();
 

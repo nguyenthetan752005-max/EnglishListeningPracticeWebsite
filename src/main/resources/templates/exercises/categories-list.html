@@ -21,7 +21,7 @@
             <a th:href="@{'/category/' + ${cat.id} + '/sections'}" class="category-card" th:each="cat : ${categories}">
                 <!-- Avatar + Status Wrapper -->
                 <div class="category-avatar-wrapper">
-                    <!-- Thumbnail from DB (Cloudinary URL) -->
+                    <!-- Thumbnail from DB (storage URL) -->
                     <img th:src="${cat.imageUrl}" alt="Cover Image" class="category-image">
 
                     <!-- Status Badge under avatar -->

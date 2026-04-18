@@ -8,6 +8,7 @@ import lombok.ToString;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,6 +53,9 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.USER;
 
+    // Trạng thái tài khoản: is_active=false -> tạm khóa, is_deleted=true -> xóa/vĩnh viễn
+    private String suspensionReason; // Lý do khóa (optional)
+
     private String avatarUrl;
     private String avatarPublicId;
     private String provider;
@@ -67,6 +71,9 @@ public class User {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     // ===== Cascading Relationships (OOSE: Entity owns lifecycle of children) =====
 

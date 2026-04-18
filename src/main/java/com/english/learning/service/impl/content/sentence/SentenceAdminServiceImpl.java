@@ -136,14 +136,14 @@ public class SentenceAdminServiceImpl implements SentenceAdminService {
         Lesson lesson = lessonRepository.findById(request.getLessonId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson khong ton tai."));
         validateLessonMedia(lesson, request);
-        String audioUrl = normalizeAudioUrlForLesson(lesson, request.getAudioUrl());
+        String fileName = normalizeFileNameForLesson(lesson, request.getFileName());
         String cloudAudioId = normalizeCloudAudioIdForLesson(lesson, request.getCloudAudioId());
         Double startTime = normalizeStartTimeForLesson(lesson, request.getStartTime());
         Double endTime = normalizeEndTimeForLesson(lesson, request.getEndTime());
         replaceStoredAudio(sentence.getCloudAudioId(), cloudAudioId);
         sentence.setLesson(lesson);
         sentence.setContent(request.getContent().trim());
-        sentence.setAudioUrl(audioUrl);
+        sentence.setFileName(fileName);
         sentence.setCloudAudioId(cloudAudioId);
         sentence.setStartTime(startTime);
         sentence.setEndTime(endTime);
@@ -163,7 +163,7 @@ public class SentenceAdminServiceImpl implements SentenceAdminService {
         validateLessonMedia(lesson, request);
         boolean unchanged = Objects.equals(sentence.getLesson() != null ? sentence.getLesson().getId() : null, request.getLessonId())
                 && Objects.equals(sentence.getContent(), request.getContent().trim())
-                && Objects.equals(sentence.getAudioUrl(), normalizeAudioUrlForLesson(lesson, request.getAudioUrl()))
+                && Objects.equals(sentence.getFileName(), normalizeFileNameForLesson(lesson, request.getFileName()))
                 && Objects.equals(sentence.getCloudAudioId(), normalizeCloudAudioIdForLesson(lesson, request.getCloudAudioId()))
                 && Objects.equals(sentence.getStartTime(), normalizeStartTimeForLesson(lesson, request.getStartTime()))
                 && Objects.equals(sentence.getEndTime(), normalizeEndTimeForLesson(lesson, request.getEndTime()))
@@ -189,13 +189,13 @@ public class SentenceAdminServiceImpl implements SentenceAdminService {
             }
             return;
         }
-        if (normalizeBlank(request.getAudioUrl()) == null) {
-            throw new IllegalArgumentException("Sentence audio phai co audio URL hoac audio upload.");
+        if (normalizeBlank(request.getFileName()) == null) {
+            throw new IllegalArgumentException("Sentence audio phai co file name hoac audio upload.");
         }
     }
 
-    private String normalizeAudioUrlForLesson(Lesson lesson, String audioUrl) {
-        return resolveLessonType(lesson) == LessonType.AUDIO ? normalizeBlank(audioUrl) : null;
+    private String normalizeFileNameForLesson(Lesson lesson, String fileName) {
+        return resolveLessonType(lesson) == LessonType.AUDIO ? normalizeBlank(fileName) : null;
     }
 
     private String normalizeCloudAudioIdForLesson(Lesson lesson, String cloudAudioId) {

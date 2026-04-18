@@ -305,7 +305,15 @@ async function uploadAdminAsset(fileInputId, urlFieldName, publicIdFieldName, re
         }
         const urlField = document.getElementById('field-' + urlFieldName);
         const publicIdField = document.getElementById('field-' + publicIdFieldName);
-        if (urlField) urlField.value = json.data?.url || '';
+        if (urlField) {
+            let uploadedValue = json.data?.url || '';
+            // For fileName field, extract just the file name from the full URL
+            if (urlFieldName === 'fileName' && uploadedValue) {
+                const parts = uploadedValue.split('/');
+                uploadedValue = parts[parts.length - 1];
+            }
+            urlField.value = uploadedValue;
+        }
         if (publicIdField) publicIdField.value = json.data?.publicId || '';
     } catch (e) {
         showAdminEntityFormError(e.message || 'Upload thất bại.');
@@ -369,7 +377,7 @@ async function restoreUser(id) {
 async function hardDeleteUser(id) {
     const warning = [
         'WARNING: This will permanently delete the account.',
-        'All related learning progress, speaking results, comments, comment votes, password reset tokens, study statistics, and avatar/audio files on Cloudinary will also be deleted.',
+        'All related learning progress, speaking results, comments, comment votes, password reset tokens, study statistics, and avatar/audio files on ImageKit will also be deleted.',
         'This action cannot be undone.',
         '',
         'Do you want to continue?'
@@ -474,7 +482,7 @@ async function hardDeleteComment(id) {
 }
 
 async function hardDeleteSentence(id) {
-    if (!confirm('WARNING: This will permanently delete the audio on Cloudinary and the DB record.\nContinue?')) return;
+    if (!confirm('WARNING: This will permanently delete the audio on ImageKit and the DB record.\nContinue?')) return;
     try {
         const res = await fetch('/api/admin/trash/sentences/' + id, { method: 'DELETE' });
         const json = await res.json();
@@ -543,7 +551,7 @@ async function restoreSlideshow(id) {
 }
 
 async function hardDeleteSlideshow(id) {
-    if (!confirm('Xóa vĩnh viễn slideshow này? Ảnh trên Cloudinary cũng sẽ bị xóa.')) return;
+    if (!confirm('Xóa vĩnh viễn slideshow này? Ảnh trên ImageKit cũng sẽ bị xóa.')) return;
     try {
         const res = await fetch('/api/admin/trash/slideshows/' + id, { method: 'DELETE' });
         const json = await res.json();
@@ -749,6 +757,7 @@ function buildCategoryFormFields(data = {}) {
             { value: 'PUBLISHED', label: 'PUBLISHED' }
         ]),
         renderTextField('orderIndex', 'Order index', data.orderIndex ?? 0, true, 'number'),
+        renderTextField('folderName', 'Folder name', data.folderName || ''),
         renderHiddenField('cloudImageId', data.cloudImageId || ''),
         renderTextField('imageUrl', 'Image URL', data.imageUrl || '', false, 'text', true),
         renderUploadField('categoryImageUpload', 'Upload image', 'image/*', {
@@ -765,6 +774,7 @@ function buildSectionFormFields(data = {}) {
     return [
         renderSelectField('categoryId', 'Category', data.categoryId || getSelectValue('sectionsCategoryFilter'), getSelectOptionsFromElement('sectionsCategoryFilter')),
         renderTextField('name', 'Section name', data.name || '', true),
+        renderTextField('folderName', 'Folder name', data.folderName || ''),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
             { value: 'PUBLISHED', label: 'PUBLISHED' }
@@ -784,6 +794,7 @@ function buildLessonFormFields(data = {}) {
         ...(lessonType === 'VIDEO'
             ? [renderTextField('youtubeVideoId', 'YouTube link or ID', data.youtubeVideoId || '', true, 'text', true)]
             : []),
+        renderTextField('folderName', 'Folder name', data.folderName || ''),
         renderSelectField('status', 'Status', data.status || 'DRAFT', [
             { value: 'DRAFT', label: 'DRAFT' },
             { value: 'PUBLISHED', label: 'PUBLISHED' }
@@ -803,13 +814,13 @@ function buildSentenceFormFields(data = {}) {
         ...(lessonType === 'AUDIO'
             ? [
                 renderHiddenField('cloudAudioId', data.cloudAudioId || ''),
-                renderTextField('audioUrl', 'Audio URL', data.audioUrl || '', true, 'text', true),
+                renderTextField('fileName', 'File name', data.fileName || '', true, 'text', true),
                 renderUploadField('sentenceAudioUpload', 'Upload audio', 'audio/*', {
-                    urlField: 'audioUrl',
+                    urlField: 'fileName',
                     publicIdField: 'cloudAudioId',
                     resourceType: 'auto',
                     folder: 'sentences'
-                }, 'Sau khi upload, link audio sẽ tự điền vào ô Audio URL.')
+                }, 'Sau khi upload, file name sẽ tự điền vào ô File name.')
             ]
             : [
                 renderTextField('startTime', 'Start time (seconds)', data.startTime ?? '', true, 'number', false, '0.01'),
@@ -842,7 +853,7 @@ function buildSlideshowFormFields(data = {}) {
             resourceType: 'image',
             folder: 'slideshows',
             overwritePublicIdField: 'cloudImageId'
-        }, 'Ảnh slideshow sẽ được upload lên Cloudinary. Nếu đang sửa và đã có ảnh cũ, upload mới sẽ chép đè ảnh cũ.'),
+        }, 'Ảnh slideshow sẽ được upload lên ImageKit. Nếu đang sửa và đã có ảnh cũ, upload mới sẽ thay thế ảnh cũ sau khi lưu.'),
         renderTextField('linkUrl', 'Target link', data.linkUrl || '', false, 'text', true)
     ].join('');
 }
@@ -859,6 +870,7 @@ function collectAdminEntityPayload(entityType) {
             levelRange: normalizeOptionalString(raw.levelRange),
             type: raw.type,
             practiceType: raw.practiceType,
+            folderName: normalizeOptionalString(raw.folderName),
             description: normalizeOptionalString(raw.description),
             status: raw.status,
             orderIndex: Number(raw.orderIndex || 0)
@@ -869,6 +881,7 @@ function collectAdminEntityPayload(entityType) {
         return {
             categoryId: Number(raw.categoryId),
             name: String(raw.name || '').trim(),
+            folderName: normalizeOptionalString(raw.folderName),
             description: normalizeOptionalString(raw.description),
             status: raw.status,
             orderIndex: Number(raw.orderIndex || 0)
@@ -880,6 +893,7 @@ function collectAdminEntityPayload(entityType) {
             sectionId: Number(raw.sectionId),
             title: String(raw.title || '').trim(),
             youtubeVideoId: normalizeOptionalString(raw.youtubeVideoId),
+            folderName: normalizeOptionalString(raw.folderName),
             level: normalizeOptionalString(raw.level),
             status: raw.status,
             orderIndex: Number(raw.orderIndex || 0)
@@ -901,7 +915,7 @@ function collectAdminEntityPayload(entityType) {
     return {
         lessonId: Number(raw.lessonId),
         content: String(raw.content || '').trim(),
-        audioUrl: normalizeOptionalString(raw.audioUrl),
+        fileName: normalizeOptionalString(raw.fileName),
         cloudAudioId: normalizeOptionalString(raw.cloudAudioId),
         startTime: parseNullableNumber(raw.startTime),
         endTime: parseNullableNumber(raw.endTime),
@@ -924,7 +938,7 @@ function validateAdminEntityPayload(entityType, payload) {
     if (payload.status === 'ARCHIVED') return 'ARCHIVED không được phép chọn trong form quản trị.';
     if (entityType === 'sentence') {
         const lessonType = getCategoryTypeFromLessonId(payload.lessonId);
-        if (lessonType === 'AUDIO' && !normalizeOptionalString(payload.audioUrl)) return 'Audio URL không được để trống với sentence audio.';
+        if (lessonType === 'AUDIO' && !normalizeOptionalString(payload.fileName)) return 'File name không được để trống với sentence audio.';
         if (lessonType === 'VIDEO' && (payload.startTime == null || payload.endTime == null)) return 'Start time và end time không được để trống với sentence video.';
         if (payload.startTime != null && Number.isNaN(payload.startTime)) return 'Start time không hợp lệ.';
         if (payload.endTime != null && Number.isNaN(payload.endTime)) return 'End time không hợp lệ.';
@@ -964,6 +978,7 @@ function normalizePayloadForCompare(entityType, payload) {
             levelRange: normalizeOptionalString(payload.levelRange),
             type: payload.type || 'AUDIO',
             practiceType: payload.practiceType || 'LISTENING',
+            folderName: normalizeOptionalString(payload.folderName),
             description: normalizeOptionalString(payload.description),
             status: payload.status || 'DRAFT',
             orderIndex: Number(payload.orderIndex || 0)
@@ -973,6 +988,7 @@ function normalizePayloadForCompare(entityType, payload) {
         return {
             categoryId: Number(payload.categoryId),
             name: String(payload.name || '').trim(),
+            folderName: normalizeOptionalString(payload.folderName),
             description: normalizeOptionalString(payload.description),
             status: payload.status || 'DRAFT',
             orderIndex: Number(payload.orderIndex || 0)
@@ -983,6 +999,7 @@ function normalizePayloadForCompare(entityType, payload) {
             sectionId: Number(payload.sectionId),
             title: String(payload.title || '').trim(),
             youtubeVideoId: normalizeOptionalString(extractYoutubeVideoId(payload.youtubeVideoId) || payload.youtubeVideoId),
+            folderName: normalizeOptionalString(payload.folderName),
             level: normalizeOptionalString(payload.level),
             status: payload.status || 'DRAFT',
             orderIndex: Number(payload.orderIndex || 0)
@@ -1002,7 +1019,7 @@ function normalizePayloadForCompare(entityType, payload) {
     return {
         lessonId: Number(payload.lessonId),
         content: String(payload.content || '').trim(),
-        audioUrl: normalizeOptionalString(payload.audioUrl),
+        fileName: normalizeOptionalString(payload.fileName),
         cloudAudioId: normalizeOptionalString(payload.cloudAudioId),
         startTime: parseNullableNumber(payload.startTime),
         endTime: parseNullableNumber(payload.endTime),
@@ -1053,6 +1070,7 @@ async function createCategory() {
         levelRange: null,
         type: 'AUDIO',
         practiceType: 'LISTENING',
+        folderName: null,
         description: null,
         status: 'DRAFT',
         orderIndex: 0
@@ -1088,6 +1106,7 @@ async function editCategory(id) {
             imageUrl: row.dataset.imageUrl || '',
             cloudImageId: row.dataset.cloudImageId || '',
             levelRange: row.dataset.levelRange || '',
+            folderName: row.dataset.folderName || '',
             description: row.dataset.description || '',
             status: row.dataset.status || 'DRAFT',
             orderIndex: row.dataset.orderIndex || 0,
@@ -1099,6 +1118,7 @@ async function editCategory(id) {
             imageUrl: row.dataset.imageUrl || '',
             cloudImageId: row.dataset.cloudImageId || '',
             levelRange: row.dataset.levelRange || '',
+            folderName: row.dataset.folderName || '',
             description: row.dataset.description || '',
             status: row.dataset.status || 'DRAFT',
             orderIndex: row.dataset.orderIndex || 0,
@@ -1139,6 +1159,7 @@ async function createSection() {
         initialPayload: {
             categoryId,
             name: '',
+            folderName: null,
             description: null,
             status: 'DRAFT',
             orderIndex: 0
@@ -1167,6 +1188,7 @@ async function editSection(id) {
         fieldsHtml: buildSectionFormFields({
             categoryId: section?.category?.id,
             name: section.name || '',
+            folderName: section.folderName || '',
             description: section.description || '',
             status: section.status || 'DRAFT',
             orderIndex: section.orderIndex ?? 0
@@ -1174,6 +1196,7 @@ async function editSection(id) {
         initialPayload: {
             categoryId: section?.category?.id,
             name: section.name || '',
+            folderName: section.folderName || '',
             description: section.description || '',
             status: section.status || 'DRAFT',
             orderIndex: section.orderIndex ?? 0
@@ -1225,6 +1248,7 @@ async function createLesson() {
             sectionId,
             title: '',
             youtubeVideoId: null,
+            folderName: null,
             level: null,
             status: 'DRAFT',
             orderIndex: 0
@@ -1245,6 +1269,7 @@ async function editLesson(id) {
         title: lesson.title || '',
         level: lesson.level || '',
         youtubeVideoId: lesson.youtubeVideoId || '',
+        folderName: lesson.folderName || '',
         status: lesson.status || 'DRAFT',
         orderIndex: lesson.orderIndex ?? 0
     };
@@ -1304,7 +1329,7 @@ async function createSentence() {
         initialPayload: {
             lessonId,
             content: '',
-            audioUrl: null,
+            fileName: null,
             cloudAudioId: null,
             startTime: null,
             endTime: null,
@@ -1330,7 +1355,7 @@ async function editSentence(id) {
     const sentenceFormData = {
         lessonId: sentence?.lesson?.id,
         content: sentence.content || '',
-        audioUrl: sentence.audioUrl || '',
+        fileName: sentence.fileName || '',
         cloudAudioId: sentence.cloudAudioId || '',
         startTime: sentence.startTime ?? '',
         endTime: sentence.endTime ?? '',
@@ -1777,8 +1802,8 @@ function buildSentenceMediaSource(sentence, lesson) {
         const videoId = (lesson?.youtubeVideoId || '').trim();
         return videoId ? ('YouTube ID: ' + videoId) : 'Missing YouTube video ID';
     }
-    const audio = (sentence?.audioUrl || '').trim();
-    return audio || 'Missing sentence audio URL';
+    const fileName = (sentence?.fileName || '').trim();
+    return fileName || 'Missing sentence file name';
 }
 
 function buildSentenceMediaUrl(sentence, lesson) {
@@ -1788,7 +1813,7 @@ function buildSentenceMediaUrl(sentence, lesson) {
         const startSeconds = Math.max(0, Math.floor(Number(sentence?.startTime || 0)));
         return videoId ? (`https://www.youtube.com/watch?v=${videoId}&start=${startSeconds}`) : '';
     }
-    return (sentence?.audioUrl || '').trim();
+    return (sentence?.fileName || '').trim();
 }
 
 async function renderSentencesTable() {
