@@ -43,6 +43,7 @@ public class SecurityConfig {
                 // Admin endpoints (cần ADMIN role)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Mobile authenticated endpoints (cần JWT)
+                .requestMatchers("/api/mobile/media/**").permitAll() // Cho phép lấy audio
                 .requestMatchers("/api/mobile/**").authenticated()
                 // Mặc định permit all cho web
                 .anyRequest().permitAll()
