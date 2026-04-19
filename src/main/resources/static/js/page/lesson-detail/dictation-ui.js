@@ -118,13 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const commentsSec = document.getElementById('lessonComments');
         if (commentsSec && result.correct) {
             commentsSec.style.display = 'block';
-            
-            // Gọi hàm render mock data nếu có
-            if (typeof window.renderMockComments === 'function') {
-                const currentSentence = window.LessonState.sentences[window.LessonState.currentIndex];
-                const lessonId = (typeof LESSON_ID !== 'undefined') ? LESSON_ID : 0;
-                window.renderMockComments(lessonId, currentSentence.content);
-            }
         }
 
         // --- CHỈ HIỆN COMPLETION SCREEN NẾU LESSON ĐÃ HOÀN THÀNH TOÀN BỘ ---

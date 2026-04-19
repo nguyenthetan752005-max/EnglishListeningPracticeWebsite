@@ -6,14 +6,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
+import java.io.*;
+import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -25,35 +23,36 @@ public class EnglishLearningProjectApplication {
     private final Environment env;
 
     public static void main(String[] args) {
+        Properties properties = new Properties();
+        configureAvailablePort(properties);
 
         SpringApplication app = new SpringApplication(EnglishLearningProjectApplication.class);
-
-        Properties properties = new Properties();
-        setPort(properties);
-
+        // Cách chuẩn của Spring Boot để set property mặc định trước khi chạy
+        app.setDefaultProperties(properties); 
         app.run(args);
     }
 
-    private static void setPort(Properties properties) {
+    private static void configureAvailablePort(Properties props) {
+        int port = 8080;
         try (InputStream input = EnglishLearningProjectApplication.class.getClassLoader()
                 .getResourceAsStream("application.properties")) {
-            properties.load(input);
-            int port = Integer.parseInt(properties.getProperty("server.port", "8080"));
-            if (!isPortAvailable(port)) {
-                System.out.println("Cổng " + port + " đã bị sử dụng. Thử dùng cổng khác ...");
-                while (!isPortAvailable(port)) {
-                    port++;
-                }
-                System.out.println("Đã tìm thấy cổng " + port + " trống. Chương trình sẽ sử dụng cổng này!");
-                System.setProperty("server.port", String.valueOf(port));
+            if (input != null) {
+                Properties tempProps = new Properties();
+                tempProps.load(input);
+                port = Integer.parseInt(tempProps.getProperty("server.port", "8080"));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {}
+
+        if (!isPortAvailable(port)) {
+            System.out.println("⚠️ Cổng " + port + " đang bận. Đang tìm cổng khác...");
+            while (!isPortAvailable(port)) port++;
+            System.out.println("✅ Chuyển sang sử dụng cổng trống: " + port);
         }
+        props.put("server.port", String.valueOf(port));
     }
 
     private static boolean isPortAvailable(int port) {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket ignored = new ServerSocket(port)) {
             return true;
         } catch (IOException e) {
             return false;
@@ -61,46 +60,96 @@ public class EnglishLearningProjectApplication {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void printApplicationUrl(ApplicationReadyEvent event) {
-        if (!(event.getApplicationContext() instanceof org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext webServerAppCtx)) {
-            return;
-        }
-        int port = webServerAppCtx.getWebServer().getPort();
-        String contextPath = env.getProperty("server.servlet.context-path", "");
+    public void onApplicationReady() {
+        String port = env.getProperty("server.port", "8080");
+        String ctx = env.getProperty("server.servlet.context-path", "");
+        String localIp = getLocalIpAddress();
 
         System.out.println("\n=======================================================");
-        System.out.println("ỨNG DỤNG ĐÃ KHỞI ĐỘNG THÀNH CÔNG!");
-        System.out.println("Web UI:           http://localhost:" + port + contextPath);
-        System.out.println("Bootstrap (v1):   http://localhost:" + port + contextPath + "/api/mobile/bootstrap");
-        System.out.println("Bootstrap-Lite:   http://localhost:" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
-        System.out.println("Lesson Detail:    http://localhost:" + port + contextPath + "/api/mobile/lessons/{id}");
-        System.out.println("Mobile Auth:      http://localhost:" + port + contextPath + "/api/mobile/auth/login");
-        System.out.println("Android (emu):    http://10.0.2.2:" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
-        String localIp = getLocalIpAddress();
-        System.out.println("Android (USB):    http://" + localIp + ":" + port + contextPath + "/api/mobile/catalog/bootstrap-lite");
+        System.out.println("🚀 Ứng dụng English Learning Website đã khởi động!");
+        System.out.println("🌍 Web UI:         http://localhost:" + port + ctx);
+        System.out.println("📱 Bootstrap:      http://localhost:" + port + ctx + "/api/mobile/bootstrap");
+        System.out.println("🤖 Android (emu):  http://10.0.2.2:" + port + ctx + "/api/mobile/catalog/bootstrap-lite");
+        System.out.println("📲 Android (LAN):  http://" + localIp + ":" + port + ctx + "/api/mobile/catalog/bootstrap-lite");
         System.out.println("=======================================================\n");
+
+        startNgrok(port);
+    }
+
+    private void startNgrok(String port) {
+        String token = env.getProperty("ngrok.auth-token");
+        String domain = env.getProperty("ngrok.domain");
+        String path = env.getProperty("ngrok.path", "ngrok");
+
+        if (token == null || domain == null) {
+            System.out.println("⚠️ Bỏ qua ngrok: Chưa cấu hình auth-token hoặc domain tĩnh.");
+            return;
+        }
+
+        String executable = findNgrokExecutable(path);
+        System.out.println("🌐 Đang khởi chạy ngrok trên cổng " + port + " (Domain: " + domain + ")");
+
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            String cmd = executable + " config add-authtoken " + token + " && " + executable + " http --domain=" + domain + " " + port;
+            ProcessBuilder builder;
+
+            if (os.contains("win")) {
+                builder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", cmd);
+            } else if (os.contains("mac")) {
+                builder = new ProcessBuilder("osascript", "-e", "tell application \"Terminal\" to do script \"" + cmd + "\"");
+            } else {
+                builder = new ProcessBuilder("gnome-terminal", "--", "bash", "-c", cmd + "; exec bash");
+            }
+            builder.start();
+        } catch (IOException e) {
+            System.err.println("❌ Lỗi khởi chạy ngrok: " + e.getMessage());
+        }
+    }
+
+    private String findNgrokExecutable(String defaultPath) {
+        if (defaultPath.contains(File.separator) && Files.exists(Path.of(defaultPath))) return defaultPath;
+
+        String os = System.getProperty("os.name").toLowerCase();
+        // Gọi thẳng qua cmd/bash để mượn khả năng tự phân giải PATH của hệ điều hành
+        String[] searchCmd = os.contains("win") ? 
+                new String[]{"cmd.exe", "/c", "where " + defaultPath} : 
+                new String[]{"bash", "-c", "which " + defaultPath};
+
+        try {
+            Process process = new ProcessBuilder(searchCmd).start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line = reader.readLine();
+                if (line != null && !line.trim().isEmpty()) return line.trim();
+            }
+        } catch (Exception ignored) {}
+
+        String[] commonPaths = {
+                System.getenv("LOCALAPPDATA") + "\\ngrok\\ngrok.exe",
+                System.getenv("USERPROFILE") + "\\ngrok.exe",
+                "/usr/local/bin/ngrok",
+                "/opt/ngrok/ngrok"
+        };
+
+        for (String p : commonPaths) {
+            if (p != null && Files.exists(Path.of(p))) return p;
+        }
+        return defaultPath;
     }
 
     private String getLocalIpAddress() {
         try {
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface ni = interfaces.nextElement();
-                // Bỏ qua interface loopback và disabled
+            for (Enumeration<NetworkInterface> itfs = NetworkInterface.getNetworkInterfaces(); itfs.hasMoreElements();) {
+                NetworkInterface ni = itfs.nextElement();
                 if (ni.isLoopback() || !ni.isUp()) continue;
-                Enumeration<InetAddress> addresses = ni.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
+                
+                for (Enumeration<InetAddress> addrs = ni.getInetAddresses(); addrs.hasMoreElements();) {
+                    InetAddress addr = addrs.nextElement();
                     String ip = addr.getHostAddress();
-                    // Chỉ lấy IPv4 (không phải IPv6)
-                    if (ip.contains(".") && !ip.startsWith("127.")) {
-                        return ip;
-                    }
+                    if (ip.contains(".") && !ip.startsWith("127.")) return ip;
                 }
             }
-        } catch (Exception e) {
-            // Fallback nếu lỗi
-        }
+        } catch (Exception ignored) {}
         return "127.0.0.1";
     }
 }
