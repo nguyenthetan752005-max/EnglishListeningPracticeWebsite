@@ -3,20 +3,15 @@ package com.english.learning.mapper.mobile;
 import com.english.learning.dto.mobile.*;
 import com.english.learning.entity.*;
 import com.english.learning.enums.LessonType;
-import com.english.learning.enums.Role;
 import com.english.learning.repository.CommentVoteRepository;
-import com.english.learning.repository.UserRepository;
 import com.english.learning.util.AudioUrlResolver;
 import com.english.learning.util.MobileApiUrlResolver;
-import com.english.learning.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Mapper: Entity -> Mobile DTO.
@@ -28,7 +23,6 @@ import java.util.Map;
 public class MobileResponseMapper {
 
     private final CommentVoteRepository commentVoteRepository;
-    private final UserRepository userRepository;
     private final MobileApiUrlResolver mobileApiUrlResolver;
     private final AudioUrlResolver audioUrlResolver;
 
@@ -136,41 +130,7 @@ public class MobileResponseMapper {
                 .build();
     }
 
-    // ===== Leaderboard =====
-    public MobileLeaderboardResponse buildLeaderboard() {
-        List<User> weekly = userRepository.findTop30ByRoleOrderByActiveTime7dDesc(Role.USER);
-        List<User> monthly = userRepository.findTop30ByRoleOrderByActiveTime30dDesc(Role.USER);
-
-        List<MobileLeaderboardEntryResponse> weeklyEntries = buildEntries(weekly, true);
-        List<MobileLeaderboardEntryResponse> monthlyEntries = buildEntries(monthly, false);
-
-        return MobileLeaderboardResponse.builder()
-                .weeklyEntries(weeklyEntries)
-                .monthlyEntries(monthlyEntries)
-                .currentUserRank(0)
-                .currentUserTime("0m")
-                .build();
-    }
-
     // ===== Private helpers =====
-
-    private List<MobileLeaderboardEntryResponse> buildEntries(List<User> users, boolean is7Day) {
-        List<MobileLeaderboardEntryResponse> entries = new ArrayList<>();
-        for (int i = 0; i < users.size(); i++) {
-            User u = users.get(i);
-            int seconds = is7Day
-                    ? (u.getActiveTime7d() != null ? u.getActiveTime7d() : 0)
-                    : (u.getActiveTime30d() != null ? u.getActiveTime30d() : 0);
-
-            entries.add(MobileLeaderboardEntryResponse.builder()
-                    .rank(i + 1)
-                    .username(u.getUsername())
-                    .initial(u.getUsername().substring(0, 1).toUpperCase())
-                    .activeTime(formatActiveTimeForMobile(seconds))
-                    .build());
-        }
-        return entries;
-    }
 
     private String deriveContentType(Lesson lesson) {
         if (lesson.getContentType() != null) {
@@ -208,14 +168,4 @@ public class MobileResponseMapper {
         return (seconds / 31536000) + " years ago";
     }
 
-    private String formatActiveTimeForMobile(int totalSeconds) {
-        int minutes = totalSeconds / 60;
-        if (minutes < 1) return "0m";
-        int hours = minutes / 60;
-        int remainingMinutes = minutes % 60;
-        if (hours > 0) {
-            return hours + "h " + remainingMinutes + "m";
-        }
-        return remainingMinutes + "m";
-    }
 }

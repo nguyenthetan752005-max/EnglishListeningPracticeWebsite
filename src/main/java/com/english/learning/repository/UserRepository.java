@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Queries for the Leaderboard
     List<User> findTop30ByRoleOrderByActiveTime7dDesc(Role role);
     List<User> findTop30ByRoleOrderByActiveTime30dDesc(Role role);
+    List<User> findByRoleOrderByActiveTime7dDesc(Role role);
+    List<User> findByRoleOrderByActiveTime30dDesc(Role role);
 
     List<User> findByIsDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
 

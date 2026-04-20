@@ -1,8 +1,8 @@
 package com.english.learning.service.impl.mobile;
 
 import com.english.learning.dto.mobile.*;
-import com.english.learning.entity.*;
 import com.english.learning.enums.ContentStatus;
+import com.english.learning.mapper.mobile.MobileLeaderboardMapper;
 import com.english.learning.mapper.mobile.MobileResponseMapper;
 import com.english.learning.repository.*;
 import com.english.learning.service.mobile.MobileBootstrapService;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +35,7 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
     private final SentenceRepository sentenceRepository;
     private final CommentRepository commentRepository;
     private final MobileResponseMapper mapper;
+    private final MobileLeaderboardMapper leaderboardMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -56,17 +57,49 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
                 .collect(Collectors.toList());
 
         // 3. Published lessons ordered by orderIndex
-        List<MobileLessonResponse> lessons = lessonRepository
+        List<MobileLessonResponse> allLessons = lessonRepository
                 .findByStatusOrderByOrderIndexAscIdAsc(ContentStatus.PUBLISHED)
                 .stream()
                 .map(mapper::toMobileLesson)
                 .collect(Collectors.toList());
+
+        // --- FILTER LESSONS ---
+        Set<Long> fullLessonCategoryIds = categories.stream()
+                .filter(c -> c.getName() != null && 
+                    (c.getName().equalsIgnoreCase("short stories") || c.getName().equalsIgnoreCase("stories for kids")))
+                .map(MobileCategoryResponse::getId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Long> sectionToCategoryMap = sections.stream()
+                .collect(Collectors.toMap(MobileSectionResponse::getId, MobileSectionResponse::getCategoryId));
+
+        List<MobileLessonResponse> lessons = new ArrayList<>();
+        Map<Long, Integer> sectionLessonCountMap = new HashMap<>();
+
+        for (MobileLessonResponse lesson : allLessons) {
+            Long sectionId = lesson.getSectionId();
+            Long categoryId = sectionToCategoryMap.get(sectionId);
+            
+            if (categoryId != null && fullLessonCategoryIds.contains(categoryId)) {
+                lessons.add(lesson);
+            } else {
+                int count = sectionLessonCountMap.getOrDefault(sectionId, 0);
+                if (count < 1) {
+                    lessons.add(lesson);
+                    sectionLessonCountMap.put(sectionId, count + 1);
+                }
+            }
+        }
+        // --- END FILTER ---
+
+        Set<Long> retainedLessonIds = lessons.stream().map(MobileLessonResponse::getId).collect(Collectors.toSet());
 
         // 4. Published sentences ordered by orderIndex
         List<MobileSentenceResponse> sentences = sentenceRepository
                 .findByStatusOrderByOrderIndexAscIdAsc(ContentStatus.PUBLISHED)
                 .stream()
                 .map(mapper::toMobileSentence)
+                .filter(s -> retainedLessonIds.contains(s.getLessonId()))
                 .collect(Collectors.toList());
 
         // 5. Visible comments (not deleted, not hidden)
@@ -77,7 +110,7 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
                 .collect(Collectors.toList());
 
         // 6. Leaderboard
-        MobileLeaderboardResponse leaderboard = mapper.buildLeaderboard();
+        MobileLeaderboardResponse leaderboard = leaderboardMapper.buildLeaderboard(null);
 
         log.info("Bootstrap: {} categories, {} sections, {} lessons, {} sentences, {} comments",
                 categories.size(), sections.size(), lessons.size(), sentences.size(), comments.size());

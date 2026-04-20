@@ -7,7 +7,8 @@ import lombok.Data;
 @Builder
 public class MobileLeaderboardEntryResponse {
     private Integer rank;
-    private String username;
-    private String initial;
+    private String name;
+    private String avatarLabel;
     private String activeTime;
+    private Boolean currentUser;
 }
