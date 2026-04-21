@@ -2,12 +2,16 @@ package com.english.learning.entity;
 
 import org.hibernate.annotations.SQLRestriction;
 import com.english.learning.enums.ContentStatus;
+import jakarta.persistence.Index;
 import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "sections")
+@Table(name = "sections", indexes = {
+    @Index(name = "idx_section_status", columnList = "status"),
+    @Index(name = "idx_section_category", columnList = "category_id")
+})
 @SQLRestriction("is_deleted = false")
 public class Section {
 

@@ -8,6 +8,7 @@ import com.english.learning.repository.*;
 import com.english.learning.service.mobile.MobileBootstrapLiteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class MobileBootstrapLiteServiceImpl implements MobileBootstrapLiteServic
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable("bootstrap-lite")
     public MobileBootstrapLiteResponse getBootstrapLiteData() {
         log.info("Building mobile bootstrap-lite response (no sentences)...");
 
@@ -59,33 +61,8 @@ public class MobileBootstrapLiteServiceImpl implements MobileBootstrapLiteServic
                 .map(mapper::toMobileLesson)
                 .collect(Collectors.toList());
 
-        // --- FILTER LESSONS ---
-        Set<Long> fullLessonCategoryIds = categories.stream()
-                .filter(c -> c.getName() != null && 
-                    (c.getName().equalsIgnoreCase("short stories") || c.getName().equalsIgnoreCase("stories for kids")))
-                .map(MobileCategoryResponse::getId)
-                .collect(Collectors.toSet());
-
-        Map<Long, Long> sectionToCategoryMap = sections.stream()
-                .collect(Collectors.toMap(MobileSectionResponse::getId, MobileSectionResponse::getCategoryId));
-
-        List<MobileLessonResponse> lessons = new ArrayList<>();
-        Map<Long, Integer> sectionLessonCountMap = new HashMap<>();
-
-        for (MobileLessonResponse lesson : allLessons) {
-            Long sectionId = lesson.getSectionId();
-            Long categoryId = sectionToCategoryMap.get(sectionId);
-            
-            if (categoryId != null && fullLessonCategoryIds.contains(categoryId)) {
-                lessons.add(lesson);
-            } else {
-                int count = sectionLessonCountMap.getOrDefault(sectionId, 0);
-                if (count < 1) {
-                    lessons.add(lesson);
-                    sectionLessonCountMap.put(sectionId, count + 1);
-                }
-            }
-        }
+        // --- REMOVED: FILTER LESSONS (Now returns all lessons without limits) ---
+        List<MobileLessonResponse> lessons = allLessons;
 
         // 4. Visible comments (not deleted, not hidden)
         List<MobileCommentResponse> comments = commentRepository
@@ -101,7 +78,7 @@ public class MobileBootstrapLiteServiceImpl implements MobileBootstrapLiteServic
                 categories.size(), sections.size(), lessons.size(), comments.size());
 
         return MobileBootstrapLiteResponse.builder()
-                .version("v2")
+                .version("v2.1")
                 .generatedAt(Instant.now().toString())
                 .categories(categories)
                 .sections(sections)

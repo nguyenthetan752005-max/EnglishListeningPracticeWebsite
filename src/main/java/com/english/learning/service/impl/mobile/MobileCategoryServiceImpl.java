@@ -57,11 +57,7 @@ public class MobileCategoryServiceImpl implements MobileCategoryService {
                             .map(mapper::toMobileLesson)
                             .collect(Collectors.toList());
 
-                    boolean isFullLessonCategory = category.getName() != null && 
-                            (category.getName().equalsIgnoreCase("short stories") || category.getName().equalsIgnoreCase("stories for kids"));
-                    if (!isFullLessonCategory && !lessons.isEmpty()) {
-                        lessons = lessons.subList(0, 1);
-                    }
+                    // --- REMOVED THE LIMIT TO RETURN ALL LESSONS HERE TOO ---
 
                     return mapper.toMobileCategoryCollectionSection(section, lessons);
                 })

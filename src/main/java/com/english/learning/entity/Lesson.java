@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.english.learning.enums.ContentStatus;
 import com.english.learning.enums.LessonType;
+import jakarta.persistence.Index;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,7 +13,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "lessons")
+@Table(name = "lessons", indexes = {
+    @Index(name = "idx_lesson_status", columnList = "status"),
+    @Index(name = "idx_lesson_section", columnList = "section_id")
+})
 @SQLRestriction("is_deleted = false")
 public class Lesson {
 

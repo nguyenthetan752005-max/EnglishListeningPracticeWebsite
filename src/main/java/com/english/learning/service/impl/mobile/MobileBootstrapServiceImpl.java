@@ -8,6 +8,7 @@ import com.english.learning.repository.*;
 import com.english.learning.service.mobile.MobileBootstrapService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable("bootstrap")
     public MobileBootstrapResponse getBootstrapData() {
         log.info("Building mobile bootstrap response...");
 
@@ -63,34 +65,8 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
                 .map(mapper::toMobileLesson)
                 .collect(Collectors.toList());
 
-        // --- FILTER LESSONS ---
-        Set<Long> fullLessonCategoryIds = categories.stream()
-                .filter(c -> c.getName() != null && 
-                    (c.getName().equalsIgnoreCase("short stories") || c.getName().equalsIgnoreCase("stories for kids")))
-                .map(MobileCategoryResponse::getId)
-                .collect(Collectors.toSet());
-
-        Map<Long, Long> sectionToCategoryMap = sections.stream()
-                .collect(Collectors.toMap(MobileSectionResponse::getId, MobileSectionResponse::getCategoryId));
-
-        List<MobileLessonResponse> lessons = new ArrayList<>();
-        Map<Long, Integer> sectionLessonCountMap = new HashMap<>();
-
-        for (MobileLessonResponse lesson : allLessons) {
-            Long sectionId = lesson.getSectionId();
-            Long categoryId = sectionToCategoryMap.get(sectionId);
-            
-            if (categoryId != null && fullLessonCategoryIds.contains(categoryId)) {
-                lessons.add(lesson);
-            } else {
-                int count = sectionLessonCountMap.getOrDefault(sectionId, 0);
-                if (count < 1) {
-                    lessons.add(lesson);
-                    sectionLessonCountMap.put(sectionId, count + 1);
-                }
-            }
-        }
-        // --- END FILTER ---
+        // --- REMOVED: FILTER LESSONS (Now returns all lessons without limits) ---
+        List<MobileLessonResponse> lessons = allLessons;
 
         Set<Long> retainedLessonIds = lessons.stream().map(MobileLessonResponse::getId).collect(Collectors.toSet());
 
@@ -116,7 +92,7 @@ public class MobileBootstrapServiceImpl implements MobileBootstrapService {
                 categories.size(), sections.size(), lessons.size(), sentences.size(), comments.size());
 
         return MobileBootstrapResponse.builder()
-                .version("v1")
+                .version("v1.1")
                 .generatedAt(Instant.now().toString())
                 .categories(categories)
                 .sections(sections)

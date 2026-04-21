@@ -15,8 +15,11 @@ import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import org.springframework.cache.annotation.EnableCaching;
+
 @SpringBootApplication
 @EnableScheduling
+@EnableCaching
 @RequiredArgsConstructor
 public class EnglishLearningProjectApplication {
 
