@@ -17,4 +17,5 @@ public class AdminUserProfileViewDTO {
     private long progressSkipped;
     private int topScore;
     private String avgScore;
+    private boolean isOnline;
 }

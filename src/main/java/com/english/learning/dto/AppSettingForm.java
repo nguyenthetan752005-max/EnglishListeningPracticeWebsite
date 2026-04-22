@@ -31,4 +31,9 @@ public class AppSettingForm {
     private Integer speakingPassThreshold;
 
     private boolean allowUserRegistration;
+
+    @NotNull(message = "Online timeout minutes is required.")
+    @Min(value = 1, message = "Timeout must be at least 1 minute.")
+    @Max(value = 1440, message = "Timeout must be at most 24 hours (1440 mins).")
+    private Integer onlineTimeoutMinutes;
 }

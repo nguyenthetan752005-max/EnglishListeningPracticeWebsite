@@ -109,4 +109,18 @@ public class MobileCommentController {
         commentService.deleteComment(commentId, userId);
         return ResponseEntity.ok(Map.of("success", true));
     }
+
+    /**
+     * GET /api/mobile/profile/{userId}/comments
+     * Returns all comments created by a specific user.
+     */
+    @GetMapping("/profile/{userId}/comments")
+    public ResponseEntity<List<MobileCommentResponse>> getUserComments(@PathVariable Long userId) {
+        List<MobileCommentResponse> comments = commentService
+                .getCommentsByUserId(userId)
+                .stream()
+                .map(mapper::toMobileComment)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(comments);
+    }
 }

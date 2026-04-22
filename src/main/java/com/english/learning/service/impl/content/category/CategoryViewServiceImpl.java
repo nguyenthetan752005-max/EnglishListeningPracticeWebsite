@@ -11,12 +11,14 @@ import com.english.learning.enums.ContentStatus;
 import com.english.learning.enums.PracticeType;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.repository.CategoryRepository;
+import com.english.learning.repository.LessonRepository;
 import com.english.learning.service.content.category.CategoryViewService;
 import com.english.learning.service.content.lesson.LessonService;
 import com.english.learning.service.content.section.SectionService;
 import com.english.learning.service.progress.UserProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +33,7 @@ public class CategoryViewServiceImpl implements CategoryViewService {
     private final SectionService sectionService;
     private final LessonService lessonService;
     private final UserProgressService userProgressService;
+    private final LessonRepository lessonRepository;
 
     @Override
     public List<Category> getAllCategories() {
@@ -38,8 +41,15 @@ public class CategoryViewServiceImpl implements CategoryViewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Category> getPublishedCategories() {
-        return categoryRepository.findByStatusOrderByOrderIndexAscIdAsc(ContentStatus.PUBLISHED);
+        List<Category> categories = categoryRepository.findByStatusOrderByOrderIndexAscIdAsc(ContentStatus.PUBLISHED);
+        categories.forEach(category -> {
+            int actualCount = (int) lessonRepository.countBySection_Category_IdAndStatus(category.getId(),
+                    ContentStatus.PUBLISHED);
+            category.setTotalLessons(actualCount);
+        });
+        return categories;
     }
 
     @Override
@@ -48,8 +58,16 @@ public class CategoryViewServiceImpl implements CategoryViewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Category> getPublishedCategoriesByPracticeType(PracticeType practiceType) {
-        return categoryRepository.findByPracticeTypeAndStatusOrderByOrderIndexAscIdAsc(practiceType, ContentStatus.PUBLISHED);
+        List<Category> categories = categoryRepository
+                .findByPracticeTypeAndStatusOrderByOrderIndexAscIdAsc(practiceType, ContentStatus.PUBLISHED);
+        categories.forEach(category -> {
+            int actualCount = (int) lessonRepository.countBySection_Category_IdAndStatus(category.getId(),
+                    ContentStatus.PUBLISHED);
+            category.setTotalLessons(actualCount);
+        });
+        return categories;
     }
 
     @Override
@@ -84,7 +102,8 @@ public class CategoryViewServiceImpl implements CategoryViewService {
     }
 
     @Override
-    public List<SectionWithLessonsDTO> getSectionWithLessonsDTOs(Long categoryId, User user, PracticeType practiceType) {
+    public List<SectionWithLessonsDTO> getSectionWithLessonsDTOs(Long categoryId, User user,
+            PracticeType practiceType) {
         List<Section> sections = sectionService.getPublishedSectionsByCategoryId(categoryId);
         return sections.stream()
                 .map(sec -> {
@@ -97,7 +116,8 @@ public class CategoryViewServiceImpl implements CategoryViewService {
 
                     if (user != null) {
                         for (Lesson lesson : filteredLessons) {
-                            UserProgressStatus lessonStatus = userProgressService.getLessonStatus(user.getId(), lesson.getId());
+                            UserProgressStatus lessonStatus = userProgressService.getLessonStatus(user.getId(),
+                                    lesson.getId());
                             if (lessonStatus != null) {
                                 lessonStatuses.put(lesson.getId(), lessonStatus);
                             }
@@ -132,4 +152,3 @@ public class CategoryViewServiceImpl implements CategoryViewService {
                 .toList();
     }
 }
-

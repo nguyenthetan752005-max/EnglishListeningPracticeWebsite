@@ -30,6 +30,7 @@ public class MobileAuthController {
     private final AppSettingService appSettingService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final com.english.learning.service.auth.PasswordResetService passwordResetService;
 
     /**
      * POST /api/mobile/auth/login
@@ -50,10 +51,6 @@ public class MobileAuthController {
                         .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
                         .build());
             }
-            // Đánh dấu user đang đăng nhập
-            user.setIsActive(true);
-            userRepository.save(user);
-
             // Tạo JWT token
             String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole().name());
             
@@ -135,10 +132,6 @@ public class MobileAuthController {
                             .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
                             .build());
                 }
-                // Đánh dấu user đang đăng nhập
-                user.setIsActive(true);
-                userRepository.save(user);
-
                 // Tạo JWT token
                 String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole().name());
                 
@@ -176,12 +169,7 @@ public class MobileAuthController {
             String token = jwtTokenProvider.resolveToken(authHeader);
             if (token != null) {
                 Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                Optional<User> userOpt = userRepository.findById(userId);
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-                    user.setIsActive(false);  // Đánh dấu đã đăng xuất
-                    userRepository.save(user);
-                }
+                // Với cơ chế Heartbeat, ta không cần cập nhật DB khi logout nữa, lastActiveAt sẽ tự động timeout.
                 // TODO: Thêm token vào blacklist nếu cần
             }
             return ResponseEntity.ok(MobileAuthResponse.builder()
@@ -192,6 +180,44 @@ public class MobileAuthController {
             return ResponseEntity.ok(MobileAuthResponse.builder()
                     .success(false)
                     .message("Lỗi đăng xuất: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    /**
+     * POST /api/mobile/auth/forgot-password
+     * Body: { "email": "..." }
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MobileAuthResponse> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.ok(MobileAuthResponse.builder()
+                    .success(false)
+                    .message("Vui lòng nhập địa chỉ email.")
+                    .build());
+        }
+
+        Optional<User> userOpt = authService.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.ok(MobileAuthResponse.builder()
+                    .success(false)
+                    .message("Không tìm thấy tài khoản với email này!")
+                    .build());
+        }
+
+        try {
+            User user = userOpt.get();
+            String token = passwordResetService.createTokenForUser(user);
+            passwordResetService.sendResetEmail(user.getEmail(), token);
+            return ResponseEntity.ok(MobileAuthResponse.builder()
+                    .success(true)
+                    .message("Đã gửi link đặt lại mật khẩu tới email của bạn. Vui lòng kiểm tra hộp thư!")
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.ok(MobileAuthResponse.builder()
+                    .success(false)
+                    .message("Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau!")
                     .build());
         }
     }

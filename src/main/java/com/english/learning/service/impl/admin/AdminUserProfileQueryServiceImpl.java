@@ -10,6 +10,7 @@ import com.english.learning.repository.SpeakingResultRepository;
 import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.admin.AdminUserProfileQueryService;
+import com.english.learning.service.settings.AppSettingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class AdminUserProfileQueryServiceImpl implements AdminUserProfileQuerySe
     private final UserRepository userRepository;
     private final UserProgressRepository userProgressRepository;
     private final SpeakingResultRepository speakingResultRepository;
+    private final AppSettingService appSettingService;
 
     @Override
     public AdminUserProfileViewDTO getUserProfile(Long userId) {
@@ -55,6 +57,7 @@ public class AdminUserProfileQueryServiceImpl implements AdminUserProfileQuerySe
                 .progressSkipped(skipped)
                 .topScore(topScore)
                 .avgScore(String.format(Locale.US, "%.1f", averageScore))
+                .isOnline(user.isOnline(appSettingService.getOnlineTimeoutMinutes()))
                 .build();
     }
 
@@ -71,6 +74,7 @@ public class AdminUserProfileQueryServiceImpl implements AdminUserProfileQuerySe
                 .progressSkipped(0)
                 .topScore(0)
                 .avgScore("0.0")
+                .isOnline(admin.isOnline(appSettingService.getOnlineTimeoutMinutes()))
                 .build();
     }
 }

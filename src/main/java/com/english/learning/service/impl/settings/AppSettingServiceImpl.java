@@ -5,6 +5,8 @@ import com.english.learning.entity.AppSetting;
 import com.english.learning.repository.AppSettingRepository;
 import com.english.learning.service.settings.AppSettingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -15,6 +17,7 @@ public class AppSettingServiceImpl implements AppSettingService {
     private final AppSettingRepository appSettingRepository;
 
     @Override
+    @Cacheable(value = "appSettings", key = "'singleton'")
     public AppSetting getSettings() {
         return getOrCreateSettings();
     }
@@ -28,10 +31,12 @@ public class AppSettingServiceImpl implements AppSettingService {
         form.setMaxRecentUsersOnDashboard(settings.getMaxRecentUsersOnDashboard());
         form.setSpeakingPassThreshold(settings.getSpeakingPassThreshold());
         form.setAllowUserRegistration(Boolean.TRUE.equals(settings.getAllowUserRegistration()));
+        form.setOnlineTimeoutMinutes(settings.getOnlineTimeoutMinutes());
         return form;
     }
 
     @Override
+    @CacheEvict(value = "appSettings", allEntries = true)
     public void updateSettings(AppSettingForm form) {
         AppSetting settings = getSettings();
         settings.setSiteName(cleanSiteName(form.getSiteName()));
@@ -39,6 +44,9 @@ public class AppSettingServiceImpl implements AppSettingService {
         settings.setMaxRecentUsersOnDashboard(form.getMaxRecentUsersOnDashboard());
         settings.setSpeakingPassThreshold(form.getSpeakingPassThreshold());
         settings.setAllowUserRegistration(form.isAllowUserRegistration());
+        if (form.getOnlineTimeoutMinutes() != null) {
+            settings.setOnlineTimeoutMinutes(form.getOnlineTimeoutMinutes());
+        }
         appSettingRepository.save(settings);
     }
 
@@ -65,6 +73,12 @@ public class AppSettingServiceImpl implements AppSettingService {
     @Override
     public boolean isUserRegistrationAllowed() {
         return Boolean.TRUE.equals(getSettings().getAllowUserRegistration());
+    }
+
+    @Override
+    public int getOnlineTimeoutMinutes() {
+        Integer timeout = getSettings().getOnlineTimeoutMinutes();
+        return timeout != null ? timeout : AppSetting.DEFAULT_ONLINE_TIMEOUT_MINUTES;
     }
 
     private AppSetting getOrCreateSettings() {

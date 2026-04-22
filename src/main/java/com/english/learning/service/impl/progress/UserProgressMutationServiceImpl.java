@@ -16,6 +16,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@org.springframework.transaction.annotation.Transactional
 public class UserProgressMutationServiceImpl implements UserProgressMutationService {
 
     private final UserProgressRepository userProgressRepository;

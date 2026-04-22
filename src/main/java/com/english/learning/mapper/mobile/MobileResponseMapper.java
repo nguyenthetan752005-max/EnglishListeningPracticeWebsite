@@ -25,6 +25,7 @@ public class MobileResponseMapper {
     private final CommentVoteRepository commentVoteRepository;
     private final MobileApiUrlResolver mobileApiUrlResolver;
     private final AudioUrlResolver audioUrlResolver;
+    private final com.english.learning.service.learning.hint.HintService hintService;
 
     // ===== Category =====
     public MobileCategoryResponse toMobileCategory(Category entity) {
@@ -101,6 +102,7 @@ public class MobileResponseMapper {
                 .startTime(entity.getStartTime())
                 .endTime(entity.getEndTime())
                 .orderIndex(entity.getOrderIndex())
+                .properNouns(entity.getProperNouns() != null ? entity.getProperNouns() : hintService.extractProperNouns(com.english.learning.util.TextNormalizerUtil.cleanHtmlAndBrackets(entity.getContent())))
                 .build();
     }
 

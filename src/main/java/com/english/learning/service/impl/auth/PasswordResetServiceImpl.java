@@ -25,6 +25,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final AuthService authService;
     private final JavaMailSender mailSender;
+    private final com.english.learning.service.auth.TokenBlacklistService tokenBlacklistService;
 
     @Value("${app.url}")
     private String appUrl;
@@ -82,6 +83,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         User user = resetToken.getUser();
         authService.updatePassword(user, newPassword);
+        tokenBlacklistService.revokeAllUserTokens(user.getId());
 
         // XÃ³a token sau khi Ä‘Ã£ sá»­ dá»¥ng
         tokenRepository.delete(resetToken);

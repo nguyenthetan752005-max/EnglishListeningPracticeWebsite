@@ -75,6 +75,14 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
+    @Transient
+    public boolean isOnline(int timeoutMinutes) {
+        return lastActiveAt != null && lastActiveAt.isAfter(LocalDateTime.now().minusMinutes(timeoutMinutes));
+    }
+
     // ===== Cascading Relationships (OOSE: Entity owns lifecycle of children) =====
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)

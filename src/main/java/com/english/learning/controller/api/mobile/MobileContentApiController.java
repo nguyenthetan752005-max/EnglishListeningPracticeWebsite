@@ -92,4 +92,16 @@ public class MobileContentApiController {
         }
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * GET /api/mobile/sections/{sectionId}/lessons
+     *
+     * Returns a list of lessons for a specific section.
+     * Android calls this when dynamically expanding a section.
+     */
+    @GetMapping("/sections/{sectionId}/lessons")
+    public ResponseEntity<java.util.List<com.english.learning.dto.mobile.MobileLessonResponse>> getSectionLessons(@PathVariable Long sectionId) {
+        java.util.List<com.english.learning.dto.mobile.MobileLessonResponse> lessons = mobileCategoryService.getLessonsBySection(sectionId);
+        return ResponseEntity.ok(lessons);
+    }
 }

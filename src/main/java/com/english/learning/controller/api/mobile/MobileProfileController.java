@@ -21,6 +21,8 @@ import java.util.Optional;
 public class MobileProfileController {
 
     private final UserService userService;
+    private final com.english.learning.service.auth.AuthService authService;
+    private final com.english.learning.service.auth.TokenBlacklistService tokenBlacklistService;
 
     /**
      * GET /api/mobile/profile/{userId}
@@ -70,6 +72,47 @@ public class MobileProfileController {
             return ResponseEntity.ok(Map.of("success", true, "username", newUsername.trim()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * PUT /api/mobile/profile/{userId}/password
+     * Body: { "currentPassword": "...", "newPassword": "..." }
+     */
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<?> updatePassword(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> payload) {
+        String currentPassword = payload.get("currentPassword");
+        String newPassword = payload.get("newPassword");
+
+        if (currentPassword == null || currentPassword.isBlank() || newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "currentPassword and newPassword required"));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Mật khẩu mới phải có ít nhất 6 ký tự."));
+        }
+
+        Optional<User> userOpt = userService.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOpt.get();
+        // Verify current password via AuthService
+        Optional<User> authenticatedUser = authService.authenticateUser(user.getUsername(), currentPassword);
+        if (authenticatedUser.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Mật khẩu hiện tại không chính xác."));
+        }
+
+        try {
+            authService.updatePassword(user, newPassword);
+            // Logout from all devices
+            tokenBlacklistService.revokeAllUserTokens(userId);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Có lỗi xảy ra: " + e.getMessage()));
         }
     }
 }

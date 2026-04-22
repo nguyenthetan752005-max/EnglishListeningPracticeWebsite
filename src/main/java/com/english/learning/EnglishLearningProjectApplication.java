@@ -51,6 +51,7 @@ public class EnglishLearningProjectApplication {
             while (!isPortAvailable(port)) port++;
             System.out.println("✅ Chuyển sang sử dụng cổng trống: " + port);
         }
+        System.setProperty("server.port", String.valueOf(port));
         props.put("server.port", String.valueOf(port));
     }
 
@@ -94,17 +95,66 @@ public class EnglishLearningProjectApplication {
 
         try {
             String os = System.getProperty("os.name").toLowerCase();
-            String cmd = executable + " config add-authtoken " + token + " && " + executable + " http --domain=" + domain + " " + port;
-            ProcessBuilder builder;
+            ProcessBuilder builder = null;
 
             if (os.contains("win")) {
-                builder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", cmd);
+                File bat = File.createTempFile("run_ngrok", ".bat");
+                bat.deleteOnExit();
+                try (FileWriter writer = new FileWriter(bat)) {
+                    writer.write("@echo off\n");
+                    writer.write("title Ngrok Monitor\n");
+                    writer.write("echo Cap quyen ngrok...\n");
+                    writer.write("\"" + executable + "\" config add-authtoken " + token + "\n");
+                    // Gọi ngrok mở ở một cửa sổ khác
+                    writer.write("start \"Ngrok Tunnel\" \"" + executable + "\" http --domain=" + domain + " " + port + "\n");
+                    writer.write("echo Ngrok dang chay hop le. He thong dang giam sat Server...\n");
+                    writer.write(":monitor\n");
+                    writer.write("timeout /t 3 /nobreak >nul\n");
+                    // Khám xem Cổng Web (8080/8081) của Spring Boot có còn LISTENING không
+                    writer.write("netstat -ano | findstr \"LISTENING\" | findstr \":" + port + "\" >nul\n");
+                    writer.write("if %errorlevel% neq 0 (\n");
+                    writer.write("    echo [!] Phat hien rong Web Server. Dang ban ha Ngrok...\n");
+                    writer.write("    taskkill /F /IM ngrok.exe /T >nul 2>&1\n");
+                    writer.write("    exit\n");
+                    writer.write(")\n");
+                    writer.write("goto monitor\n");
+                }
+                builder = new ProcessBuilder("cmd.exe", "/c", "start", "/min", "/wait", bat.getName());
+                builder.directory(bat.getParentFile());
             } else if (os.contains("mac")) {
+                String cmd = "\"" + executable + "\" config add-authtoken " + token + " && \"" + executable + "\" http --domain=" + domain + " " + port;
                 builder = new ProcessBuilder("osascript", "-e", "tell application \"Terminal\" to do script \"" + cmd + "\"");
             } else {
-                builder = new ProcessBuilder("gnome-terminal", "--", "bash", "-c", cmd + "; exec bash");
+                String cmd = "\"" + executable + "\" config add-authtoken " + token + " && \"" + executable + "\" http --domain=" + domain + " " + port;
+                builder = new ProcessBuilder("gnome-terminal", "--wait", "--", "bash", "-c", cmd + "; exec bash");
             }
-            builder.start();
+            
+            Process process = builder.start();
+            
+            // Đăng ký sự kiện tắt ngrok khi Web (Spring Boot) bị ngắt
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    if (os.contains("win")) {
+                        Runtime.getRuntime().exec(new String[]{"taskkill", "/F", "/IM", "ngrok.exe", "/T"});
+                    } else {
+                        Runtime.getRuntime().exec(new String[]{"killall", "ngrok"});
+                    }
+                    System.out.println("🛑 Đã tự động đóng tiến trình ngrok.");
+                } catch (Exception ignored) {}
+            }));
+            
+            Thread monitorThread = new Thread(() -> {
+                try {
+                    process.waitFor();
+                    System.err.println("\n⚠️ [CẢNH BÁO] Terminal ngrok đã bị ngắt!");
+                    System.err.println("⚠️ Ứng dụng web vẫn đang chạy ở cổng " + port + ", nhưng kết nối từ bên ngoài (Internet/Mobile) có thể bị gián đoạn.\n");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            monitorThread.setDaemon(true);
+            monitorThread.start();
+            
         } catch (IOException e) {
             System.err.println("❌ Lỗi khởi chạy ngrok: " + e.getMessage());
         }

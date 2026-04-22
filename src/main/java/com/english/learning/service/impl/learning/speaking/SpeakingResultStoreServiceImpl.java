@@ -29,6 +29,7 @@ public class SpeakingResultStoreServiceImpl implements SpeakingResultStoreServic
     private final SpeakingMediaService speakingMediaService;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public SpeakingPersistenceOutcome saveEvaluation(byte[] audioBytes, Long userId, Long sentenceId, SpeakingEvaluation evaluation) throws Exception {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User khong ton tai!"));

@@ -15,4 +15,5 @@ public class MobileSentenceResponse {
     private Double startTime;
     private Double endTime;
     private Integer orderIndex;
+    private java.util.List<String> properNouns;
 }

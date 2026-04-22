@@ -33,7 +33,12 @@ public class MobileCategoryServiceImpl implements MobileCategoryService {
     public List<MobileCategoryResponse> getAllCategories() {
         return categoryRepository.findPublishedCategories(ContentStatus.PUBLISHED)
                 .stream()
-                .map(mapper::toMobileCategory)
+                .map(category -> {
+                    MobileCategoryResponse response = mapper.toMobileCategory(category);
+                    int actualCount = (int) lessonRepository.countBySection_Category_IdAndStatus(category.getId(), ContentStatus.PUBLISHED);
+                    response.setTotalLessons(actualCount);
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -47,29 +52,41 @@ public class MobileCategoryServiceImpl implements MobileCategoryService {
 
         Category category = categoryOpt.get();
 
-        List<MobileCategoryCollectionSectionDto> sectionDtos = sectionRepository
-                .findPublishedSectionsByCategoryId(category.getId(), ContentStatus.PUBLISHED)
-                .stream()
-                .map(section -> {
-                    List<MobileLessonResponse> lessons = lessonRepository
-                            .findPublishedLessonsBySectionId(section.getId(), ContentStatus.PUBLISHED)
-                            .stream()
-                            .map(mapper::toMobileLesson)
-                            .collect(Collectors.toList());
+        List<com.english.learning.entity.Section> sections = sectionRepository
+                .findPublishedSectionsByCategoryId(category.getId(), ContentStatus.PUBLISHED);
+        
+        List<MobileCategoryCollectionSectionDto> sectionDtos = new java.util.ArrayList<>();
+        for (int i = 0; i < sections.size(); i++) {
+            com.english.learning.entity.Section section = sections.get(i);
+            List<MobileLessonResponse> lessons = new java.util.ArrayList<>();
+            if (i == 0) {
+                lessons = lessonRepository
+                        .findPublishedLessonsBySectionId(section.getId(), ContentStatus.PUBLISHED)
+                        .stream()
+                        .map(mapper::toMobileLesson)
+                        .collect(Collectors.toList());
+            }
+            sectionDtos.add(mapper.toMobileCategoryCollectionSection(section, lessons));
+        }
 
-                    // --- REMOVED THE LIMIT TO RETURN ALL LESSONS HERE TOO ---
-
-                    return mapper.toMobileCategoryCollectionSection(section, lessons);
-                })
-                .collect(Collectors.toList());
+        int actualTotalLessons = (int) lessonRepository.countBySection_Category_IdAndStatus(category.getId(), ContentStatus.PUBLISHED);
 
         return MobileCategoryCollectionResponse.builder()
                 .categoryId(category.getId())
                 .categorySlug(category.getSlug())
                 .categoryName(category.getName())
                 .description(category.getDescription())
-                .totalLessons(category.getTotalLessons())
+                .totalLessons(actualTotalLessons)
                 .sections(sectionDtos)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MobileLessonResponse> getLessonsBySection(Long sectionId) {
+        return lessonRepository.findPublishedLessonsBySectionId(sectionId, ContentStatus.PUBLISHED)
+                .stream()
+                .map(mapper::toMobileLesson)
+                .collect(Collectors.toList());
     }
 }

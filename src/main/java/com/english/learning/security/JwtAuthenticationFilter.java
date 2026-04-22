@@ -3,6 +3,7 @@ package com.english.learning.security;
 import com.english.learning.entity.User;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.auth.TokenBlacklistService;
+import com.english.learning.service.settings.AppSettingService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
     private final TokenBlacklistService blacklistService;
     private final UserRepository userRepository;
+    private final AppSettingService appSettingService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -75,6 +78,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     sendError(response, 401, "ACCOUNT_INACTIVE", 
                         "Tài khoản không hoạt động" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""));
                     return;
+                }
+
+                // Cập nhật nhịp đập hoạt động cuối (Online Status Heartbeat)
+                int timeoutMins = appSettingService.getOnlineTimeoutMinutes();
+                LocalDateTime now = LocalDateTime.now();
+                if (user.getLastActiveAt() == null || user.getLastActiveAt().isBefore(now.minusMinutes(timeoutMins))) {
+                    user.setLastActiveAt(now);
+                    userRepository.save(user);
                 }
 
                 // Set authentication

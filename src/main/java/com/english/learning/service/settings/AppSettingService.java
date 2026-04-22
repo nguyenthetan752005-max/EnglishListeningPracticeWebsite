@@ -12,4 +12,5 @@ public interface AppSettingService {
     int getMaxRecentUsersOnDashboard();
     int getSpeakingPassThreshold();
     boolean isUserRegistrationAllowed();
+    int getOnlineTimeoutMinutes();
 }

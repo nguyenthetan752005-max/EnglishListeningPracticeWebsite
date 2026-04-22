@@ -19,6 +19,7 @@ public class AppSetting {
     public static final String DEFAULT_SITE_NAME = "English Listening Practice";
     public static final String DEFAULT_SEO_META_DESCRIPTION =
             "Free English listening and speaking practice platform with real-world conversations.";
+    public static final int DEFAULT_ONLINE_TIMEOUT_MINUTES = 5;
 
     @Id
     private Long id = SINGLETON_ID;
@@ -37,4 +38,7 @@ public class AppSetting {
 
     @Column(nullable = false)
     private Boolean allowUserRegistration = true;
+
+    @Column(nullable = false)
+    private Integer onlineTimeoutMinutes = DEFAULT_ONLINE_TIMEOUT_MINUTES;
 }
