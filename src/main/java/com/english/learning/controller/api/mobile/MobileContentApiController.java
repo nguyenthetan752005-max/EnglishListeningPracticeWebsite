@@ -3,6 +3,8 @@ package com.english.learning.controller.api.mobile;
 import com.english.learning.dto.mobile.MobileBootstrapLiteResponse;
 import com.english.learning.dto.mobile.MobileBootstrapResponse;
 import com.english.learning.dto.mobile.MobileLessonDetailResponse;
+import com.english.learning.dto.mobile.MobileReminderSettingsResponse;
+import com.english.learning.service.settings.AppSettingService;
 import com.english.learning.service.mobile.MobileBootstrapLiteService;
 import com.english.learning.service.mobile.MobileBootstrapService;
 import com.english.learning.service.mobile.MobileLessonDetailService;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.format.DateTimeFormatter;
 
 /**
  * REST Controller: Mobile Content API.
@@ -23,10 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MobileContentApiController {
 
+    private static final DateTimeFormatter REMINDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private final MobileBootstrapService mobileBootstrapService;
     private final MobileBootstrapLiteService mobileBootstrapLiteService;
     private final MobileLessonDetailService mobileLessonDetailService;
     private final com.english.learning.service.mobile.MobileCategoryService mobileCategoryService;
+    private final AppSettingService appSettingService;
 
     /**
      * GET /api/mobile/bootstrap
@@ -103,5 +109,21 @@ public class MobileContentApiController {
     public ResponseEntity<java.util.List<com.english.learning.dto.mobile.MobileLessonResponse>> getSectionLessons(@PathVariable Long sectionId) {
         java.util.List<com.english.learning.dto.mobile.MobileLessonResponse> lessons = mobileCategoryService.getLessonsBySection(sectionId);
         return ResponseEntity.ok(lessons);
+    }
+
+    /**
+     * GET /api/mobile/app-settings/reminder
+     *
+     * Returns the public daily reminder schedule used by the Android app.
+     * This endpoint must stay public so guest users can also receive app-level reminders.
+     */
+    @GetMapping("/app-settings/reminder")
+    public ResponseEntity<MobileReminderSettingsResponse> getReminderSettings() {
+        MobileReminderSettingsResponse response = MobileReminderSettingsResponse.builder()
+                .dailyReminderEnabled(appSettingService.isDailyReminderEnabled())
+                .dailyReminderTime(appSettingService.getDailyReminderTime().format(REMINDER_TIME_FORMATTER))
+                .dailyReminderTimezone(appSettingService.getDailyReminderTimezone())
+                .build();
+        return ResponseEntity.ok(response);
     }
 }

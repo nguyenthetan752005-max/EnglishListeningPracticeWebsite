@@ -33,7 +33,7 @@
         <div class="admin-stat-card" th:if="${!isSelfAdmin and userDetail.role != null and userDetail.role.name() == 'USER'}"><div class="admin-stat-info"><h3>Avg Score</h3><p th:text="${avgScore}">0.0</p></div></div>
         <div class="admin-stat-card" th:if="${isSelfAdmin}"><div class="admin-stat-info"><h3>Role</h3><p th:text="${userDetail.role}">ADMIN</p></div></div>
         <div class="admin-stat-card" th:if="${isSelfAdmin}"><div class="admin-stat-info"><h3>Provider</h3><p th:text="${userDetail.provider != null ? userDetail.provider : 'LOCAL'}">LOCAL</p></div></div>
-        <div class="admin-stat-card"><div class="admin-stat-info"><h3>Status</h3><p th:text="${userDetail.isActive != null and userDetail.isActive ? 'Online' : 'Offline'}">Offline</p></div></div>
+        <div class="admin-stat-card"><div class="admin-stat-info"><h3>Status</h3><p style="display:flex;align-items:center;gap:6px;"><span th:style="'width:8px;height:8px;border-radius:50%;background:' + (${userDetail.isOnline != null and userDetail.isOnline} ? '#22c55e' : '#94a3b8')"></span><span th:text="${userDetail.isOnline != null and userDetail.isOnline ? 'Online' : 'Offline'}">Offline</span></p></div></div>
         <div class="admin-stat-card" th:if="${isSelfAdmin}"><div class="admin-stat-info"><h3>Created</h3><p th:text="${userDetail.createdAt != null ? #temporals.format(userDetail.createdAt, 'yyyy-MM-dd') : 'N/A'}">N/A</p></div></div>
     </div>
 

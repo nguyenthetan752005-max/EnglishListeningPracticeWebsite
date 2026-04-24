@@ -44,4 +44,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @org.springframework.data.jpa.repository.Query(value = "UPDATE users SET is_active = false", nativeQuery = true)
     void resetAllActiveStatuses();
+
+    @Modifying
+    @jakarta.transaction.Transactional
+    @org.springframework.data.jpa.repository.Query(value = "UPDATE users SET last_active_at = NULL", nativeQuery = true)
+    void resetAllOnlinePresence();
+
+    @Modifying
+    @jakarta.transaction.Transactional
+    @org.springframework.data.jpa.repository.Query(value = "UPDATE users SET is_active = true WHERE is_active = false AND suspension_reason IS NULL", nativeQuery = true)
+    void repairWronglyDeactivatedUsers();
 }

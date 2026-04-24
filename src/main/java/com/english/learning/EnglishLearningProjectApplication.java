@@ -110,7 +110,13 @@ public class EnglishLearningProjectApplication {
                     writer.write("echo Ngrok dang chay hop le. He thong dang giam sat Server...\n");
                     writer.write(":monitor\n");
                     writer.write("timeout /t 3 /nobreak >nul\n");
-                    // Khám xem Cổng Web (8080/8081) của Spring Boot có còn LISTENING không
+                    // Kiểm tra ngrok còn chạy không (user có thể tắt cửa sổ ngrok)
+                    writer.write("tasklist /FI \"IMAGENAME eq ngrok.exe\" 2>nul | findstr /I \"ngrok.exe\" >nul\n");
+                    writer.write("if %errorlevel% neq 0 (\n");
+                    writer.write("    echo [!] Ngrok da bi tat. Dang thoat giam sat...\n");
+                    writer.write("    exit\n");
+                    writer.write(")\n");
+                    // Kiểm tra Cổng Web (8080/8081) của Spring Boot có còn LISTENING không
                     writer.write("netstat -ano | findstr \"LISTENING\" | findstr \":" + port + "\" >nul\n");
                     writer.write("if %errorlevel% neq 0 (\n");
                     writer.write("    echo [!] Phat hien rong Web Server. Dang ban ha Ngrok...\n");

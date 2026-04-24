@@ -40,6 +40,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateNotificationPreference(Long id, boolean notificationsEnabled, String timezone) throws Exception {
+        userProfileManagementService.updateNotificationPreference(id, notificationsEnabled, timezone);
+    }
+
+    @Override
     public void adminUpdateBasicInfo(Long id, String username, String avatarUrl, boolean isActive, Role role) throws Exception {
         userAdministrationService.adminUpdateBasicInfo(id, username, avatarUrl, isActive, role);
     }

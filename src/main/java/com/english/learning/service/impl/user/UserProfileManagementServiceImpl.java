@@ -5,6 +5,7 @@ import com.english.learning.repository.UserRepository;
 import com.english.learning.service.user.UserProfileManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -47,6 +48,14 @@ public class UserProfileManagementServiceImpl implements UserProfileManagementSe
         User user = userRepository.findById(id).orElseThrow(() -> new Exception("Khong tim thay nguoi dung"));
         user.setAvatarUrl(avatarUrl);
         user.setAvatarPublicId(avatarPublicId);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateNotificationPreference(Long id, boolean notificationsEnabled, String timezone) throws Exception {
+        User user = userRepository.findById(id).orElseThrow(() -> new Exception("Khong tim thay nguoi dung"));
+        user.setNotificationsEnabled(notificationsEnabled);
+        user.setNotificationTimezone(StringUtils.hasText(timezone) ? timezone.trim() : null);
         userRepository.save(user);
     }
 }

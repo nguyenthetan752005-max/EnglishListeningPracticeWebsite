@@ -15,4 +15,9 @@ public class MobileUserProfileResponse {
     private String formattedActiveTime;
     private Integer activeTime7d;
     private Integer activeTime30d;
+    private Boolean notificationsEnabled;
+    private String notificationTimezone;
+    private Boolean dailyReminderEnabled;
+    private String dailyReminderTime;
+    private String dailyReminderTimezone;
 }

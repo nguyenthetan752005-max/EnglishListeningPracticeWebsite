@@ -122,6 +122,7 @@ public class MobileResponseMapper {
                 .id(entity.getId())
                 .sentenceId(entity.getSentence() != null ? entity.getSentence().getId() : null)
                 .parentCommentId(entity.getParent() != null ? entity.getParent().getId() : null)
+                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
                 .author(author)
                 .avatarLabel(avatarLabel)
                 .timeAgo(deriveTimeAgo(entity.getCreatedAt()))

@@ -1,13 +1,16 @@
 package com.english.learning.controller.api.mobile;
 
+import com.english.learning.dto.mobile.MobileNotificationPreferenceRequest;
 import com.english.learning.dto.mobile.MobileUserProfileResponse;
 import com.english.learning.entity.User;
+import com.english.learning.service.settings.AppSettingService;
 import com.english.learning.service.user.UserService;
 import com.english.learning.util.TimeFormatUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,9 +23,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MobileProfileController {
 
+    private static final DateTimeFormatter REMINDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private final UserService userService;
     private final com.english.learning.service.auth.AuthService authService;
     private final com.english.learning.service.auth.TokenBlacklistService tokenBlacklistService;
+    private final AppSettingService appSettingService;
 
     /**
      * GET /api/mobile/profile/{userId}
@@ -49,6 +54,11 @@ public class MobileProfileController {
                 .formattedActiveTime(formattedTime)
                 .activeTime7d(user.getActiveTime7d())
                 .activeTime30d(user.getActiveTime30d())
+                .notificationsEnabled(Boolean.TRUE.equals(user.getNotificationsEnabled()))
+                .notificationTimezone(user.getNotificationTimezone())
+                .dailyReminderEnabled(appSettingService.isDailyReminderEnabled())
+                .dailyReminderTime(appSettingService.getDailyReminderTime().format(REMINDER_TIME_FORMATTER))
+                .dailyReminderTimezone(appSettingService.getDailyReminderTimezone())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -113,6 +123,34 @@ public class MobileProfileController {
             return ResponseEntity.ok(Map.of("success", true, "message", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Có lỗi xảy ra: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * PUT /api/mobile/profile/{userId}/notifications
+     * Body: { "notificationsEnabled": true, "timezone": "Asia/Bangkok" }
+     */
+    @PutMapping("/{userId}/notifications")
+    public ResponseEntity<?> updateNotificationPreference(
+            @PathVariable Long userId,
+            @RequestBody MobileNotificationPreferenceRequest request) {
+        if (request.getNotificationsEnabled() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "notificationsEnabled required"));
+        }
+
+        try {
+            userService.updateNotificationPreference(
+                    userId,
+                    request.getNotificationsEnabled(),
+                    request.getTimezone()
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "notificationsEnabled", request.getNotificationsEnabled(),
+                    "timezone", request.getTimezone()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }

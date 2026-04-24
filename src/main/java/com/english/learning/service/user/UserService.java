@@ -19,6 +19,7 @@ public interface UserService {
     void updateUsername(Long id, String newUsername) throws Exception;
     void updateAvatarUrl(Long id, String avatarUrl) throws Exception;
     void updateAvatar(Long id, String avatarUrl, String avatarPublicId) throws Exception;
+    void updateNotificationPreference(Long id, boolean notificationsEnabled, String timezone) throws Exception;
 
     void adminUpdateBasicInfo(Long id, String username, String avatarUrl, boolean isActive, com.english.learning.enums.Role role) throws Exception;
     void adminUpdatePassword(Long id, String newPassword) throws Exception;

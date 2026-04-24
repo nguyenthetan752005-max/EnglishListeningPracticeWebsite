@@ -12,5 +12,7 @@ public interface UserProfileManagementService {
     void updateAvatarUrl(Long id, String avatarUrl) throws Exception;
 
     void updateAvatar(Long id, String avatarUrl, String avatarPublicId) throws Exception;
+
+    void updateNotificationPreference(Long id, boolean notificationsEnabled, String timezone) throws Exception;
 }
 

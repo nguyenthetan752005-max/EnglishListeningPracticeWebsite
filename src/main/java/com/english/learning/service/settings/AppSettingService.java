@@ -3,6 +3,8 @@ package com.english.learning.service.settings;
 import com.english.learning.dto.AppSettingForm;
 import com.english.learning.entity.AppSetting;
 
+import java.time.LocalTime;
+
 public interface AppSettingService {
     AppSetting getSettings();
     AppSettingForm getSettingForm();
@@ -13,4 +15,7 @@ public interface AppSettingService {
     int getSpeakingPassThreshold();
     boolean isUserRegistrationAllowed();
     int getOnlineTimeoutMinutes();
+    boolean isDailyReminderEnabled();
+    LocalTime getDailyReminderTime();
+    String getDailyReminderTimezone();
 }

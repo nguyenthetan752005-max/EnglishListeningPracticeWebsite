@@ -9,6 +9,7 @@ public class MobileCommentResponse {
     private Long id;
     private Long sentenceId;
     private Long parentCommentId;
+    private Long userId;
     private String author;
     private String avatarLabel;
     private String timeAgo;

@@ -5,14 +5,21 @@ import com.english.learning.entity.User;
 import com.english.learning.repository.PasswordResetTokenRepository;
 import com.english.learning.service.auth.AuthService;
 import com.english.learning.service.auth.PasswordResetService;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,9 +33,13 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final AuthService authService;
     private final JavaMailSender mailSender;
     private final com.english.learning.service.auth.TokenBlacklistService tokenBlacklistService;
+    private final TemplateEngine templateEngine;
 
     @Value("${app.url}")
     private String appUrl;
+
+    @Value("${app.external.url:${app.url}}")
+    private String externalUrl;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -92,31 +103,52 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private void sendEmail(String email, String token, String source) {
         boolean fromProfile = !"forgot-password".equals(source);
         boolean fromAdminProfile = "admin-profile".equals(source);
-        String resetUrl = appUrl + "/reset-password?token=" + token + "&source=" + source;
+        String resetUrl = externalUrl + "/reset-password?token=" + token + "&source=" + source;
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(email);
-        message.setSubject(fromProfile
+        String subject = fromProfile
                 ? (fromAdminProfile
-                    ? "English Learning - XÃ¡c nháº­n Ä‘á»•i máº­t kháº©u admin"
-                    : "English Learning - XÃ¡c nháº­n Ä‘á»•i máº­t kháº©u")
-                : "English Learning - Äáº·t láº¡i máº­t kháº©u");
-        message.setText("Xin chÃ o,\n\n"
-                + (fromAdminProfile
-                ? "Báº¡n Ä‘Ã£ yÃªu cáº§u Ä‘á»•i máº­t kháº©u cho tÃ i khoáº£n admin Ä‘ang Ä‘Äƒng nháº­p. Vui lÃ²ng nháº¥n vÃ o link bÃªn dÆ°á»›i Ä‘á»ƒ xÃ¡c nháº­n vÃ  Ä‘áº·t máº­t kháº©u má»›i:\n\n"
-                : (fromProfile
-                ? "Báº¡n Ä‘Ã£ yÃªu cáº§u Ä‘á»•i máº­t kháº©u tá»« trang há»“ sÆ¡. Vui lÃ²ng nháº¥n vÃ o link bÃªn dÆ°á»›i Ä‘á»ƒ xÃ¡c nháº­n vÃ  Ä‘áº·t máº­t kháº©u má»›i:\n\n"
-                : "Báº¡n Ä‘Ã£ yÃªu cáº§u Ä‘áº·t láº¡i máº­t kháº©u. Vui lÃ²ng nháº¥n vÃ o link bÃªn dÆ°á»›i Ä‘á»ƒ Ä‘áº·t máº­t kháº©u má»›i:\n\n"))
-                + resetUrl + "\n\n"
-                + "Link nÃ y sáº½ háº¿t háº¡n sau " + TOKEN_EXPIRY_MINUTES + " phÃºt.\n\n"
-                + (fromProfile
-                ? "Sau khi Ä‘á»•i máº­t kháº©u thÃ nh cÃ´ng, phiÃªn Ä‘Äƒng nháº­p hiá»‡n táº¡i sáº½ bá»‹ Ä‘Äƒng xuáº¥t.\n\n"
-                : "")
-                + "Náº¿u báº¡n khÃ´ng yÃªu cáº§u thao tÃ¡c nÃ y, vui lÃ²ng bá» qua email nÃ y.\n\n"
-                + "TrÃ¢n trá»ng,\nEnglish Learning Team");
+                    ? "English Learning - Xác nhận đổi mật khẩu Admin"
+                    : "English Learning - Xác nhận đổi mật khẩu")
+                : "English Learning - Đặt lại mật khẩu";
 
-        mailSender.send(message);
+        String title = fromAdminProfile
+                ? "Xác nhận đổi mật khẩu Admin"
+                : (fromProfile ? "Xác nhận đổi mật khẩu" : "Đặt lại mật khẩu");
+
+        String description = fromAdminProfile
+                ? "Bạn đã yêu cầu đổi mật khẩu cho tài khoản admin đang đăng nhập. Vui lòng nhấn vào nút bên dưới để xác nhận và đặt mật khẩu mới:"
+                : (fromProfile
+                ? "Bạn đã yêu cầu đổi mật khẩu từ trang hồ sơ. Vui lòng nhấn vào nút bên dưới để xác nhận và đặt mật khẩu mới:"
+                : "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản English Learning. Vui lòng nhấn vào nút bên dưới để đặt mật khẩu mới:");
+
+        String buttonText = fromProfile ? "Đổi mật khẩu" : "Đặt lại mật khẩu";
+
+        // Build Thymeleaf context
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", title);
+        variables.put("description", description);
+        variables.put("resetUrl", resetUrl);
+        variables.put("buttonText", buttonText);
+        variables.put("expiryMinutes", TOKEN_EXPIRY_MINUTES);
+        variables.put("showSecurityNote", fromProfile);
+
+        Context context = new Context();
+        context.setVariables(variables);
+
+        // Process template
+        String htmlContent = templateEngine.process("mail/password-reset-email", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail, "English Learning Team");
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Không thể gửi email: " + e.getMessage(), e);
+        }
     }
 }
 

@@ -51,6 +51,13 @@ public class MobileAuthController {
                         .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
                         .build());
             }
+            if (Boolean.FALSE.equals(user.getIsActive())) {
+                return ResponseEntity.ok(MobileAuthResponse.builder()
+                        .success(false)
+                        .code("ACCOUNT_INACTIVE")
+                        .message("Tài khoản không hoạt động" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                        .build());
+            }
             // Tạo JWT token
             String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole().name());
             
@@ -130,6 +137,13 @@ public class MobileAuthController {
                             .success(false)
                             .code("ACCOUNT_BANNED")
                             .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                            .build());
+                }
+                if (Boolean.FALSE.equals(user.getIsActive())) {
+                    return ResponseEntity.ok(MobileAuthResponse.builder()
+                            .success(false)
+                            .code("ACCOUNT_INACTIVE")
+                            .message("Tài khoản không hoạt động" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
                             .build());
                 }
                 // Tạo JWT token

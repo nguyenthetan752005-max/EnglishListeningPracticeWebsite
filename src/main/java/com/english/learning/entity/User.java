@@ -61,6 +61,11 @@ public class User {
     private String provider;
     private String providerId;
     private Integer totalActiveTime = 0;
+    @Column(name = "notifications_enabled", nullable = false)
+    private Boolean notificationsEnabled = false;
+
+    @Column(name = "notification_timezone", length = 80)
+    private String notificationTimezone;
 
     // Cached values updated by Leaderboard Cron Job to ensure ultra-fast Leaderboard Retrieval
     @Column(name = "active_time_7d")

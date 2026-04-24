@@ -170,8 +170,8 @@
                                 oninput="filterTable('usersTable', this.value)">
                             <select class="admin-filter-select" id="filterUserStatus"
                                 onchange="filterTableByStatus('usersTable', this.value)">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
+                                <option value="active">Online</option>
+                                <option value="inactive">Offline</option>
                             </select>
                             <span class="admin-result-count">Top Score:</span>
                             <select class="admin-filter-select" id="filterUserTopScore" onchange="sortUsersByTopScore(this.value)">
@@ -197,7 +197,7 @@
                             </thead>
                             <tbody>
                                 <tr th:each="user : ${regularUsers}"
-                                    th:data-status="${user.isActive != null and user.isActive ? 'active' : 'inactive'}"
+                                    th:data-status="${user.isOnline != null and user.isOnline ? 'active' : 'inactive'}"
                                     th:data-top-score="${userTopScoreMap != null and userTopScoreMap[user.id] != null ? userTopScoreMap[user.id] : 0}"
                                     th:onclick="'openUserProfile(' + ${user.id} + ')'">
                                     <td th:text="${user.id}">1</td>
@@ -216,10 +216,12 @@
                                     </td>
                                     <td><span class="admin-badge badge-user"
                                             th:text="${userTopScoreMap != null and userTopScoreMap[user.id] != null ? userTopScoreMap[user.id] : 0}">0</span></td>
-                                    <td><span
-                                            th:classappend="${user.isActive != null and user.isActive ? 'badge-active' : 'badge-inactive'}"
-                                            class="admin-badge"
-                                            th:text="${user.isActive != null and user.isActive ? 'Active' : 'Inactive'}">Active</span>
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:6px;">
+                                            <div th:style="'width:8px;height:8px;border-radius:50%;background:' + (${user.isOnline != null and user.isOnline} ? '#22c55e' : '#94a3b8')"></div>
+                                            <span th:text="${user.isOnline != null and user.isOnline ? 'Online' : 'Offline'}"
+                                                th:style="'color:' + (${user.isOnline != null and user.isOnline} ? '#166534' : 'var(--text-secondary)') + ';font-weight:600;font-size:13px;'">Online</span>
+                                        </div>
                                     </td>
                                     <td
                                         th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd') : 'N/A'}">
@@ -1132,6 +1134,18 @@
                                 <span class="admin-form-help">Used by speaking practice to mark a sentence as completed.</span>
                             </div>
                         </div>
+                        <div class="admin-grid-2">
+                            <div class="admin-form-group">
+                                <label>Online Timeout Minutes</label>
+                                <input type="number" class="admin-form-control" th:field="*{onlineTimeoutMinutes}" min="1" max="1440" required>
+                                <span class="admin-form-help">Controls how long a user stays marked online after the last activity heartbeat.</span>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Reminder Timezone</label>
+                                <input type="text" class="admin-form-control" th:field="*{dailyReminderTimezone}" maxlength="80" required>
+                                <span class="admin-form-help">Example: `Asia/Ho_Chi_Minh`, `Asia/Bangkok`, `UTC`.</span>
+                            </div>
+                        </div>
                         <div class="admin-form-group">
                             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
                                 <input type="checkbox" th:field="*{allowUserRegistration}"
@@ -1139,6 +1153,19 @@
                                 Allow User Registration
                             </label>
                             <span class="admin-form-help">Unchecking will block new signups from both `/register` and Google OAuth account creation.</span>
+                        </div>
+                        <div class="admin-form-group">
+                            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                <input type="checkbox" th:field="*{dailyReminderEnabled}"
+                                    style="width:18px;height:18px;accent-color:var(--primary);">
+                                Enable Daily Reminder For Mobile App
+                            </label>
+                            <span class="admin-form-help">When enabled, the mobile app uses this global reminder schedule to show and later send daily study reminders.</span>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Daily Reminder Time</label>
+                            <input type="time" class="admin-form-control" th:field="*{dailyReminderTime}" required>
+                            <span class="admin-form-help">Mobile reminder message: `Hôm nay bạn đã học tiếng anh chưa, nếu chưa hãy học cùng Tung Tung nhé!`</span>
                         </div>
                         <div style="display:flex;justify-content:flex-end;margin-top:24px;">
                             <button type="submit" class="admin-btn admin-btn-primary"><i class="fas fa-save"></i> Save Changes</button>

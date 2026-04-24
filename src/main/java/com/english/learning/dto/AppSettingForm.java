@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,4 +37,14 @@ public class AppSettingForm {
     @Min(value = 1, message = "Timeout must be at least 1 minute.")
     @Max(value = 1440, message = "Timeout must be at most 24 hours (1440 mins).")
     private Integer onlineTimeoutMinutes;
+
+    private boolean dailyReminderEnabled;
+
+    @NotBlank(message = "Daily reminder time is required.")
+    @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "Reminder time must be in HH:mm format.")
+    private String dailyReminderTime;
+
+    @NotBlank(message = "Daily reminder timezone is required.")
+    @Size(max = 80, message = "Reminder timezone must be at most 80 characters.")
+    private String dailyReminderTimezone;
 }

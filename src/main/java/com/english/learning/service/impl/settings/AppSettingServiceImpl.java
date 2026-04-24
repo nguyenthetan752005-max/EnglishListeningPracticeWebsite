@@ -10,10 +10,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @RequiredArgsConstructor
 public class AppSettingServiceImpl implements AppSettingService {
 
+    private static final DateTimeFormatter REMINDER_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private final AppSettingRepository appSettingRepository;
 
     @Override
@@ -32,6 +36,9 @@ public class AppSettingServiceImpl implements AppSettingService {
         form.setSpeakingPassThreshold(settings.getSpeakingPassThreshold());
         form.setAllowUserRegistration(Boolean.TRUE.equals(settings.getAllowUserRegistration()));
         form.setOnlineTimeoutMinutes(settings.getOnlineTimeoutMinutes());
+        form.setDailyReminderEnabled(Boolean.TRUE.equals(settings.getDailyReminderEnabled()));
+        form.setDailyReminderTime(formatReminderTime(settings.getDailyReminderTime()));
+        form.setDailyReminderTimezone(settings.getDailyReminderTimezone());
         return form;
     }
 
@@ -47,6 +54,9 @@ public class AppSettingServiceImpl implements AppSettingService {
         if (form.getOnlineTimeoutMinutes() != null) {
             settings.setOnlineTimeoutMinutes(form.getOnlineTimeoutMinutes());
         }
+        settings.setDailyReminderEnabled(form.isDailyReminderEnabled());
+        settings.setDailyReminderTime(parseReminderTime(form.getDailyReminderTime()));
+        settings.setDailyReminderTimezone(cleanReminderTimezone(form.getDailyReminderTimezone()));
         appSettingRepository.save(settings);
     }
 
@@ -81,6 +91,23 @@ public class AppSettingServiceImpl implements AppSettingService {
         return timeout != null ? timeout : AppSetting.DEFAULT_ONLINE_TIMEOUT_MINUTES;
     }
 
+    @Override
+    public boolean isDailyReminderEnabled() {
+        return Boolean.TRUE.equals(getSettings().getDailyReminderEnabled());
+    }
+
+    @Override
+    public LocalTime getDailyReminderTime() {
+        LocalTime value = getSettings().getDailyReminderTime();
+        return value != null ? value : AppSetting.DEFAULT_DAILY_REMINDER_TIME;
+    }
+
+    @Override
+    public String getDailyReminderTimezone() {
+        String value = getSettings().getDailyReminderTimezone();
+        return StringUtils.hasText(value) ? value.trim() : AppSetting.DEFAULT_DAILY_REMINDER_TIMEZONE;
+    }
+
     private AppSetting getOrCreateSettings() {
         return appSettingRepository.findById(AppSetting.SINGLETON_ID)
                 .orElseGet(() -> appSettingRepository.save(new AppSetting()));
@@ -94,5 +121,23 @@ public class AppSettingServiceImpl implements AppSettingService {
         return StringUtils.hasText(seoMetaDescription)
                 ? seoMetaDescription.trim()
                 : AppSetting.DEFAULT_SEO_META_DESCRIPTION;
+    }
+
+    private LocalTime parseReminderTime(String rawValue) {
+        if (!StringUtils.hasText(rawValue)) {
+            return AppSetting.DEFAULT_DAILY_REMINDER_TIME;
+        }
+        return LocalTime.parse(rawValue.trim(), REMINDER_TIME_FORMATTER);
+    }
+
+    private String formatReminderTime(LocalTime value) {
+        LocalTime resolved = value != null ? value : AppSetting.DEFAULT_DAILY_REMINDER_TIME;
+        return resolved.format(REMINDER_TIME_FORMATTER);
+    }
+
+    private String cleanReminderTimezone(String timezone) {
+        return StringUtils.hasText(timezone)
+                ? timezone.trim()
+                : AppSetting.DEFAULT_DAILY_REMINDER_TIMEZONE;
     }
 }
