@@ -4,16 +4,13 @@ import com.english.learning.entity.User;
 import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import com.english.learning.service.auth.GoogleAuthService;
+import com.english.learning.util.CachedGoogleTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +19,7 @@ import java.util.UUID;
 public class GoogleAuthServiceImpl implements GoogleAuthService {
 
     private final UserRepository userRepository;
+    private final CachedGoogleTokenVerifier cachedGoogleTokenVerifier;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
@@ -33,11 +31,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
                 throw new RuntimeException("Chưa cấu hình Google Client ID trên máy chủ.");
             }
 
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                    .setAudience(Collections.singletonList(googleClientId))
-                    .build();
-
-            GoogleIdToken idToken = verifier.verify(idTokenString);
+            GoogleIdToken idToken = cachedGoogleTokenVerifier.verify(idTokenString, googleClientId);
             if (idToken != null) {
                 GoogleIdToken.Payload payload = idToken.getPayload();
                 

@@ -6,6 +6,7 @@ import com.english.learning.entity.User;
 import com.english.learning.enums.Role;
 import com.english.learning.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,9 +21,10 @@ public class MobileLeaderboardMapper {
 
     private final UserRepository userRepository;
 
+    @Cacheable(value = "leaderboard", key = "#currentUserId != null ? #currentUserId : 'guest'", unless = "#result == null")
     public MobileLeaderboardResponse buildLeaderboard(Long currentUserId) {
-        List<User> weeklyAllUsers = userRepository.findByRoleOrderByActiveTime7dDesc(Role.USER);
-        List<User> monthlyAllUsers = userRepository.findByRoleOrderByActiveTime30dDesc(Role.USER);
+        List<User> weeklyAllUsers = userRepository.findTop30ByRoleOrderByActiveTime7dDesc(Role.USER);
+        List<User> monthlyAllUsers = userRepository.findTop30ByRoleOrderByActiveTime30dDesc(Role.USER);
 
         List<MobileLeaderboardEntryResponse> weeklyEntries = buildEntries(weeklyAllUsers, true, currentUserId);
         List<MobileLeaderboardEntryResponse> monthlyEntries = buildEntries(monthlyAllUsers, false, currentUserId);
@@ -64,8 +66,16 @@ public class MobileLeaderboardMapper {
     }
 
     private int resolveRank(List<User> sortedUsers, Long currentUserId) {
+        // Only search in top 30 (if not found, user is not in top 30)
         for (int i = 0; i < sortedUsers.size(); i++) {
             if (currentUserId.equals(sortedUsers.get(i).getId())) {
+                return i + 1;
+            }
+        }
+        // User not in top 30, query full list to find actual rank
+        List<User> allUsers = userRepository.findByRoleOrderByActiveTime7dDesc(Role.USER);
+        for (int i = 0; i < allUsers.size(); i++) {
+            if (currentUserId.equals(allUsers.get(i).getId())) {
                 return i + 1;
             }
         }

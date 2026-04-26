@@ -19,6 +19,13 @@ public interface DailyStudyStatisticRepository extends JpaRepository<DailyStudyS
     @Query("SELECT COALESCE(SUM(d.activeTimeSeconds), 0) FROM DailyStudyStatistic d WHERE d.user = :user AND d.studyDate >= :startDate")
     Integer sumActiveTimeByUserAndStudyDateAfter(@Param("user") User user, @Param("startDate") LocalDate startDate);
 
+    // Last 7 days of study data for weekly activity chart
+    java.util.List<DailyStudyStatistic> findByUserAndStudyDateBetweenOrderByStudyDateAsc(User user, LocalDate startDate, LocalDate endDate);
+
+    // All study dates for streak computation (ordered newest first)
+    @Query("SELECT DISTINCT d.studyDate FROM DailyStudyStatistic d WHERE d.user = :user AND d.activeTimeSeconds > 0 ORDER BY d.studyDate DESC")
+    java.util.List<LocalDate> findDistinctStudyDatesByUserOrderByDesc(@Param("user") User user);
+
     @Modifying
     @Query(value = "DELETE FROM daily_study_statistics WHERE user_id = :userId", nativeQuery = true)
     void deleteByUserId(@Param("userId") Long userId);

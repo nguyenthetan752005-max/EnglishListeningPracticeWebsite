@@ -1,10 +1,13 @@
 package com.english.learning.controller.api.mobile;
 
 import com.english.learning.dto.InProgressLessonDTO;
+import com.english.learning.dto.mobile.MobileSentenceProgressResponse;
 import com.english.learning.entity.UserProgress;
 import com.english.learning.service.progress.UserProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,9 +29,29 @@ public class MobileProgressController {
      * Returns list of in-progress lessons for a user.
      */
     @GetMapping("/in-progress")
-    public ResponseEntity<List<InProgressLessonDTO>> getInProgressLessons(@RequestParam Long userId) {
-        List<InProgressLessonDTO> lessons = userProgressService.getInProgressLessons(userId);
+    public ResponseEntity<List<InProgressLessonDTO>> getInProgressLessons(@RequestParam(required = false) Long userId) {
+        Long resolvedUserId = resolveAuthenticatedUserId(userId);
+        if (resolvedUserId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        List<InProgressLessonDTO> lessons = userProgressService.getInProgressLessons(resolvedUserId);
         return ResponseEntity.ok(lessons);
+    }
+
+    /**
+     * GET /api/mobile/progress/snapshot?lessonId={lessonId}
+     * Returns touched sentence progress for current authenticated user.
+     * Android uses this to hydrate Room cache without blocking UI.
+     */
+    @GetMapping("/snapshot")
+    public ResponseEntity<List<MobileSentenceProgressResponse>> getProgressSnapshot(
+            @RequestParam(required = false) Long lessonId) {
+        Long resolvedUserId = resolveAuthenticatedUserId(null);
+        if (resolvedUserId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        List<MobileSentenceProgressResponse> snapshot = userProgressService.getSentenceProgressSnapshot(resolvedUserId, lessonId);
+        return ResponseEntity.ok(snapshot);
     }
 
     /**
@@ -38,10 +61,10 @@ public class MobileProgressController {
      */
     @PostMapping("/update")
     public ResponseEntity<?> updateProgress(@RequestBody Map<String, Long> payload) {
-        Long userId = payload.get("userId");
+        Long userId = resolveAuthenticatedUserId(payload.get("userId"));
         Long sentenceId = payload.get("sentenceId");
         if (userId == null || sentenceId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId and sentenceId required"));
+            return ResponseEntity.badRequest().body(Map.of("error", "sentenceId required"));
         }
         UserProgress progress = userProgressService.updateProgress(userId, sentenceId);
         return ResponseEntity.ok(Map.of("success", true, "status", progress.getStatus().name()));
@@ -54,10 +77,10 @@ public class MobileProgressController {
      */
     @PostMapping("/complete")
     public ResponseEntity<?> completeSentence(@RequestBody Map<String, Long> payload) {
-        Long userId = payload.get("userId");
+        Long userId = resolveAuthenticatedUserId(payload.get("userId"));
         Long sentenceId = payload.get("sentenceId");
         if (userId == null || sentenceId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId and sentenceId required"));
+            return ResponseEntity.badRequest().body(Map.of("error", "sentenceId required"));
         }
         UserProgress progress = userProgressService.completeSentence(userId, sentenceId);
         return ResponseEntity.ok(Map.of("success", true, "status", progress.getStatus().name()));
@@ -70,12 +93,20 @@ public class MobileProgressController {
      */
     @PostMapping("/skip")
     public ResponseEntity<?> skipSentence(@RequestBody Map<String, Long> payload) {
-        Long userId = payload.get("userId");
+        Long userId = resolveAuthenticatedUserId(payload.get("userId"));
         Long sentenceId = payload.get("sentenceId");
         if (userId == null || sentenceId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId and sentenceId required"));
+            return ResponseEntity.badRequest().body(Map.of("error", "sentenceId required"));
         }
         UserProgress progress = userProgressService.skipSentence(userId, sentenceId);
         return ResponseEntity.ok(Map.of("success", true, "status", progress.getStatus().name()));
+    }
+
+    private Long resolveAuthenticatedUserId(Long fallbackUserId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Long) {
+            return (Long) auth.getPrincipal();
+        }
+        return fallbackUserId;
     }
 }

@@ -15,6 +15,10 @@ public class MobileUserProfileResponse {
     private String formattedActiveTime;
     private Integer activeTime7d;
     private Integer activeTime30d;
+    private Integer currentStreak;
+    private Integer longestStreak;
+    private Integer missedDays;
+    private java.util.List<Integer> weeklyActivity;
     private Boolean notificationsEnabled;
     private String notificationTimezone;
     private Boolean dailyReminderEnabled;

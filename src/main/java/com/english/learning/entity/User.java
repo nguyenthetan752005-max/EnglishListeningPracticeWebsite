@@ -26,7 +26,10 @@ import java.util.List;
 @Setter
 @ToString(exclude = {"passwordResetTokens", "comments", "commentVotes", "userProgresses", "speakingResults", "dailyStudyStatistics"})
 @EqualsAndHashCode(of = "id")
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_role_active_time_7d", columnList = "role,active_time_7d DESC"),
+    @Index(name = "idx_role_active_time_30d", columnList = "role,active_time_30d DESC")
+})
 @SQLRestriction("is_deleted = false")
 public class User {
 

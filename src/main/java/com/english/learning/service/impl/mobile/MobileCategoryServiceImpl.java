@@ -58,14 +58,11 @@ public class MobileCategoryServiceImpl implements MobileCategoryService {
         List<MobileCategoryCollectionSectionDto> sectionDtos = new java.util.ArrayList<>();
         for (int i = 0; i < sections.size(); i++) {
             com.english.learning.entity.Section section = sections.get(i);
-            List<MobileLessonResponse> lessons = new java.util.ArrayList<>();
-            if (i == 0) {
-                lessons = lessonRepository
-                        .findPublishedLessonsBySectionId(section.getId(), ContentStatus.PUBLISHED)
-                        .stream()
-                        .map(mapper::toMobileLesson)
-                        .collect(Collectors.toList());
-            }
+            List<MobileLessonResponse> lessons = lessonRepository
+                    .findPublishedLessonsBySectionId(section.getId(), ContentStatus.PUBLISHED)
+                    .stream()
+                    .map(mapper::toMobileLesson)
+                    .collect(Collectors.toList());
             sectionDtos.add(mapper.toMobileCategoryCollectionSection(section, lessons));
         }
 

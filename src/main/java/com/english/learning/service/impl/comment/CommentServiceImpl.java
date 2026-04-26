@@ -9,6 +9,7 @@ import com.english.learning.entity.CommentVote;
 import com.english.learning.entity.Sentence;
 import com.english.learning.entity.User;
 import com.english.learning.service.comment.CommentService;
+import com.english.learning.service.notification.MobileNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentVoteRepository commentVoteRepository;
     private final UserRepository userRepository;
     private final SentenceRepository sentenceRepository;
+    private final MobileNotificationService mobileNotificationService;
 
     @Override
     public List<Comment> getCommentsBySentenceId(Long sentenceId) {
@@ -79,6 +81,9 @@ public class CommentServiceImpl implements CommentService {
         }
 
         Comment saved = commentRepository.save(comment);
+        if (comment.getParent() != null) {
+            mobileNotificationService.createReplyNotification(comment.getParent(), saved);
+        }
         populateVoteCounts(saved);
         return saved;
     }

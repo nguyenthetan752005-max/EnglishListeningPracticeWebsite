@@ -1,6 +1,7 @@
 package com.english.learning.service.impl.progress;
 
 import com.english.learning.dto.InProgressLessonDTO;
+import com.english.learning.dto.mobile.MobileSentenceProgressResponse;
 import com.english.learning.entity.UserProgress;
 import com.english.learning.enums.UserProgressStatus;
 import com.english.learning.service.progress.InProgressLessonQueryService;
@@ -42,6 +43,11 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Override
     public Map<Long, String> getUserProgressMapAsStrings(Long userId, Long lessonId) {
         return userProgressQueryService.getUserProgressMapAsStrings(userId, lessonId);
+    }
+
+    @Override
+    public List<MobileSentenceProgressResponse> getSentenceProgressSnapshot(Long userId, Long lessonId) {
+        return userProgressQueryService.getSentenceProgressSnapshot(userId, lessonId);
     }
 
     @Override

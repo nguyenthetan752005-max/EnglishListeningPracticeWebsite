@@ -33,6 +33,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/mobile/catalog/**").permitAll()
                 .requestMatchers("/api/mobile/categories").permitAll()
                 .requestMatchers("/api/mobile/categories/*/sections").permitAll()
+                .requestMatchers("/api/mobile/app-settings/reminder").permitAll()
+                .requestMatchers("/api/mobile/leaderboard").permitAll()
                 .requestMatchers("/api/mobile/lessons/*").permitAll()  // Cho phép xem lesson không cần login
                 .requestMatchers("/api/mobile/sections/*").permitAll() // Cho phép xem section không cần login
                 .requestMatchers("/login").permitAll()
@@ -44,6 +46,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Mobile authenticated endpoints (cần JWT)
                 .requestMatchers("/api/mobile/media/**").permitAll() // Cho phép lấy audio
+                .requestMatchers("/api/mobile/sentences/*/comments").permitAll() // Cho phép guest xem comments
+                .requestMatchers("/api/mobile/comments/*/replies").permitAll() // Cho phép guest xem replies
                 .requestMatchers("/api/mobile/**").authenticated()
                 // Mặc định permit all cho web
                 .anyRequest().permitAll()

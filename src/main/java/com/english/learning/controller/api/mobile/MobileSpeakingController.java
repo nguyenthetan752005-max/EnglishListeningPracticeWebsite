@@ -54,7 +54,7 @@ public class MobileSpeakingController {
             SpeakingResultDTO result = speakingService.evaluateSpeaking(audio, referenceText, userId, sentenceId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Không thể chấm speaking lúc này."));
         }
     }
 

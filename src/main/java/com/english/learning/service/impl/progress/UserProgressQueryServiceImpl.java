@@ -1,5 +1,6 @@
 package com.english.learning.service.impl.progress;
 
+import com.english.learning.dto.mobile.MobileSentenceProgressResponse;
 import com.english.learning.entity.UserProgress;
 import com.english.learning.repository.UserProgressRepository;
 import com.english.learning.service.progress.UserProgressQueryService;
@@ -39,6 +40,24 @@ public class UserProgressQueryServiceImpl implements UserProgressQueryService {
                         progress -> progress.getSentence().getId(),
                         progress -> progress.getStatus().name()
                 ));
+    }
+
+    @Override
+    public List<MobileSentenceProgressResponse> getSentenceProgressSnapshot(Long userId, Long lessonId) {
+        List<UserProgress> progressList = lessonId == null
+                ? userProgressRepository.findByUser_Id(userId)
+                : userProgressRepository.findByUserIdAndLessonId(userId, lessonId);
+
+        return progressList.stream()
+                .filter(progress -> progress.getSentence() != null
+                        && progress.getSentence().getLesson() != null
+                        && progress.getStatus() != null)
+                .map(progress -> MobileSentenceProgressResponse.builder()
+                        .sentenceId(progress.getSentence().getId())
+                        .lessonId(progress.getSentence().getLesson().getId())
+                        .status(progress.getStatus().name())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
 

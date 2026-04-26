@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -48,14 +49,14 @@ public class MobileAuthController {
                 return ResponseEntity.ok(MobileAuthResponse.builder()
                         .success(false)
                         .code("ACCOUNT_BANNED")
-                        .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                        .message("Tài khoản đã bị khóa.")
                         .build());
             }
             if (Boolean.FALSE.equals(user.getIsActive())) {
                 return ResponseEntity.ok(MobileAuthResponse.builder()
                         .success(false)
                         .code("ACCOUNT_INACTIVE")
-                        .message("Tài khoản không hoạt động" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                        .message("Tài khoản hiện không hoạt động.")
                         .build());
             }
             // Tạo JWT token
@@ -115,7 +116,7 @@ public class MobileAuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.ok(MobileAuthResponse.builder()
                     .success(false)
-                    .message(e.getMessage())
+                    .message(sanitizeRegistrationError(e))
                     .build());
         }
     }
@@ -136,14 +137,14 @@ public class MobileAuthController {
                     return ResponseEntity.ok(MobileAuthResponse.builder()
                             .success(false)
                             .code("ACCOUNT_BANNED")
-                            .message("Tài khoản bị cấm" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                            .message("Tài khoản đã bị khóa.")
                             .build());
                 }
                 if (Boolean.FALSE.equals(user.getIsActive())) {
                     return ResponseEntity.ok(MobileAuthResponse.builder()
                             .success(false)
                             .code("ACCOUNT_INACTIVE")
-                            .message("Tài khoản không hoạt động" + (user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() : ""))
+                            .message("Tài khoản hiện không hoạt động.")
                             .build());
                 }
                 // Tạo JWT token
@@ -168,7 +169,7 @@ public class MobileAuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.ok(MobileAuthResponse.builder()
                     .success(false)
-                    .message(e.getMessage())
+                    .message("Không thể xác thực với Google lúc này. Vui lòng thử lại sau.")
                     .build());
         }
     }
@@ -193,7 +194,7 @@ public class MobileAuthController {
         } catch (Exception e) {
             return ResponseEntity.ok(MobileAuthResponse.builder()
                     .success(false)
-                    .message("Lỗi đăng xuất: " + e.getMessage())
+                    .message("Không thể đăng xuất lúc này. Vui lòng thử lại.")
                     .build());
         }
     }
@@ -234,5 +235,18 @@ public class MobileAuthController {
                     .message("Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau!")
                     .build());
         }
+    }
+
+    private String sanitizeRegistrationError(RuntimeException exception) {
+        String message = exception == null || exception.getMessage() == null
+                ? ""
+                : exception.getMessage().toLowerCase(Locale.US);
+        if (message.contains("email")) {
+            return "Email đã tồn tại.";
+        }
+        if (message.contains("username")) {
+            return "Tên đăng nhập đã tồn tại.";
+        }
+        return "Không thể tạo tài khoản với thông tin đã nhập.";
     }
 }

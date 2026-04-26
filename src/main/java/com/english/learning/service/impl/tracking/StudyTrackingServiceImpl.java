@@ -7,6 +7,7 @@ import com.english.learning.repository.UserRepository;
 import com.english.learning.service.tracking.StudyTrackingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class StudyTrackingServiceImpl implements StudyTrackingService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "leaderboard", allEntries = true)
     public void addActiveSeconds(String username, int seconds) {
         if (seconds <= 0) return;
 
