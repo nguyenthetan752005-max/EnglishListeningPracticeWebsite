@@ -10,10 +10,12 @@ import com.english.learning.security.JwtTokenProvider;
 import com.english.learning.service.auth.AuthService;
 import com.english.learning.service.auth.GoogleAuthService;
 import com.english.learning.service.settings.AppSettingService;
+import com.english.learning.service.auth.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -32,6 +34,7 @@ public class MobileAuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final com.english.learning.service.auth.PasswordResetService passwordResetService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * POST /api/mobile/auth/login
@@ -183,9 +186,8 @@ public class MobileAuthController {
         try {
             String token = jwtTokenProvider.resolveToken(authHeader);
             if (token != null) {
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                // Với cơ chế Heartbeat, ta không cần cập nhật DB khi logout nữa, lastActiveAt sẽ tự động timeout.
-                // TODO: Thêm token vào blacklist nếu cần
+                String tokenId = jwtTokenProvider.getTokenId(token);
+                tokenBlacklistService.blacklistToken(tokenId, Duration.ofHours(24));
             }
             return ResponseEntity.ok(MobileAuthResponse.builder()
                     .success(true)

@@ -70,10 +70,10 @@ public class JwtTokenProvider {
             );
         } catch (ExpiredJwtException e) {
             log.warn("JWT token expired");
-            throw new RuntimeException("TOKEN_EXPIRED");
+            throw new InvalidJwtException(InvalidJwtException.Code.TOKEN_EXPIRED, "Token đã hết hạn", e);
         } catch (JwtException e) {
             log.warn("Invalid JWT token: {}", e.getMessage());
-            throw new RuntimeException("INVALID_TOKEN");
+            throw new InvalidJwtException(InvalidJwtException.Code.INVALID_TOKEN, "Token không hợp lệ", e);
         }
     }
 

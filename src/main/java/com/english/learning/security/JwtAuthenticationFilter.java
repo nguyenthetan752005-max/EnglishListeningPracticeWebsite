@@ -97,8 +97,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-            } catch (RuntimeException e) {
-                if ("TOKEN_EXPIRED".equals(e.getMessage())) {
+            } catch (InvalidJwtException e) {
+                if (e.getCode() == InvalidJwtException.Code.TOKEN_EXPIRED) {
                     sendError(response, 401, "TOKEN_EXPIRED", "Token đã hết hạn");
                 } else {
                     sendError(response, 401, "INVALID_TOKEN", "Token không hợp lệ");
