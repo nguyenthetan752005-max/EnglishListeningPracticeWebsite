@@ -24,11 +24,12 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@ToString(exclude = {"passwordResetTokens", "comments", "commentVotes", "userProgresses", "speakingResults", "dailyStudyStatistics"})
+@ToString(exclude = { "passwordResetTokens", "comments", "commentVotes", "userProgresses", "speakingResults",
+        "dailyStudyStatistics" })
 @EqualsAndHashCode(of = "id")
 @Table(name = "users", indexes = {
-    @Index(name = "idx_role_active_time_7d", columnList = "role,active_time_7d DESC"),
-    @Index(name = "idx_role_active_time_30d", columnList = "role,active_time_30d DESC")
+        @Index(name = "idx_role_active_time_7d", columnList = "role,active_time_7d DESC"),
+        @Index(name = "idx_role_active_time_30d", columnList = "role,active_time_30d DESC")
 })
 @SQLRestriction("is_deleted = false")
 public class User {
@@ -56,7 +57,8 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.USER;
 
-    // Trạng thái tài khoản: is_active=false -> tạm khóa, is_deleted=true -> xóa/vĩnh viễn
+    // Trạng thái tài khoản: is_active=false -> tạm khóa, is_deleted=true ->
+    // xóa/vĩnh viễn
     private String suspensionReason; // Lý do khóa (optional)
 
     private String avatarUrl;
@@ -70,7 +72,8 @@ public class User {
     @Column(name = "notification_timezone", length = 80)
     private String notificationTimezone;
 
-    // Cached values updated by Leaderboard Cron Job to ensure ultra-fast Leaderboard Retrieval
+    // Cached values updated by Leaderboard Cron Job to ensure ultra-fast
+    // Leaderboard Retrieval
     @Column(name = "active_time_7d")
     private Integer activeTime7d = 0;
 
