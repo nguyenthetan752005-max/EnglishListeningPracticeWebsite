@@ -1,55 +1,95 @@
+// TRIỂN KHAI THUẬT TOÁN CHẤM CHÍNH TẢ THEO TỪNG TỪ.
+// - So sánh từng từ người dùng gõ với đáp án trong Database.
+// - BỎ QUA dấu câu (.,?!;:) khi so sánh nhưng GIỮ NGUYÊN khi hiển thị.
+// - Tạo mảng gợi ý: từ đúng giữ nguyên, từ chưa đúng thành "***".
+// - Đánh dấu chỉ số từ MỚI được gợi ý (newHintIndex) để Frontend tô xanh.
+
 package com.english.learning.service.impl.learning.dictation;
 
 import com.english.learning.dto.DictationResultDTO;
 import com.english.learning.entity.Sentence;
 import com.english.learning.exception.SentenceNotFoundException;
 import com.english.learning.repository.SentenceRepository;
-import com.english.learning.service.impl.learning.dictation.strategy.DictationCheckStrategy;
 import com.english.learning.service.learning.dictation.DictationService;
+import com.english.learning.util.TextNormalizerUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class DictationServiceImpl implements DictationService {
 
     private final SentenceRepository sentenceRepository;
-    private final Map<String, DictationCheckStrategy> strategyMap;
 
-    /**
-     * Mẫu thiết kế Strategy Pattern kết hợp Factory (Map):
-     * Spring sẽ tự động inject tất cả các class implements DictationCheckStrategy vào List<DictationCheckStrategy>.
-     * Sau đó ta chuyển List thành Map để tra cứu thuật toán cực kỳ nhanh dựa vào tên Strategy (getStrategyName).
-     */
-    public DictationServiceImpl(SentenceRepository sentenceRepository, List<DictationCheckStrategy> strategies) {
+    public DictationServiceImpl(SentenceRepository sentenceRepository) {
         this.sentenceRepository = sentenceRepository;
-        this.strategyMap = strategies.stream()
-                .collect(Collectors.toMap(DictationCheckStrategy::getStrategyName, Function.identity()));
     }
 
     /**
-     * Chấm điểm chính tả (Áp dụng Strategy Pattern)
+     * THUẬT TOÁN CHÍNH: Chấm đáp án theo từng từ.
+     *
+     * Luật:
+     * - So sánh không phân biệt hoa thường, bỏ qua dấu câu.
+     * - Đếm số từ đúng liên tiếp từ đầu (matchedCount).
+     * - Gợi ý: hiện (matchedCount + 1) từ gốc, ẩn phần còn lại.
+     * - Từ thứ (matchedCount) là từ MỚI được gợi ý (tô xanh).
      */
     @Override
     public DictationResultDTO checkAnswer(Long sentenceId, String userInput) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
                 .orElseThrow(() -> new SentenceNotFoundException(sentenceId));
 
-        // Tình huống thực tế: Có thể lấy chiến lược từ cài đặt người dùng hoặc tham số request.
-        // Ở đây ta gán cứng "RELAXED" làm mặc định để không phá vỡ logic cũ của ứng dụng.
-        String selectedStrategyName = "RELAXED"; 
+        String correctContent = sentence.getContent();
 
-        DictationCheckStrategy strategy = strategyMap.get(selectedStrategyName);
-        if (strategy == null) {
-            throw new IllegalArgumentException("Không tìm thấy chiến lược chấm điểm: " + selectedStrategyName);
+        // Tách từ (giữ nguyên dấu câu gốc để hiển thị)
+        String[] correctWords = correctContent.trim().split("\\s+");
+        String[] userWords = userInput.trim().split("\\s+");
+
+        // Đếm số từ đúng liên tiếp (bỏ qua dấu câu khi so sánh)
+        int matchedCount = 0;
+        for (int i = 0; i < Math.min(correctWords.length, userWords.length); i++) {
+            if (TextNormalizerUtil.removePunctuationAndLowercase(correctWords[i])
+                    .equals(TextNormalizerUtil.removePunctuationAndLowercase(userWords[i]))) {
+                matchedCount++;
+            } else {
+                break;
+            }
         }
 
-        // Ủy quyền (Delegate) xử lý thuật toán cho Strategy đã chọn
-        return strategy.check(sentence.getContent(), userInput);
+        boolean isCorrect = (matchedCount == correctWords.length);
+
+        // Tạo mảng hint
+        List<String> hintWords = new ArrayList<>();
+        int newHintIndex = -1;
+
+        if (isCorrect) {
+            // Đúng hết: hiện toàn bộ câu gốc
+            for (String w : correctWords) {
+                hintWords.add(w);
+            }
+        } else {
+            // Số từ hiện ra = matchedCount + 1
+            int revealCount = Math.min(matchedCount + 1, correctWords.length);
+            newHintIndex = matchedCount; // Từ mới gợi ý = vị trí ngay sau phần đúng
+
+            for (int i = 0; i < correctWords.length; i++) {
+                if (i < revealCount) {
+                    hintWords.add(correctWords[i]); // Hiện từ gốc (giữ nguyên hoa/thường + dấu câu)
+                } else {
+                    hintWords.add("***");
+                }
+            }
+        }
+
+        return new DictationResultDTO(
+                isCorrect,
+                matchedCount,
+                correctWords.length,
+                hintWords,
+                newHintIndex,
+                isCorrect ? correctContent : null
+        );
     }
 
     /**
